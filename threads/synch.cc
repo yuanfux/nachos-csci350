@@ -105,8 +105,96 @@ Lock::~Lock() {}
 void Lock::Acquire() {}
 void Lock::Release() {}
 
-Condition::Condition(char* debugName) { }
-Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) { ASSERT(FALSE); }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+Condition::Condition(char* debugName) {
+    waitingLock = NULL;
+    name = debugName;
+    queue = new List;
+ }
+
+Condition::~Condition() { 
+    delete queue;
+}
+
+void Condition::Wait(Lock* conditionLock) { 
+    ASSERT(FALSE); 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
+    if ( conditionLock == NULL ){
+        printf("Error. Please pass in a lock\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    if (waitingLock == NULL){
+        waitingLock = conditionLock;
+    }
+
+    if (waitingLock != conditionLock){
+        printf("Error. Please use the same lock\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    queue->Append((void *)currentThread);   // so go to sleep
+
+    conditionLock->Release();
+    currentThread->Sleep();
+    conditionLock->Acquire();
+
+    (void) interrupt->SetLevel(oldLevel);
+
+}
+
+void Condition::Signal(Lock* conditionLock) { 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    if ( conditionLock == NULL ){
+        printf("Error. Please pass in a lock\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    if (queue == NULL){
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    if (waitingLock != conditionLock){
+        printf("Error. Please use the same lock\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    Thread *thread;
+    thread = (Thread *)queue->Remove();
+
+    scheduler->ReadyToRun(thread);
+
+    if (queue == NULL){
+        waitingLock = NULL;
+    }
+
+    (void) interrupt->SetLevel(oldLevel);
+}
+
+void Condition::Broadcast(Lock* conditionLock) { 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    if ( conditionLock == NULL ){
+        printf("Error. Please pass in a lock\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    if (waitingLock != conditionLock){
+        printf("Error. Please use the same lock\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    (void) interrupt->SetLevel(oldLevel);
+
+    while (queue != NULL){
+        Condition::Signal(conditionLock);
+    }
+
+}
