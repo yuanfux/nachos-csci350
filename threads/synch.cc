@@ -100,10 +100,64 @@ Semaphore::V()
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
-Lock::Lock(char* debugName) {}
-Lock::~Lock() {}
-void Lock::Acquire() {}
-void Lock::Release() {}
+Lock::Lock(char* debugName) {
+    name = debugName;
+    state = 0;
+    queue = new List;
+    owner = currentThread;
+}
+
+Lock::~Lock() {
+    delete queue;
+}
+
+void Lock::Acquire() {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    if (isHeldByCurrentThread()){
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    if (state == 0){
+        state = 1;
+        owner = currentThread;
+    }
+    else{
+        queue->Append((void *)currentThread);
+        currentThread->Sleep();
+    }
+
+    (void) interrupt->SetLevel(oldLevel);
+}
+
+void Lock::Release() {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    if (!isHeldByCurrentThread()){
+        printf("Error. Current thread is not the lock owner\n");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+
+    Thread *thread;
+    if (!queue->IsEmpty()){
+        thread = (Thread *)queue->Remove();
+        owner = thread;
+        scheduler->ReadyToRun(thread);
+
+    }
+    else {
+        state = 0;
+        owner = NULL;
+    }
+
+    (void) interrupt->SetLevel(oldLevel);
+}
+
+bool Lock::isHeldByCurrentThread(){
+    return owner == currentThread;
+}
 
 Condition::Condition(char* debugName) {
     waitingLock = NULL;
@@ -116,10 +170,9 @@ Condition::~Condition() {
 }
 
 void Condition::Wait(Lock* conditionLock) { 
-    ASSERT(FALSE); 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
     if ( conditionLock == NULL ){
-        printf("Error. Please pass in a lock\n");
+        printf("Error. Please pass a lock in the argument.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
@@ -129,7 +182,7 @@ void Condition::Wait(Lock* conditionLock) {
     }
 
     if (waitingLock != conditionLock){
-        printf("Error. Please use the same lock\n");
+        printf("Error. Please use the same lock.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
@@ -148,18 +201,18 @@ void Condition::Signal(Lock* conditionLock) {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
     if ( conditionLock == NULL ){
-        printf("Error. Please pass in a lock\n");
+        printf("Error. Please pass a lock in the argument.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
-    if (queue == NULL){
+    if (queue->IsEmpty()){
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
     if (waitingLock != conditionLock){
-        printf("Error. Please use the same lock\n");
+        printf("Error. Please use the same lock.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
@@ -169,7 +222,7 @@ void Condition::Signal(Lock* conditionLock) {
 
     scheduler->ReadyToRun(thread);
 
-    if (queue == NULL){
+    if (queue->IsEmpty()){
         waitingLock = NULL;
     }
 
@@ -180,20 +233,20 @@ void Condition::Broadcast(Lock* conditionLock) {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
     if ( conditionLock == NULL ){
-        printf("Error. Please pass in a lock\n");
+        printf("Error. Please pass a lock in the argument.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
     if (waitingLock != conditionLock){
-        printf("Error. Please use the same lock\n");
+        printf("Error. Please use the same lock.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
     (void) interrupt->SetLevel(oldLevel);
 
-    while (queue != NULL){
+    while (!queue->IsEmpty()){
         Condition::Signal(conditionLock);
     }
 
