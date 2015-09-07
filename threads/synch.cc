@@ -102,13 +102,14 @@ Semaphore::V()
 // the test case in the network assignment won't work!
 Lock::Lock(char* debugName) {
     name = debugName;
-    state = 0;
+    state = FREE;
     queue = new List;
     owner = currentThread;
 }
 
 Lock::~Lock() {
     delete queue;
+    delete owner;
 }
 
 void Lock::Acquire() {
@@ -119,8 +120,8 @@ void Lock::Acquire() {
         return;
     }
 
-    if (state == 0){
-        state = 1;
+    if (state == FREE){
+        state = BUSY;
         owner = currentThread;
     }
     else{
@@ -148,7 +149,7 @@ void Lock::Release() {
 
     }
     else {
-        state = 0;
+        state = FREE;
         owner = NULL;
     }
 
@@ -167,6 +168,7 @@ Condition::Condition(char* debugName) {
 
 Condition::~Condition() { 
     delete queue;
+    delete waitingLock;
 }
 
 void Condition::Wait(Lock* conditionLock) { 
@@ -207,6 +209,7 @@ void Condition::Signal(Lock* conditionLock) {
     }
 
     if (queue->IsEmpty()){
+        printf("Warning. There's nothing to signal.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }

@@ -83,6 +83,10 @@ class Lock {
     int state;     //FREE: 0, BUSY: 1.
     List *queue;
     Thread *owner;
+    enum currentState{
+        FREE = 0,
+        BUSY = 1
+    };
 };
 
 // The following class defines a "condition variable".  A condition
