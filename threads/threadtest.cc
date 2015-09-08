@@ -83,14 +83,14 @@ Lock t1_l1("t1_l1");		  // the lock tested in Test 1
 void t1_t1() {
     t1_l1.Acquire();
     t1_s1.V();  // Allow t1_t2 to try to Acquire Lock
- 
+    
     printf ("%s: Acquired Lock %s, waiting for t3\n",currentThread->getName(),
-	    t1_l1.getName());
+       t1_l1.getName());
     t1_s3.P();
     printf ("%s: working in CS\n",currentThread->getName());
     for (int i = 0; i < 1000000; i++) ;
-    printf ("%s: Releasing Lock %s\n",currentThread->getName(),
-	    t1_l1.getName());
+        printf ("%s: Releasing Lock %s\n",currentThread->getName(),
+           t1_l1.getName());
     t1_l1.Release();
     t1_done.V();
 }
@@ -105,17 +105,17 @@ void t1_t2() {
     t1_s2.V();  // Let t3 try to acquire the lock
 
     printf("%s: trying to acquire lock %s\n",currentThread->getName(),
-	    t1_l1.getName());
+       t1_l1.getName());
     t1_l1.Acquire();
 
     printf ("%s: Acquired Lock %s, working in CS\n",currentThread->getName(),
-	    t1_l1.getName());
+       t1_l1.getName());
     for (int i = 0; i < 10; i++)
-	;
-    printf ("%s: Releasing Lock %s\n",currentThread->getName(),
-	    t1_l1.getName());
-    t1_l1.Release();
-    t1_done.V();
+       ;
+   printf ("%s: Releasing Lock %s\n",currentThread->getName(),
+       t1_l1.getName());
+   t1_l1.Release();
+   t1_done.V();
 }
 
 // --------------------------------------------------
@@ -128,10 +128,10 @@ void t1_t3() {
 
     t1_s3.V();	// Let t1 do it's stuff
     for ( int i = 0; i < 3; i++ ) {
-	printf("%s: Trying to release Lock %s\n",currentThread->getName(),
-	       t1_l1.getName());
-	t1_l1.Release();
-    }
+       printf("%s: Trying to release Lock %s\n",currentThread->getName(),
+        t1_l1.getName());
+       t1_l1.Release();
+   }
 }
 
 // --------------------------------------------------
@@ -150,10 +150,10 @@ Semaphore t2_done("t2_done",0);     // So that TestSuite knows when Test 2 is
 void t2_t1() {
     t2_l1.Acquire();
     printf("%s: Lock %s acquired, signalling %s\n",currentThread->getName(),
-	   t2_l1.getName(), t2_c1.getName());
+        t2_l1.getName(), t2_c1.getName());
     t2_c1.Signal(&t2_l1);
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
-	   t2_l1.getName());
+        t2_l1.getName());
     t2_l1.Release();
     t2_s1.V();	// release t2_t2
     t2_done.V();
@@ -167,10 +167,10 @@ void t2_t2() {
     t2_s1.P();	// Wait for t2_t1 to be done with the lock
     t2_l1.Acquire();
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
-	   t2_l1.getName(), t2_c1.getName());
+        t2_l1.getName(), t2_c1.getName());
     t2_c1.Wait(&t2_l1);
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
-	   t2_l1.getName());
+        t2_l1.getName());
     t2_l1.Release();
 }
 // --------------------------------------------------
@@ -191,7 +191,7 @@ void t3_waiter() {
     t3_l1.Acquire();
     t3_s1.V();		// Let the signaller know we're ready to wait
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
-	   t3_l1.getName(), t3_c1.getName());
+        t3_l1.getName(), t3_c1.getName());
     t3_c1.Wait(&t3_l1);
     printf("%s: freed from %s\n",currentThread->getName(), t3_c1.getName());
     t3_l1.Release();
@@ -209,16 +209,16 @@ void t3_signaller() {
     // Don't signal until someone's waiting
     
     for ( int i = 0; i < 5 ; i++ ) 
-	t3_s1.P();
-    t3_l1.Acquire();
-    printf("%s: Lock %s acquired, signalling %s\n",currentThread->getName(),
-	   t3_l1.getName(), t3_c1.getName());
-    t3_c1.Signal(&t3_l1);
-    printf("%s: Releasing %s\n",currentThread->getName(), t3_l1.getName());
-    t3_l1.Release();
-    t3_done.V();
+       t3_s1.P();
+   t3_l1.Acquire();
+   printf("%s: Lock %s acquired, signalling %s\n",currentThread->getName(),
+    t3_l1.getName(), t3_c1.getName());
+   t3_c1.Signal(&t3_l1);
+   printf("%s: Releasing %s\n",currentThread->getName(), t3_l1.getName());
+   t3_l1.Release();
+   t3_done.V();
 }
- 
+
 // --------------------------------------------------
 // Test 4 - see TestSuite() for details
 // --------------------------------------------------
@@ -237,7 +237,7 @@ void t4_waiter() {
     t4_l1.Acquire();
     t4_s1.V();		// Let the signaller know we're ready to wait
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
-	   t4_l1.getName(), t4_c1.getName());
+        t4_l1.getName(), t4_c1.getName());
     t4_c1.Wait(&t4_l1);
     printf("%s: freed from %s\n",currentThread->getName(), t4_c1.getName());
     t4_l1.Release();
@@ -255,14 +255,14 @@ void t4_signaller() {
     // Don't broadcast until someone's waiting
     
     for ( int i = 0; i < 5 ; i++ ) 
-	t4_s1.P();
-    t4_l1.Acquire();
-    printf("%s: Lock %s acquired, broadcasting %s\n",currentThread->getName(),
-	   t4_l1.getName(), t4_c1.getName());
-    t4_c1.Broadcast(&t4_l1);
-    printf("%s: Releasing %s\n",currentThread->getName(), t4_l1.getName());
-    t4_l1.Release();
-    t4_done.V();
+       t4_s1.P();
+   t4_l1.Acquire();
+   printf("%s: Lock %s acquired, broadcasting %s\n",currentThread->getName(),
+    t4_l1.getName(), t4_c1.getName());
+   t4_c1.Broadcast(&t4_l1);
+   printf("%s: Releasing %s\n",currentThread->getName(), t4_l1.getName());
+   t4_l1.Release();
+   t4_done.V();
 }
 // --------------------------------------------------
 // Test 5 - see TestSuite() for details
@@ -281,10 +281,10 @@ void t5_t1() {
     t5_l1.Acquire();
     t5_s1.V();	// release t5_t2
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
-	   t5_l1.getName(), t5_c1.getName());
+        t5_l1.getName(), t5_c1.getName());
     t5_c1.Wait(&t5_l1);
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
-	   t5_l1.getName());
+        t5_l1.getName());
     t5_l1.Release();
 }
 
@@ -298,13 +298,13 @@ void t5_t2() {
     t5_l1.Acquire();
     t5_l2.Acquire();
     printf("%s: Lock %s acquired, signalling %s\n",currentThread->getName(),
-	   t5_l2.getName(), t5_c1.getName());
+        t5_l2.getName(), t5_c1.getName());
     t5_c1.Signal(&t5_l2);
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
-	   t5_l2.getName());
+        t5_l2.getName());
     t5_l2.Release();
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
-	   t5_l1.getName());
+        t5_l1.getName());
     t5_l1.Release();
 }
 
@@ -348,65 +348,65 @@ void TestSuite() {
 
     // Wait for Test 1 to complete
     for (  i = 0; i < 2; i++ )
-	t1_done.P();
+       t1_done.P();
 
     // Test 2
 
-    printf("Starting Test 2.  Note that it is an error if thread t2_t2\n");
-    printf("completes\n");
+   printf("Starting Test 2.  Note that it is an error if thread t2_t2\n");
+   printf("completes\n");
 
-    t = new Thread("t2_t1");
-    t->Fork((VoidFunctionPtr)t2_t1,0);
+   t = new Thread("t2_t1");
+   t->Fork((VoidFunctionPtr)t2_t1,0);
 
-    t = new Thread("t2_t2");
-    t->Fork((VoidFunctionPtr)t2_t2,0);
+   t = new Thread("t2_t2");
+   t->Fork((VoidFunctionPtr)t2_t2,0);
 
     // Wait for Test 2 to complete
-    t2_done.P();
+   t2_done.P();
 
     // Test 3
 
-    printf("Starting Test 3\n");
+   printf("Starting Test 3\n");
 
-    for (  i = 0 ; i < 5 ; i++ ) {
-	name = new char [20];
-	sprintf(name,"t3_waiter%d",i);
-	t = new Thread(name);
-	t->Fork((VoidFunctionPtr)t3_waiter,0);
-    }
-    t = new Thread("t3_signaller");
-    t->Fork((VoidFunctionPtr)t3_signaller,0);
+   for (  i = 0 ; i < 5 ; i++ ) {
+       name = new char [20];
+       sprintf(name,"t3_waiter%d",i);
+       t = new Thread(name);
+       t->Fork((VoidFunctionPtr)t3_waiter,0);
+   }
+   t = new Thread("t3_signaller");
+   t->Fork((VoidFunctionPtr)t3_signaller,0);
 
     // Wait for Test 3 to complete
-    for (  i = 0; i < 2; i++ )
-	t3_done.P();
+   for (  i = 0; i < 2; i++ )
+       t3_done.P();
 
     // Test 4
 
-    printf("Starting Test 4\n");
+   printf("Starting Test 4\n");
 
-    for (  i = 0 ; i < 5 ; i++ ) {
-	name = new char [20];
-	sprintf(name,"t4_waiter%d",i);
-	t = new Thread(name);
-	t->Fork((VoidFunctionPtr)t4_waiter,0);
-    }
-    t = new Thread("t4_signaller");
-    t->Fork((VoidFunctionPtr)t4_signaller,0);
+   for (  i = 0 ; i < 5 ; i++ ) {
+       name = new char [20];
+       sprintf(name,"t4_waiter%d",i);
+       t = new Thread(name);
+       t->Fork((VoidFunctionPtr)t4_waiter,0);
+   }
+   t = new Thread("t4_signaller");
+   t->Fork((VoidFunctionPtr)t4_signaller,0);
 
     // Wait for Test 4 to complete
-    for (  i = 0; i < 6; i++ )
-	t4_done.P();
+   for (  i = 0; i < 6; i++ )
+       t4_done.P();
 
     // Test 5
 
-    printf("Starting Test 5.  Note that it is an error if thread t5_t1\n");
-    printf("completes\n");
+   printf("Starting Test 5.  Note that it is an error if thread t5_t1\n");
+   printf("completes\n");
 
-    t = new Thread("t5_t1");
-    t->Fork((VoidFunctionPtr)t5_t1,0);
+   t = new Thread("t5_t1");
+   t->Fork((VoidFunctionPtr)t5_t1,0);
 
-    t = new Thread("t5_t2");
-    t->Fork((VoidFunctionPtr)t5_t2,0);
+   t = new Thread("t5_t2");
+   t->Fork((VoidFunctionPtr)t5_t2,0);
 }
 #endif

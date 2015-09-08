@@ -69,7 +69,7 @@ Semaphore::P()
     while (value == 0) { 			// semaphore not available
 	queue->Append((void *)currentThread);	// so go to sleep
 	currentThread->Sleep();
-    } 
+} 
     value--; 					// semaphore available, 
 						// consume its value
     
@@ -92,9 +92,9 @@ Semaphore::V()
 
     thread = (Thread *)queue->Remove();
     if (thread != NULL)	   // make thread ready, consuming the V immediately
-	scheduler->ReadyToRun(thread);
-    value++;
-    (void) interrupt->SetLevel(oldLevel);
+       scheduler->ReadyToRun(thread);
+   value++;
+   (void) interrupt->SetLevel(oldLevel);
 }
 
 // Dummy functions -- so we can compile our later assignments 
@@ -162,7 +162,7 @@ Condition::Condition(char* debugName) {
     waitingLock = NULL;
     name = debugName;
     queue = new List;
- }
+}
 
 Condition::~Condition() { 
     delete queue;

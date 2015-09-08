@@ -37,7 +37,7 @@
 // now be different.
 
 class Semaphore {
-  public:
+public:
     Semaphore(char* debugName, int initialValue);	// set initial value
     ~Semaphore();   					// de-allocate semaphore
     char* getName() { return name;}			// debugging assist
@@ -45,7 +45,7 @@ class Semaphore {
     void P();	 // these are the only operations on a semaphore
     void V();	 // they are both *atomic*
     
-  private:
+private:
     char* name;        // useful for debugging
     int value;         // semaphore value, always >= 0
     List *queue;       // threads waiting in P() for the value to be > 0
@@ -64,7 +64,7 @@ class Semaphore {
 // (because the value might change immediately after you read it).  
 
 class Lock {
-  public:
+public:
     Lock(char* debugName);  		// initialize lock to be FREE
     ~Lock();				// deallocate lock
     char* getName() { return name; }	// debugging assist
@@ -77,7 +77,7 @@ class Lock {
 					// checking in Release, and in
 					// Condition variable ops below.
 
-  private:
+private:
     char* name;				// for debugging
     // plus some other stuff you'll need to define
     List *queue;
@@ -123,7 +123,7 @@ class Lock {
 // thread gets a chance to run.
 
 class Condition {
-  public:
+public:
     Condition(char* debugName);		// initialize condition to 
 					// "no one waiting"
     ~Condition();			// deallocate the condition
@@ -137,7 +137,7 @@ class Condition {
     void Broadcast(Lock *conditionLock);// the currentThread for all of 
 					// these operations
 
-  private:
+private:
     char* name;
     // plus some other stuff you'll need to define
     Lock *waitingLock;
