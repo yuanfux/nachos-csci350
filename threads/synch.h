@@ -80,13 +80,13 @@ public:
 private:
     char* name;				// for debugging
     // plus some other stuff you'll need to define
-    List *queue;
-    Thread *lockHolder;
+    List *queue;            //queue for waiting threads
+    Thread *lockHolder;     //the holder thread of the lock
     enum State{
         FREE = 0,
         BUSY = 1
     };
-    State state;
+    State state;            //state of the lock: busy or free
 
 };
 
@@ -140,7 +140,7 @@ public:
 private:
     char* name;
     // plus some other stuff you'll need to define
-    Lock *waitingLock;
-    List *queue;
+    Lock *waitingLock;  //the lock for the conditional variable
+    List *queue;        //queue for the waiting threads
 };
 #endif // SYNCH_H

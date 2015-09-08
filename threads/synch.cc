@@ -113,42 +113,42 @@ Lock::~Lock() {
 }
 
 void Lock::Acquire() {
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupt
 
-    if (isHeldByCurrentThread()){
-        (void) interrupt->SetLevel(oldLevel);
-        return;
+    if (isHeldByCurrentThread()){                   //check holder of the lock
+        (void) interrupt->SetLevel(oldLevel);       //if the holder of the lock is
+        return;                                     //current thread, then nothing happens
     }
 
-    if (state == FREE){
-        state = BUSY;
-        lockHolder = currentThread;
+    if (state == FREE){                 //if the lock is not acquired by any threads
+        state = BUSY;                   //set the lock to be busy
+        lockHolder = currentThread;     //set current thread to be the holder of the lock
     }
     else{
-        queue->Append((void *)currentThread);
-        currentThread->Sleep();
+        queue->Append((void *)currentThread);   //if the lock is busy, put current thread
+        currentThread->Sleep();                 //into waiting queue and put to sleep
     }
 
-    (void) interrupt->SetLevel(oldLevel);
+    (void) interrupt->SetLevel(oldLevel);   //restore interrupt
 }
 
 void Lock::Release() {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
-    if (!isHeldByCurrentThread()){
-        printf("Error. Current thread is not the lock holder\n");
-        (void) interrupt->SetLevel(oldLevel);
+    if (!isHeldByCurrentThread()){                                  //if a thread tries to release the lock
+        printf("Error. Current thread is not the lock holder\n");   //but is not the holder, send error message
+        (void) interrupt->SetLevel(oldLevel);                       //and exit
         return;
     }
 
-    if (!queue->IsEmpty()){
-        lockHolder = (Thread *)queue->Remove();
-        scheduler->ReadyToRun(lockHolder);
+    if (!queue->IsEmpty()){                         //if the queue of waiting lock is empty
+        lockHolder = (Thread *)queue->Remove();     //remove the first thread from the queue
+        scheduler->ReadyToRun(lockHolder);          //put the thread to ready state
 
     }
     else {
-        state = FREE;
-        lockHolder = NULL;
+        state = FREE;           //if the queue is empty, then simply free the lock
+        lockHolder = NULL;      //set holder of the lock to be NULL
     }
 
     (void) interrupt->SetLevel(oldLevel);
@@ -171,27 +171,27 @@ Condition::~Condition() {
 
 void Condition::Wait(Lock* conditionLock) { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
-    if ( conditionLock == NULL ){
+    if ( conditionLock == NULL ){                       //always check if there's argument
         printf("Error. Please pass a lock in the argument.\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
-    if (waitingLock == NULL){
-        waitingLock = conditionLock;
+    if (waitingLock == NULL){           //if no lock is waiting
+        waitingLock = conditionLock;    //make current lock the as waiting lock
     }
 
-    if (waitingLock != conditionLock){
-        printf("Error. Please use the same lock.\n");
+    if (waitingLock != conditionLock){                  //if the thread uses a different lock
+        printf("Error. Please use the same lock.\n");   //print error message and return
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
-    queue->Append((void *)currentThread);   // so go to sleep
+    queue->Append((void *)currentThread);   //put current thread on waiting queue
 
-    conditionLock->Release();
-    currentThread->Sleep();
-    conditionLock->Acquire();
+    conditionLock->Release();               //give up the lock to other threads
+    currentThread->Sleep();                 //put thread to sleep
+    conditionLock->Acquire();               //acquire the same lock again after been signalled
 
     (void) interrupt->SetLevel(oldLevel);
 
@@ -206,8 +206,8 @@ void Condition::Signal(Lock* conditionLock) {
         return;
     }
 
-    if (queue->IsEmpty()){
-        printf("Warning. There's nothing to signal.\n");
+    if (queue->IsEmpty()){                                  //if the waiting queue is empty
+        printf("Warning. There's nothing to signal.\n");    //then it doesn't need to signal any thread
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
@@ -218,10 +218,10 @@ void Condition::Signal(Lock* conditionLock) {
         return;
     }
 
-    scheduler->ReadyToRun((Thread *)queue->Remove());
+    scheduler->ReadyToRun((Thread *)queue->Remove());   //put the first thread in waiting queue to ready state
 
-    if (queue->IsEmpty()){
-        waitingLock = NULL;
+    if (queue->IsEmpty()){      //if the waiting queue is empty
+        waitingLock = NULL;     //clean the record of lock for the conditional variable
     }
 
     (void) interrupt->SetLevel(oldLevel);
@@ -244,7 +244,7 @@ void Condition::Broadcast(Lock* conditionLock) {
 
     (void) interrupt->SetLevel(oldLevel);
 
-    while (!queue->IsEmpty()){
-        Condition::Signal(conditionLock);
+    while (!queue->IsEmpty()){              //if the queue is not empty
+        Condition::Signal(conditionLock);   //signal all threads.
     }
 }
