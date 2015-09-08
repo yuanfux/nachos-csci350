@@ -104,12 +104,12 @@ Lock::Lock(char* debugName) {
     name = debugName;
     state = FREE;
     queue = new List;
-    owner = currentThread;
+    lockHolder = currentThread;
 }
 
 Lock::~Lock() {
     delete queue;
-    delete owner;
+    delete lockHolder;
 }
 
 void Lock::Acquire() {
@@ -122,7 +122,7 @@ void Lock::Acquire() {
 
     if (state == FREE){
         state = BUSY;
-        owner = currentThread;
+        lockHolder = currentThread;
     }
     else{
         queue->Append((void *)currentThread);
@@ -136,28 +136,26 @@ void Lock::Release() {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
     if (!isHeldByCurrentThread()){
-        printf("Error. Current thread is not the lock owner\n");
+        printf("Error. Current thread is not the lock holder\n");
         (void) interrupt->SetLevel(oldLevel);
         return;
     }
 
-    Thread *thread;
     if (!queue->IsEmpty()){
-        thread = (Thread *)queue->Remove();
-        owner = thread;
-        scheduler->ReadyToRun(thread);
+        lockHolder = (Thread *)queue->Remove();
+        scheduler->ReadyToRun(lockHolder);
 
     }
     else {
         state = FREE;
-        owner = NULL;
+        lockHolder = NULL;
     }
 
     (void) interrupt->SetLevel(oldLevel);
 }
 
 bool Lock::isHeldByCurrentThread(){
-    return owner == currentThread;
+    return lockHolder == currentThread;
 }
 
 Condition::Condition(char* debugName) {
@@ -220,10 +218,7 @@ void Condition::Signal(Lock* conditionLock) {
         return;
     }
 
-    Thread *thread;
-    thread = (Thread *)queue->Remove();
-
-    scheduler->ReadyToRun(thread);
+    scheduler->ReadyToRun((Thread *)queue->Remove());
 
     if (queue->IsEmpty()){
         waitingLock = NULL;
@@ -252,5 +247,4 @@ void Condition::Broadcast(Lock* conditionLock) {
     while (!queue->IsEmpty()){
         Condition::Signal(conditionLock);
     }
-
 }

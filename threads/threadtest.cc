@@ -1,12 +1,12 @@
-// threadtest.cc 
+// threadtest.cc
 //	Simple test case for the threads assignment.
 //
 //	Create two threads, and have them context switch
-//	back and forth between themselves by calling Thread::Yield, 
+//	back and forth between themselves by calling Thread::Yield,
 //	to illustratethe inner workings of the thread system.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -19,7 +19,7 @@
 #ifdef CHANGED
 //----------------------------------------------------------------------
 // SimpleThread
-// 	Loop 5 times, yielding the CPU to another ready thread 
+// 	Loop 5 times, yielding the CPU to another ready thread
 //	each iteration.
 //
 //	"which" is simply a number identifying the thread, for debugging
@@ -32,14 +32,14 @@ SimpleThread(int which)
     int num;
     
     for (num = 0; num < 5; num++) {
-	printf("*** thread %d looped %d times\n", which, num);
+        printf("*** thread %d looped %d times\n", which, num);
         currentThread->Yield();
     }
 }
 
 //----------------------------------------------------------------------
 // ThreadTest
-// 	Set up a ping-pong between two threads, by forking a thread 
+// 	Set up a ping-pong between two threads, by forking a thread
 //	to call SimpleThread, and then calling SimpleThread ourselves.
 //----------------------------------------------------------------------
 
@@ -47,9 +47,9 @@ void
 ThreadTest()
 {
     DEBUG('t', "Entering SimpleTest");
-
+    
     Thread *t = new Thread("forked thread");
-
+    
     t->Fork(SimpleThread, 1);
     SimpleThread(0);
 }
@@ -73,6 +73,7 @@ Semaphore t1_s3("t1_s3",0);       // To make sure t1_t1 does not release the
                                   // lock before t1_t3 tries to acquire it
 Semaphore t1_done("t1_done",0);   // So that TestSuite knows when Test 1 is
                                   // done
+
 Lock t1_l1("t1_l1");		  // the lock tested in Test 1
 
 // --------------------------------------------------
@@ -407,6 +408,5 @@ void TestSuite() {
 
     t = new Thread("t5_t2");
     t->Fork((VoidFunctionPtr)t5_t2,0);
-
 }
 #endif

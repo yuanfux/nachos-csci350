@@ -80,13 +80,14 @@ class Lock {
   private:
     char* name;				// for debugging
     // plus some other stuff you'll need to define
-    int state;     //FREE: 0, BUSY: 1.
     List *queue;
-    Thread *owner;
-    enum currentState{
+    Thread *lockHolder;
+    enum State{
         FREE = 0,
         BUSY = 1
     };
+    State state;
+
 };
 
 // The following class defines a "condition variable".  A condition
