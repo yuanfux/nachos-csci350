@@ -100,13 +100,139 @@ Semaphore::V()
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
-Lock::Lock(char* debugName) {}
-Lock::~Lock() {}
-void Lock::Acquire() {}
-void Lock::Release() {}
+Lock::Lock(char* debugName) {
+    name=debugName;
+    state=available;
+    LockHolder=NULL;
+    queue=new List;
+}
+Lock::~Lock() {
+    delete queue;
 
-Condition::Condition(char* debugName) { }
+}
+
+void Lock::Acquire() {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    if(isHeldByCurrentThread()){
+         (void) interrupt->SetLevel(oldLevel);
+         return;
+    }
+    
+    if(state==available){
+        state=busy;
+        this->LockHolder=currentThread;
+        
+    }
+    else if(state==busy){
+        queue->Append(currentThread);//put current thread into wait list
+        currentThread->Sleep();
+    }
+    
+    (void) interrupt->SetLevel(oldLevel);
+    return;
+    
+    
+}
+void Lock::Release() {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    if(!isHeldByCurrentThread()){
+        //invalid request
+        printf("Current thread is not the lock owner.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    if(!queue->IsEmpty()){
+        LockHolder=(Thread *)queue->Remove();//take the first item in the wait list
+        scheduler->ReadyToRun(LockHolder);
+        
+    }
+    else{//wait list is empty
+        state=available;
+        LockHolder=NULL;
+    
+    }
+    
+    (void) interrupt->SetLevel(oldLevel);
+    return;
+
+
+}
+bool Lock::isHeldByCurrentThread(){
+    if(currentThread==LockHolder){
+        return true;
+    }
+    return false;
+}
+
+Condition::Condition(char* debugName) {
+    name=debugName;
+    waitingLock=NULL;
+    queue=new List;
+}
 Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) { ASSERT(FALSE); }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+void Condition::Wait(Lock* conditionLock) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    if(conditionLock==NULL){//invalid lock
+        printf("NULL conditionLock pointer.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    if(waitingLock==NULL){
+        waitingLock=conditionLock;
+    }
+    if(waitingLock!=conditionLock){//invalid lock
+        printf("Need same lock.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    queue->Append(currentThread);//add to the wait queue
+    conditionLock->Release();
+    currentThread->Sleep();
+    conditionLock->Acquire();
+    (void) interrupt->SetLevel(oldLevel);
+    return;
+
+}
+void Condition::Signal(Lock* conditionLock) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    if(conditionLock==NULL){//invalid lock
+        printf("NULL conditionLock pointer.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    if(waitingLock!=conditionLock){//invalid lock
+        printf("Need same lock.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    //take the first item in the wait list
+    scheduler->ReadyToRun((Thread *)queue->Remove());
+    
+    if(queue->IsEmpty()){
+        waitingLock=NULL;
+    }
+    
+    (void) interrupt->SetLevel(oldLevel);
+    return;
+
+}
+void Condition::Broadcast(Lock* conditionLock) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    if(conditionLock==NULL){//invalid lock
+        printf("NULL conditionLock pointer.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    if(waitingLock!=conditionLock){//invalid lock
+        printf("Need same lock.");
+        (void) interrupt->SetLevel(oldLevel);
+        return;
+    }
+    (void) interrupt->SetLevel(oldLevel);
+    
+    while(!queue->IsEmpty()){
+        Signal(conditionLock);
+    }
+    
+
+}

@@ -80,6 +80,12 @@ class Lock {
   private:
     char* name;				// for debugging
     // plus some other stuff you'll need to define
+    enum State {available, busy};
+    State state;
+    Thread* LockHolder;
+    List* queue;
+    
+    
 };
 
 // The following class defines a "condition variable".  A condition
@@ -132,5 +138,7 @@ class Condition {
   private:
     char* name;
     // plus some other stuff you'll need to define
+    Lock* waitingLock;
+    List* queue;
 };
 #endif // SYNCH_H
