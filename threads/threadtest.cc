@@ -289,6 +289,7 @@ void t5_t1() {
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
         t5_l1.getName());
     t5_l1.Release();
+    printf("end of t5_t1");
 }
 
 // --------------------------------------------------
@@ -453,11 +454,11 @@ int randomNum=rand()%4;
     
     if(money>=500){//have enough bribe money
         ClerkLineLock.Acquire();
+        money-=500;
         int myLine;
         
         int shortestApplicationBribeLine=-1;
         int shortestApplicationBribeLineSize=INT_MAX;
-        
         for(unsigned int i=0;i<ApplicationClerkLineLock.size();i++){//avaliable application clerk check
             
             if(ApplicationClerkBribeLineCount[i]<shortestApplicationBribeLineSize && ApplicationClerkState[i]!=ONBREAK){
@@ -489,6 +490,14 @@ int randomNum=rand()%4;
                 ApplicationClerkBribeLineCV[myLine].Wait(&ClerkLineLock);
                 ApplicationClerkBribeLineCount[myLine]--;
             }
+            ClerkLineLock.Release();
+            ApplicationClerkLineLock[myLine].Acquire();
+            cout<<"give my data to application clerk"<<endl;
+            ApplicationClerkBribeLineCV[myLine].Signal(&ApplicationClerkLineLock[myLine]);
+            //wait clerk to do their job
+            ApplicationClerkBribeLineCV[myLine].Wait(&ApplicationClerkLineLock[myLine]);
+            ApplicationClerkLineLock[myLine].Release();
+
         }
         else{
             myLine=shortestPictureBribeLine;
@@ -550,8 +559,51 @@ int randomNum=rand()%4;
                 PictureClerkLineCV[myLine].Wait(&ClerkLineLock);
                 PictureClerkLineCount[myLine]--;
             }
-            
         }
     }
+    
 }
+
+void ApplicationClerk(int myLine){
+    int incoming=0;
+    while(true){
+    bool InBribeLine=false;
+    ClerkLineLock.Acquire();
+    if(ApplicationClerkBribeLineCount[myLine]>0){
+        ApplicationClerkBribeLineCV[myLine].Signal(&ClerkLineLock);
+        ApplicationClerkState[myLine]=BUSY;
+        InBribeLine=true;
+    }
+    else if(ApplicationClerkLineCount[myLine]>0){
+        ApplicationClerkLineCV[myLine].Signal(&ClerkLineLock);
+        ApplicationClerkState[myLine]=BUSY;
+        
+    }
+    else{
+        ApplicationClerkState[myLine]=AVAILABLE;
+        continue;
+    }
+        ApplicationClerkLineLock[myLine].Acquire();
+        ClerkLineLock.Release();
+        //wait for customer data
+        if(InBribeLine){//in bribe line
+            ApplicationClerkBribeLineCV[myLine].Wait(&ApplicationClerkLineLock[myLine]);
+            //do my job customer now waiting
+            cout<<"customer data received"<<endl;
+            ApplicationClerkBribeLineCV[myLine].Signal(&ApplicationClerkLineLock[myLine]);
+            ApplicationClerkLineLock[myLine].Release();
+        }
+        else{//not in bribe line
+            ApplicationClerkLineCV[myLine].Wait(&ApplicationClerkLineLock[myLine]);
+            //do my job customer now waiting
+            ApplicationClerkLineCV[myLine].Signal(&ApplicationClerkLineLock[myLine]);
+            ApplicationClerkLineLock[myLine].Release();
+            
+        }
+        
+    }//while
+}
+
+
+
 #endif
