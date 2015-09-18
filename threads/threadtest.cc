@@ -457,16 +457,10 @@ int randomNum = rand() % 4;
         money-=500;
         int myLine;
         
-<<<<<<< Updated upstream
-        int shortestApplicationBribeLine=-1;
-        int shortestApplicationBribeLineSize=INT_MAX;
-        for(unsigned int i=0;i<ApplicationClerkLineLock.size();i++){//avaliable application clerk check
-=======
         int shortestApplicationBribeLine = -1;
         int shortestApplicationBribeLineSize = INT_MAX;
         
         for(unsigned int i = 0; i < ApplicationClerkLineLock.size(); i++){//avaliable application clerk check
->>>>>>> Stashed changes
             
             if(ApplicationClerkBribeLineCount[i] < shortestApplicationBribeLineSize && ApplicationClerkState[i] != ONBREAK){
                 
@@ -597,6 +591,9 @@ void ApplicationClerk(int myLine){
             ApplicationClerkBribeLineCV[myLine].Wait(&ApplicationClerkLineLock[myLine]);
             //do my job customer now waiting
             cout<<"customer data received"<<endl;
+            for(int i = 0; i < 20; i++){
+              currentThread->Yeild();
+            }
             ApplicationClerkBribeLineCV[myLine].Signal(&ApplicationClerkLineLock[myLine]);
             ApplicationClerkLineLock[myLine].Release();
         }
