@@ -55,7 +55,7 @@
 
 
 // External functions used by this file
-
+extern void passportOffice(void), Copy(char *unixFile, char *nachosFile);
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void TestSuite(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
@@ -86,8 +86,9 @@ main(int argc, char **argv)
     (void) Initialize(argc, argv);
     
 #ifdef THREADS
-    ThreadTest();
-    TestSuite();
+   // ThreadTest();
+   // TestSuite();
+    passportOffice();
 #endif
     
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
