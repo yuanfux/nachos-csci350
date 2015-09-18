@@ -429,64 +429,71 @@ vector<Lock> PictureClerkLineLock;
 vector<Condition> PictureClerkLineCV;
 vector<Condition> PictureClerkBribeLineCV;
 vector<int> PictureClerkLineCount;
-vector<int>PictureClerkBribeLineCount;
+vector<int> PictureClerkBribeLineCount;
 vector<clerkState> PictureClerkState;
-int customerNum=0;
+int customerNum = 0;
 void Customer(){
 //determine amount of money customer has
-int id=customerNum+1;
+int id = customerNum + 1;
 int money;
-int randomNum=rand()%4;
+int randomNum = rand() % 4;
     
-    if(randomNum==0){
-        money=100;
+    if(randomNum == 0){
+        money = 100;
     }
-    else if(randomNum==1){
-        money=600;
+    else if(randomNum == 1){
+        money = 600;
     }
-    else if(randomNum==2){
-        money=1100;
+    else if(randomNum == 2){
+        money = 1100;
     }
-    else if(randomNum==3){
-        money=1600;
+    else if(randomNum == 3){
+        money = 1600;
     }
 //find the shortest line of application clerk line
     
-    if(money>=500){//have enough bribe money
+    if(money >= 500){//have enough bribe money
         ClerkLineLock.Acquire();
         money-=500;
         int myLine;
         
+<<<<<<< Updated upstream
         int shortestApplicationBribeLine=-1;
         int shortestApplicationBribeLineSize=INT_MAX;
         for(unsigned int i=0;i<ApplicationClerkLineLock.size();i++){//avaliable application clerk check
+=======
+        int shortestApplicationBribeLine = -1;
+        int shortestApplicationBribeLineSize = INT_MAX;
+        
+        for(unsigned int i = 0; i < ApplicationClerkLineLock.size(); i++){//avaliable application clerk check
+>>>>>>> Stashed changes
             
-            if(ApplicationClerkBribeLineCount[i]<shortestApplicationBribeLineSize && ApplicationClerkState[i]!=ONBREAK){
+            if(ApplicationClerkBribeLineCount[i] < shortestApplicationBribeLineSize && ApplicationClerkState[i] != ONBREAK){
                 
-                shortestApplicationBribeLine=i;
-                shortestApplicationBribeLineSize=ApplicationClerkBribeLineCount[i];
+                shortestApplicationBribeLine = i;
+                shortestApplicationBribeLineSize = ApplicationClerkBribeLineCount[i];
                 
             }
         }
         
-        int shortestPictureBribeLine=-1;
-        int shortestPictureBribeLineSize=INT_MAX;
+        int shortestPictureBribeLine = -1;
+        int shortestPictureBribeLineSize = INT_MAX;
         
-        for(unsigned int i=0;i<PictureClerkLineLock.size();i++){//available picture clerk check
-            if(PictureClerkBribeLineCount[i]<shortestPictureBribeLineSize && PictureClerkState[i]!=ONBREAK){
+        for(unsigned int i = 0;i < PictureClerkLineLock.size(); i++){//available picture clerk check
+            if(PictureClerkBribeLineCount[i] < shortestPictureBribeLineSize && PictureClerkState[i] != ONBREAK){
                 
-                shortestPictureBribeLine=i;
-                shortestPictureBribeLineSize=PictureClerkBribeLineCount[i];
+                shortestPictureBribeLine = i;
+                shortestPictureBribeLineSize = PictureClerkBribeLineCount[i];
                 
             }
         }
-        if(shortestApplicationBribeLineSize<=shortestPictureBribeLineSize){//determine my line and my line size
-            myLine=shortestApplicationBribeLine;
+        if(shortestApplicationBribeLineSize <= shortestPictureBribeLineSize){//determine my line and my line size
+            myLine = shortestApplicationBribeLine;
             
-            if(ApplicationClerkState[myLine]==BUSY){
+            if(ApplicationClerkState[myLine] == BUSY){
                 //wait in the application clerk line
                 ApplicationClerkBribeLineCount[myLine]++;
-                cout<<"customer"<<"["<<id<<"]"<<" waiting in the bribe line for application clerk["<<myLine<<"]"<<endl;
+                cout << "customer[" << id << "] waiting in the bribe line for application clerk[" << myLine << "]" << endl;
                 ApplicationClerkBribeLineCV[myLine].Wait(&ClerkLineLock);
                 ApplicationClerkBribeLineCount[myLine]--;
             }
@@ -500,12 +507,12 @@ int randomNum=rand()%4;
 
         }
         else{
-            myLine=shortestPictureBribeLine;
+            myLine = shortestPictureBribeLine;
             
-            if(PictureClerkState[myLine]==BUSY){
+            if(PictureClerkState[myLine] == BUSY){
                 //wait in the picture clerk line
                 PictureClerkBribeLineCount[myLine]++;
-                cout<<"customer"<<"["<<id<<"]"<<" waiting in the bribe line for picture clerk["<<myLine<<"]"<<endl;
+                cout << "customer["<< id << "] waiting in the bribe line for picture clerk[" << myLine << "]" << endl;
                 PictureClerkBribeLineCV[myLine].Wait(&ClerkLineLock);
                 PictureClerkBribeLineCount[myLine]--;
             }
@@ -517,45 +524,45 @@ int randomNum=rand()%4;
         int myLine;
         int lineSize;
         
-        int shortestApplicationLine=-1;
-        int shortestApplicationLineSize=INT_MAX;
+        int shortestApplicationLine = -1;
+        int shortestApplicationLineSize = INT_MAX;
         
-        for(unsigned int i=0;i<ApplicationClerkLineLock.size();i++){
-            if(ApplicationClerkLineCount[i]<shortestApplicationLineSize && ApplicationClerkState[i]!=ONBREAK){
+        for(unsigned int i = 0; i < ApplicationClerkLineLock.size(); i++){
+            if(ApplicationClerkLineCount[i] < shortestApplicationLineSize && ApplicationClerkState[i] != ONBREAK){
                 
-                shortestApplicationLine=i;
-                shortestApplicationLineSize=ApplicationClerkLineCount[i];
+                shortestApplicationLine = i;
+                shortestApplicationLineSize = ApplicationClerkLineCount[i];
                 
             }
         }
         
-        int shortestPictureLine=-1;
-        int shortestPictureLineSize=INT_MAX;
+        int shortestPictureLine = -1;
+        int shortestPictureLineSize = INT_MAX;
         
-        for(unsigned int i=0;i<PictureClerkLineLock.size();i++){
-            if(PictureClerkLineCount[i]<shortestPictureLineSize && PictureClerkState[i]!=ONBREAK){
+        for(unsigned int i = 0; i < PictureClerkLineLock.size(); i++){
+            if(PictureClerkLineCount[i] < shortestPictureLineSize && PictureClerkState[i] != ONBREAK){
                 
-                shortestPictureLine=i;
-                shortestPictureLineSize=PictureClerkLineCount[i];
+                shortestPictureLine = i;
+                shortestPictureLineSize = PictureClerkLineCount[i];
                 
             }
             
         }
-        if(shortestApplicationLineSize<=shortestPictureLineSize){
-            myLine=shortestApplicationLine;
+        if(shortestApplicationLineSize <= shortestPictureLineSize){
+            myLine = shortestApplicationLine;
             
-            if(ApplicationClerkState[myLine]==BUSY){
+            if(ApplicationClerkState[myLine] == BUSY){
                 ApplicationClerkLineCount[myLine]++;
-                cout<<"customer"<<"["<<id<<"]"<<" waiting in the line for application clerk["<<myLine<<"]"<<endl;
+                cout << "customer[" << id << "] waiting in the line for application clerk[" << myLine << "]" << endl;
                 ApplicationClerkLineCV[myLine].Wait(&ClerkLineLock);
                 ApplicationClerkLineCount[myLine]--;
             }
         }
         else{
-            myLine=shortestPictureLine;
-            if(PictureClerkState[myLine]==BUSY){
+            myLine = shortestPictureLine;
+            if(PictureClerkState[myLine] == BUSY){
                 PictureClerkLineCount[myLine]++;
-                cout<<"customer"<<"["<<id<<"]"<<" waiting in the line for picture clerk["<<myLine<<"]"<<endl;
+                cout << "customer[" << id << "] waiting in the line for picture clerk[" << myLine << "]" << endl;
                 PictureClerkLineCV[myLine].Wait(&ClerkLineLock);
                 PictureClerkLineCount[myLine]--;
             }

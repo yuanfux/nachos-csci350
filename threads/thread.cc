@@ -21,8 +21,8 @@
 #include "system.h"
 
 #define STACK_FENCEPOST 0xdeadbeef  // this is put at the top of the
-                    // execution stack, for detecting 
-                    // stack overflows
+                                    // execution stack, for detecting 
+                                    // stack overflows
 
 //----------------------------------------------------------------------
 // Thread::Thread
@@ -94,7 +94,7 @@ Thread::Fork(VoidFunctionPtr func, int arg)
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
     scheduler->ReadyToRun(this);    // ReadyToRun assumes that interrupts 
-                    // are disabled!
+                                    // are disabled!
     (void) interrupt->SetLevel(oldLevel);
 }    
 
@@ -150,7 +150,7 @@ Thread::Finish ()
     
     threadToBeDestroyed = currentThread;
     Sleep();                    // invokes SWITCH
-    // not reached
+                                // not reached
 }
 
 //----------------------------------------------------------------------

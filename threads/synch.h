@@ -83,8 +83,8 @@ private:
     List *queue;            //queue for waiting threads
     Thread *lockHolder;     //the holder thread of the lock
     enum State{
-        FREE = 0,
-        BUSY = 1
+        FREE,
+        BUSY
     };
     State state;            //state of the lock: busy or free
 
