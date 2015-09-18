@@ -519,13 +519,13 @@ int randomNum = rand() % 4;
         else{
             myLine = shortestPictureBribeLine;
             
-            if(PictureClerkState[myLine] == BUSY){
+           // if(PictureClerkState[myLine] == BUSY){
                 //wait in the picture clerk line
                 PictureClerkBribeLineCount[myLine]++;
                 cout << "customer["<< id << "] waiting in the bribe line for picture clerk[" << myLine << "]" << endl;
                 PictureClerkBribeLineCV[myLine]->Wait(&ClerkLineLock);
                 PictureClerkBribeLineCount[myLine]--;
-            }
+           // }
         }
     }
     
@@ -560,12 +560,12 @@ int randomNum = rand() % 4;
         if(shortestApplicationLineSize <= shortestPictureLineSize){
             myLine = shortestApplicationLine;
             
-            if(ApplicationClerkState[myLine] == BUSY){
+           // if(ApplicationClerkState[myLine] == BUSY){
                 ApplicationClerkLineCount[myLine]++;
                 cout << "customer[" << id << "] waiting in the line for application clerk[" << myLine << "]" << endl;
                 ApplicationClerkLineCV[myLine]->Wait(&ClerkLineLock);
                 ApplicationClerkLineCount[myLine]--;
-            }
+            //}
             ClerkLineLock.Release();
             ApplicationClerkLineLock[myLine]->Acquire();
             cout<<"give my"<<" customer["<<id<<"]'s "<< "data to application clerk["<<myLine<<"]"<<endl;
@@ -576,12 +576,12 @@ int randomNum = rand() % 4;
         }
         else{
             myLine = shortestPictureLine;
-            if(PictureClerkState[myLine] == BUSY){
+           // if(PictureClerkState[myLine] == BUSY){
                 PictureClerkLineCount[myLine]++;
                 cout << "customer[" << id << "] waiting in the line for picture clerk[" << myLine << "]" << endl;
                 PictureClerkLineCV[myLine]->Wait(&ClerkLineLock);
                 PictureClerkLineCount[myLine]--;
-            }
+           // }
         }
     }
     
