@@ -2,6 +2,7 @@ vector<int> pictureClerkCustomerId;
 vector<int> pictureAcceptance;
 vector<bool> pictureClerkCustomerWaiting;
 vector<int> customerStatus;
+vector<clerkState> pictureClerkState;
 
 void PictureClerk(int myLine){
 	while(true){
@@ -12,13 +13,13 @@ void PictureClerk(int myLine){
 
 		if (pictureClerkBribeLineCount[myLine] > 0){
 			pictureClerkBribeLineCV[myLine].Signal(&clerkLineLock);
-			clerkState[myLine] = BUSY;
+			pictureClerkState[myLine] = BUSY;
 			inBribeLine = true;
 		} else if(pictureClerkLineCount[myLine] > 0){
 			pictureClerkLineCV[myLine].Signal(&clerkLineLock);
-			clerkState[myLine] = BUSY;
+			pictureClerkState[myLine] = BUSY;
 		} else{
-			clerkState[myLine] = AVAILABLE;
+			pictureClerkState[myLine] = AVAILABLE;
 		}
 
 		pictureClerkLineLock[myLine].Acquire();
@@ -28,7 +29,8 @@ void PictureClerk(int myLine){
 
 			pictureClerkBribeLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
 
-			cout << "Customer[" << "] picture taken, wait to be accepted" << endl;
+			cout << "Customer[" << "] picture taken by PictureClerk[" << myLine << "]" << endl;
+			cout << "The picture is to be accepted" << endl;
 
 			pictureClerkBribeLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 			pictureClerkBribeLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
@@ -42,7 +44,7 @@ void PictureClerk(int myLine){
 				}
 
 				customerStatus[id] += 2;
-				cout << "Customer[" << id << "] picture filed" << endl;
+				cout << "Customer[" << id << "] picture filed by PictureClerk[" << myLine << "]" << endl;
 				if (pictureClerkCustomerWaiting[myLine] == true){
 					pictureClerkBribeLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 				}
@@ -54,7 +56,8 @@ void PictureClerk(int myLine){
 
 			pictureClerkLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
 
-			cout << "Customer[" << "] picture taken, wait to be accepted" << endl;
+			cout << "Customer[" << "] picture taken by PictureClerk[" << myLine << "]" << endl;
+			cout << "The picture is to be accepted" << endl;
 
 			pictureClerkLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 			pictureClerkLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
@@ -68,7 +71,7 @@ void PictureClerk(int myLine){
 				}
 
 				customerStatus[id] += 2;
-				cout << "Customer[" << id << "] picture filed" << endl;
+				cout << "Customer[" << id << "] picture filed by PictureClerk[" << myLine << "]" << endl;
 				if (pictureClerkCustomerWaiting[myLine] == true){
 					pictureClerkLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 				}
