@@ -9,7 +9,7 @@ void Cashier(int myLine){
     while (true){
         
         clerkLineLock.Acquire();
-        bool inBribeLine = false;       //????
+        bool inBribeLine = false;
         int id = CashierCustomerId[myLine];
         
         if (CashierBribeLineCount[myLine] > 0){
@@ -39,6 +39,7 @@ void Cashier(int myLine){
                 cout << "Collected Money from Customer[" << Id << "]." << "Current Money is : " << money << "..." << endl;
                 
                 // Give out the passport to the customer
+                // TODO: Check if the passport has given out already (Check with id)
                 // Notify the customer he is done
             
             }
@@ -70,6 +71,7 @@ void Cashier(int myLine){
                 cout << "Collected Money from Customer[" << Id << "]." << "Current Money is : " << money << "..." << endl;
                 
                 // Give out the passport to the customer
+                // TODO: Check if the passport has given out already (Check with id)
                 // Notify the customer he is done
                 
             }
