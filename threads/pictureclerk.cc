@@ -1,7 +1,7 @@
 vector<int> pictureClerkCustomerId;
 vector<int> pictureAcceptance;
 vector<bool> pictureClerkCustomerWaiting;
-vector<int> customerStatus;
+vector<int> customerApplicationStatus;
 vector<clerkState> pictureClerkState;
 
 void PictureClerk(int myLine){
@@ -45,7 +45,7 @@ void PictureClerk(int myLine){
 					currentThread->Yield();
 				}
 
-				customerStatus[id] += 2;
+				customerApplicationStatus[id] += 2;
 				if (pictureClerkCustomerWaiting[myLine] == true){
 					pictureClerkBribeLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 				}
@@ -71,7 +71,7 @@ void PictureClerk(int myLine){
 					currentThread->Yield();
 				}
 
-				customerStatus[id] += 2;
+				customerApplicationStatus[id] += 2;
 				if (pictureClerkCustomerWaiting[myLine] == true){
 					pictureClerkLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 				}
