@@ -12,10 +12,12 @@ void PassportClerk(int myLine){
 
 		if (passportClerkBribeLineCount[myLine] > 0){
 			passportClerkBribeLineCV[myLine].Signal(&clerkLineLock);
+			cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
 			passportClerkState[myLine] = BUSY;
 			inBribeLine = true;
 		} else if(passportClerkLineCount[myLine] > 0){
 			passportClerkLineCV[myLine].Signal(&clerkLineLock);
+			cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
 			passportClerkState[myLine] = BUSY;
 		} else{
 			passportClerkState[myLine] = AVAILABLE;
@@ -27,34 +29,34 @@ void PassportClerk(int myLine){
 		if (inBribeLine){
 
 			passportClerkBribeLineCV[myLine].Wait(&passportClerkLineLock[myLine]);
+			cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
 
 			if (customerStatus[id] == 3){
 
-				cout << "Customer[" << id << "] passport materials accepted." << endl;
-				cout << "Not certified by PassportClerk[" << myLine << "]." << endl;
-
+				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] has both their application and picture completed" << endl;
+				
 				int numCalls = rand() % 900 + 100;
 				for (int i = 0; i < numCalls; i++){
 					currentThread->Yield();
 				}
 
 				customerStatus[id] += 3;
-				cout << "Customer[" << id << "] passport certified by PassportClerk[" << myLine << "]." << endl;
+				cout << "PassportClerk [" << myLine << "] has recorded Customer[" << id << "] passport documentation" << endl;
 				if (passportClerkCustomerWaiting[myLine] == true){
 					passportClerkBribeLineCV[myLine].Signal(&passportClerkLineLock[myLine]);
 				}
 			} else{
-				cout << "Customer[" << id << "] passport materials not completed, customer goes to the back of a passport line" << endl;
+				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] does not have both their application and picture completed" << endl;
 			}
 
 		} else{
 
 			passportClerkLineCV[myLine].Wait(&passportClerkLineLock[myLine]);
+			cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
 
 			if (customerStatus[id] == 3){
 
-				cout << "Customer[" << id << "] passport materials accepted." << endl;
-				cout << "Not certified by PassportClerk[" << myLine << "]." << endl;
+				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] has both their application and picture completed" << endl;
 
 				int numCalls = rand() % 80 + 20;
 				for (int i = 0; i < numCalls; i++){
@@ -62,12 +64,12 @@ void PassportClerk(int myLine){
 				}
 
 				customerStatus[id] += 3;
-				cout << "Customer[" << id << "] passport certified by PassportClerk[" << myLine << "]." << endl;
+				cout << "PassportClerk [" << myLine << "] has recorded Customer[" << id << "] passport documentation" << endl;
 				if (passportClerkCustomerWaiting[myLine] == true){
 					passportClerkLineCV[myLine].Signal(&passportClerkLineLock[myLine]);
 				}
 			} else{
-				cout << "Customer[" << id << "] passport materials not completed, customer goes to the back of a passport line" << endl;
+				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] does not have both their application and picture completed" << endl;
 			}
 
 		}

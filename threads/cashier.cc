@@ -14,10 +14,12 @@ void Cashier(int myLine){
         
         if (CashierBribeLineCount[myLine] > 0){
             CashierBribeLineCV[myLine].Signal(&clerkLineLock);
+            cout << "Cashier [" << id << "] has signalled a Customer to come to their counter." << endl;
             CashierState[myLine] = BUSY;
             inBribeLine = true;
         }   else if (CashierLineCount[myLine] > 0){
             CashierLineCV[myLine].Signal(&clerkLineLock);
+            cout << "Cashier [" << id << "] has signalled a Customer to come to their counter." << endl;
             CashierState[myLine] = BUSY;
         }
             else {
@@ -31,6 +33,7 @@ void Cashier(int myLine){
             //In BribeLine
             
             CashierBribeLineCV[myLine].Wait(&CashierLineLock[myLine]);
+            cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
             //Check Document Time
             int numCalls = rand() % 50 + 100;
@@ -41,18 +44,19 @@ void Cashier(int myLine){
             
             
             if (customerStatus[id] == 6) {  // Passed All the tests (Certified)
-                cout << "Customer[" << Id << "] (Bribe) Passport Certified and Delivered. Now Accepting Money From The Customer" << endl;
+                cout << "Cashier [" << myLine << "] has verified that Customer [" << id << "] has been certified by a PassportClerk" << endl;
                 // Money -100
                 money += 100;               //collect fee from the customer
-                cout << "Collected Money from Customer[" << Id << "]." << "Current Money is : " << money << "..." << endl;
-                
+                cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] after certification" << endl;
                 // Give out the passport to the customer
                 // TODO: Check if the passport has given out already (Check with id)
                 // Notify the customer he is done
-            
+                cout << "Cashier [" << id << "] has provided Customer[identifier] their completed passport" << endl;
+                cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
             }
             else {
-                cout << "Customer[" << id << "] passport materials haven't completed yet, customer go back to the line" << endl;
+                money += 100;
+                cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
                 
                 
                 // To Get Verified?
@@ -65,6 +69,7 @@ void Cashier(int myLine){
             // NOT inBribeLine
          
             CashierLineCV[myLine].Wait(&CashierLineLock[myLine]);
+            cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
             //Check Document Time
             int numCalls = rand() % 50 + 100;
@@ -74,19 +79,21 @@ void Cashier(int myLine){
             }
             
             if (customerStatus[id] == 6) {  // Passed All the tests (Certified)
-                cout << "Customer[" << Id << "] (Normal) Passport Certified and Delivered. Now Accepting Money From The Customer" << endl;
+                cout << "Cashier [" << myLine << "] has verified that Customer [" << id << "] has been certified by a PassportClerk" << endl;
                 // Money -100
                 money += 100;               //collect fee from the customer
-                cout << "Collected Money from Customer[" << Id << "]." << "Current Money is : " << money << "..." << endl;
+                cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] after certification" << endl;
                 
                 // Give out the passport to the customer
                 // TODO: Check if the passport has given out already (Check with id)
                 // Notify the customer he is done
+                cout << "Cashier [" << id << "] has provided Customer[identifier] their completed passport" << endl;
+                cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
                 
             }
             else {
-                cout << "Customer[" << id << "] passport materials haven't completed yet, customer go back to the line" << endl;
-                
+                money += 100;
+                cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
                 
                 
                 // To Get Verified?

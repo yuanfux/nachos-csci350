@@ -13,10 +13,12 @@ void PictureClerk(int myLine){
 
 		if (pictureClerkBribeLineCount[myLine] > 0){
 			pictureClerkBribeLineCV[myLine].Signal(&clerkLineLock);
+			cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
 			pictureClerkState[myLine] = BUSY;
 			inBribeLine = true;
 		} else if(pictureClerkLineCount[myLine] > 0){
 			pictureClerkLineCV[myLine].Signal(&clerkLineLock);
+			cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
 			pictureClerkState[myLine] = BUSY;
 		} else{
 			pictureClerkState[myLine] = AVAILABLE;
@@ -29,14 +31,14 @@ void PictureClerk(int myLine){
 
 			pictureClerkBribeLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
 
-			cout << "Customer[" << "] picture taken by PictureClerk[" << myLine << "]" << endl;
-			cout << "The picture is to be accepted" << endl;
+			cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
+			cout << "PictureClerk [" << myLine << "] has taken a picture of Customer [" << id << "]" << endl;
 
 			pictureClerkBribeLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 			pictureClerkBribeLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
 
 			if (pictureAcceptance[myLine] > 2){
-				cout << "Customer[" << id << "] picture accepted, but not filed" << endl;
+				cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does like their picture" << endl;
 
 				int numCalls = rand() % 80 + 20;
 				for (int i = 0; i < numCalls; i++){
@@ -44,26 +46,25 @@ void PictureClerk(int myLine){
 				}
 
 				customerStatus[id] += 2;
-				cout << "Customer[" << id << "] picture filed by PictureClerk[" << myLine << "]" << endl;
 				if (pictureClerkCustomerWaiting[myLine] == true){
 					pictureClerkBribeLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 				}
 			} else{
-				cout << "Customer[" << id << "] picture not accepted, customer goes to the end of line." << endl;
+				cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
 			}
 
 		} else{
 
 			pictureClerkLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
 
-			cout << "Customer[" << "] picture taken by PictureClerk[" << myLine << "]" << endl;
-			cout << "The picture is to be accepted" << endl;
+			cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
+			cout << "PictureClerk [" << myLine << "] has taken a picture of Customer [" << id << "]" << endl;
 
 			pictureClerkLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 			pictureClerkLineCV[myLine].Wait(&pictureClerkLineLock[myLine]);
 
 			if (pictureAcceptance[myLine] > 2){
-				cout << "Customer[" << id << "] picture accepted, but not filed" << endl;
+				cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does like their picture" << endl;
 
 				int numCalls = rand() % 80 + 20;
 				for (int i = 0; i < numCalls; i++){
@@ -71,12 +72,11 @@ void PictureClerk(int myLine){
 				}
 
 				customerStatus[id] += 2;
-				cout << "Customer[" << id << "] picture filed by PictureClerk[" << myLine << "]" << endl;
 				if (pictureClerkCustomerWaiting[myLine] == true){
 					pictureClerkLineCV[myLine].Signal(&pictureClerkLineLock[myLine]);
 				}
 			} else{
-				cout << "Customer[" << id << "] picture not accepted, customer goes to the end of line." << endl;
+				cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
 			}
 
 		}
