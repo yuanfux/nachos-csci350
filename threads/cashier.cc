@@ -32,6 +32,14 @@ void Cashier(int myLine){
             
             CashierBribeLineCV[myLine].Wait(&CashierLineLock[myLine]);
             
+            //Check Document Time
+            int numCalls = rand() % 50 + 100;
+            for (int i = 0; i < numCalls; i++)
+            {
+                currentThread->Yield();
+            }
+            
+            
             if (customerStatus[id] == 6) {  // Passed All the tests (Certified)
                 cout << "Customer[" << Id << "] (Bribe) Passport Certified and Delivered. Now Accepting Money From The Customer" << endl;
                 // Money -100
@@ -46,15 +54,9 @@ void Cashier(int myLine){
             else {
                 cout << "Customer[" << id << "] passport materials haven't completed yet, customer go back to the line" << endl;
                 
-                //Force to wait
-                int numCalls = rand() % 900 + 100;
-                for (int i = 0; i < numCalls; i++)
-                {
-                    currentThread->Yield();
-                }
                 
                 // To Get Verified?
-                
+                // Punish the Customer
                 
             }
         }
@@ -63,6 +65,13 @@ void Cashier(int myLine){
             // NOT inBribeLine
          
             CashierLineCV[myLine].Wait(&CashierLineLock[myLine]);
+            
+            //Check Document Time
+            int numCalls = rand() % 50 + 100;
+            for (int i = 0; i < numCalls; i++)
+            {
+                currentThread->Yield();
+            }
             
             if (customerStatus[id] == 6) {  // Passed All the tests (Certified)
                 cout << "Customer[" << Id << "] (Normal) Passport Certified and Delivered. Now Accepting Money From The Customer" << endl;
@@ -78,14 +87,10 @@ void Cashier(int myLine){
             else {
                 cout << "Customer[" << id << "] passport materials haven't completed yet, customer go back to the line" << endl;
                 
-                //Force to wait
-                int numCalls = rand() % 900 + 100;
-                for (int i = 0; i < numCalls; i++)
-                {
-                    currentThread->Yield();
-                }
+                
                 
                 // To Get Verified?
+                // Punish the Customer
                 
                 
             }
