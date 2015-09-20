@@ -550,6 +550,10 @@ void Customer(){
             cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]"<<endl;
             
             pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+
+            pictureAcceptance[myLine] = rand() % 10; // customer decide whether receive the picture
+            pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
 
             //wait clerk to do their job
             pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
@@ -618,6 +622,11 @@ void Customer(){
             cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]"<<endl;
             pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
             //wait clerk to do their job
+            pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+            
+            pictureAcceptance[myLine] = rand() % 10; // customer decide whether receive the picture
+
+            pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
             pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
             pictureClerkLineLock[myLine]->Release();
         }
@@ -742,9 +751,9 @@ void PictureClerk(int myLine){
         }
 
         customerApplicationStatus[id] += 2;
-        if (pictureClerkCustomerWaiting[myLine] == true){
+        // if (pictureClerkCustomerWaiting[myLine] == true){
           pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
-        }
+        // }
       } else{
         cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
       }
@@ -768,9 +777,9 @@ void PictureClerk(int myLine){
         }
 
         customerApplicationStatus[id] += 2;
-        if (pictureClerkCustomerWaiting[myLine] == true){
+        // if (pictureClerkCustomerWaiting[myLine] == true){
           pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
-        }
+        // }
       } else{
         cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
       }
