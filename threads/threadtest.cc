@@ -444,6 +444,19 @@ vector<int> pictureAcceptance;
 //vector<bool> pictureClerkCustomerWaiting;
 vector<int> customerApplicationStatus;
 
+vector<int> passportClerkCustomerId;
+vector<bool> passportClerkCustomerWaiting;
+vector<clerkState> passportClerkState;
+vector<int> passportClerkPunishment;
+vector<Lock*> passportClerkLineLock;
+vector<Condition*> passportClerkLineCV;
+vector<Condition*> passportClerkLineWaitCV;//need new cv to prevent the different lock case
+vector<Condition*> passportClerkBribeLineCV;
+vector<Condition*> passportClerkBribeLineWaitCV;//need new cv to prevent the different lock case
+vector<int> passportClerkLineCount;
+vector<int> passportClerkBribeLineCount;
+
+
 Lock* senatorWaitLock;
 Condition* senatorWaitCV;
 
@@ -794,6 +807,84 @@ void Customer(){
             ApplicationClerkLineLock[myLine]->Release();
             
         }
+        
+    }
+        
+    else if(customerApplicationStatus[id]==3){//passport clerk case
+        ClerkLineLock.Acquire();
+        
+        if(money>500){//has bribe money
+            int myLine;
+            int shortestPassportBribeLine = -1;
+            int shortestPassportBribeLineSize = INT_MAX;
+            
+            for(unsigned int i = 0; i < passportClerkLineLock.size(); i++){//avaliable application clerk check
+                
+                if(passportClerkBribeLineCount[i] < shortestPassportBribeLineSize){
+                    
+                    shortestPassportBribeLine = i;
+                    shortestPassportBribeLineSize = passportClerkBribeLineCount[i];
+                    
+                }
+            }
+            myLine = shortestPassportBribeLine;
+            
+            // if(ApplicationClerkState[myLine] == BUSY){
+            //wait in the application clerk line
+            passportClerkBribeLineCount[myLine]++;
+            cout << "Customer[" << id << "] has gotten in bribe line for PassportClerk[" << myLine << "]" << endl;
+            
+            passportClerkBribeLineWaitCV[myLine]->Wait(&ClerkLineLock);
+            passportClerkBribeLineCount[myLine]--;
+            // }
+            ClerkLineLock.Release();
+            passportClerkLineLock[myLine]->Acquire();
+            passportClerkCustomerId[myLine]=id;
+            cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PassportClerk["<<myLine<<"]"<<endl;
+            
+            passportClerkBribeLineCV[myLine]->Signal(passportClerkLineLock[myLine]);
+            
+            //wait clerk to do their job
+            passportClerkBribeLineCV[myLine]->Wait(passportClerkLineLock[myLine]);
+            
+            
+            passportClerkLineLock[myLine]->Release();
+            
+        }
+        else{//does not have bribe money
+            int myLine;
+            int shortestPassportLine = -1;
+            int shortestPassportLineSize = INT_MAX;
+            
+            for(unsigned int i = 0; i < passportClerkLineLock.size(); i++){
+                if(passportClerkLineCount[i] < shortestPassportLineSize){
+                    
+                    shortestPassportLine = i;
+                    shortestPassportLineSize = passportClerkLineCount[i];
+                    
+                }
+            }
+            
+            myLine = shortestPassportLine;
+            
+            // if(ApplicationClerkState[myLine] == BUSY){
+            passportClerkLineCount[myLine]++;
+            cout << "Customer[" << id << "] has gotten in regular line for PassportClerk[" << myLine << "]" << endl;
+            passportClerkLineWaitCV[myLine]->Wait(&ClerkLineLock);
+            passportClerkLineCount[myLine]--;
+            //}
+            ClerkLineLock.Release();
+            passportClerkLineLock[myLine]->Acquire();
+            passportClerkCustomerId[myLine]=id;
+            cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PassportClerk["<<myLine<<"]"<<endl;
+            passportClerkLineCV[myLine]->Signal(passportClerkLineLock[myLine]);
+            //wait clerk to do their job
+            passportClerkLineCV[myLine]->Wait(passportClerkLineLock[myLine]);
+            passportClerkLineLock[myLine]->Release();
+            
+        }
+
+        
         
     }
     }//while loop
