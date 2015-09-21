@@ -13,7 +13,7 @@ void Cashier(int myLine){
         int id = 0;
         //int id = CashierCustomerId[myLine];
         
-        
+       
         if (CashierState[myLine] != ONBREAK){
             //When CashierState != ONBREAK
             if (CashierBribeLineCount[myLine] > 0){
