@@ -478,7 +478,7 @@ void Customer(){
    // cout<<"c21"<<endl;
 //find the shortest line of application clerk line
     while(customerApplicationStatus[id]!=10){
-        if(customerApplicationStatus[id]==0){
+    /*    if(customerApplicationStatus[id]==0){
     if(hasSenator){
         cout<<"Customer["<<id<<"] is leaving the Passport Office."<<endl;
     }
@@ -634,10 +634,12 @@ void Customer(){
             pictureClerkLineLock[myLine]->Release();
         }
     }
-        }//if customer application status =0
+        }//if customer application status =0*/
     //second round
-   else if(customerApplicationStatus[id]==1){//has finished applicaiton clerk
-        cout<<"start second round"<<endl;
+    int choseClerk=rand()%2;
+       // cout<<"random choice: "<<choseClerk<<endl;
+    if((customerApplicationStatus[id]==1)|| (customerApplicationStatus[id]==0 && choseClerk==0)){//has finished applicaiton clerk
+        //cout<<"start second round"<<endl;
         ClerkLineLock.Acquire();
         if(money>500){//can bribe
             int myLine;
@@ -695,10 +697,10 @@ void Customer(){
             myLine = shortestPictureLine;
             // if(PictureClerkState[myLine] == BUSY){
             pictureClerkLineCount[myLine]++;
+//            cout << "Customer[" << id << "] pictureClerkLineCount[" << myLine << "] " << pictureClerkLineCount[myLine] << endl;
             cout << "Customer[" << id << "] has gotten in regular line for PictureClerk[" << myLine << "]" << endl;
             pictureClerkLineWaitCV[myLine]->Wait(&ClerkLineLock);
-            pictureClerkLineCount[myLine]--;
-            // }
+            pictureClerkLineCount[myLine]--;           // }
             ClerkLineLock.Release();
             pictureClerkLineLock[myLine]->Acquire();
             pictureClerkData[myLine]=id;
@@ -721,7 +723,8 @@ void Customer(){
         
     }
     
-    else if(customerApplicationStatus[id]==2){//has finished picture clerk
+    else if((customerApplicationStatus[id]==2) || (customerApplicationStatus[id]==0 && choseClerk==1)){//has finished picture clerk
+        ClerkLineLock.Acquire();
         if(money>500){//has bribe money
             int myLine;
             int shortestApplicationBribeLine = -1;
@@ -799,7 +802,7 @@ void Customer(){
 }
 
 void ApplicationClerk(int myLine){
-  cout << "ApplicationClerk debug" << endl;
+ // cout << "ApplicationClerk debug" << endl;
     int incoming=0;
     while(true){
         //cout<<"m3"<<endl;
@@ -867,7 +870,7 @@ void ApplicationClerk(int myLine){
 }
 
 void PictureClerk(int myLine){
-  cout << "pictureClerk debug" << endl;
+ // cout << "pictureClerk debug" << endl;
   while(true){
     //cout << "before lock" << endl;
     
@@ -875,14 +878,13 @@ void PictureClerk(int myLine){
      //cout << "after lock" << endl;
     bool inBribeLine = false;
     int id = 0; 
-    //cout << "get id" << endl;
+//    cout << "Clerk pictureClerkLineCount[" << myLine << "] " << pictureClerkLineCount[myLine] << endl;
     if (pictureClerkBribeLineCount[myLine] > 0){
       pictureClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
       cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
       pictureClerkState[myLine] = BUSY;
       inBribeLine = true;
-    } else if(pictureClerkLineCount[myLine] > 0){
-      pictureClerkLineWaitCV[myLine]->Signal(&ClerkLineLock);
+    } else if(pictureClerkLineCount[myLine] > 0){      pictureClerkLineWaitCV[myLine]->Signal(&ClerkLineLock);
       cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
       pictureClerkState[myLine] = BUSY;
     } else{
@@ -917,7 +919,9 @@ void PictureClerk(int myLine){
           pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
         // }
       } else{
+          
         cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
+          pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
       }
 
     } else{
@@ -945,6 +949,7 @@ void PictureClerk(int myLine){
         // }
       } else{
         cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
+          pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
       }
 
     }
