@@ -441,7 +441,7 @@ vector<clerkState> pictureClerkState;
 vector<int> pictureClerkData;
 
 vector<int> pictureAcceptance;
-vector<bool> pictureClerkCustomerWaiting;
+//vector<bool> pictureClerkCustomerWaiting;
 vector<int> customerApplicationStatus;
 
 Lock* senatorWaitLock;
@@ -541,7 +541,7 @@ void Customer(){
                 //wait in the picture clerk line
                 pictureClerkBribeLineCount[myLine]++;
                 cout << "Customer[" << id << "] has gotten in bribe line for PictureClerk[" << myLine << "]" << endl;
-                pictureClerkBribeLineCV[myLine]->Wait(&ClerkLineLock);
+                pictureClerkBribeLineWaitCV[myLine]->Wait(&ClerkLineLock);
                 pictureClerkBribeLineCount[myLine]--;
            // }
             ClerkLineLock.Release();
@@ -549,6 +549,10 @@ void Customer(){
             pictureClerkData[myLine]=id;
             cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]"<<endl;
             
+            pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+
+            pictureAcceptance[myLine] = rand() % 10; // customer decide whether receive the picture
             pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
 
             //wait clerk to do their job
@@ -559,6 +563,7 @@ void Customer(){
     }
     
     else{//no bribe money
+        
         int myLine;
         int lineSize;
         
@@ -609,7 +614,7 @@ void Customer(){
            // if(PictureClerkState[myLine] == BUSY){
                 pictureClerkLineCount[myLine]++;
                 cout << "Customer[" << id << "] has gotten in regular line for PictureClerk[" << myLine << "]" << endl;
-                pictureClerkLineCV[myLine]->Wait(&ClerkLineLock);
+                pictureClerkLineWaitCV[myLine]->Wait(&ClerkLineLock);
                 pictureClerkLineCount[myLine]--;
            // }
             ClerkLineLock.Release();
@@ -619,10 +624,172 @@ void Customer(){
             pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
             //wait clerk to do their job
             pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+            
+            pictureAcceptance[myLine] = rand() % 10; // customer decide whether receive the picture
+
+            pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
             pictureClerkLineLock[myLine]->Release();
         }
     }
+    //second round
+    ClerkLineLock.Acquire();
+    if(customerApplicationStatus[id]==1){//has finished applicaiton clerk
+        cout<<"start second round"<<endl;
+        if(money>500){//can bribe
+            int myLine;
+            int shortestPictureBribeLine = -1;
+            int shortestPictureBribeLineSize = INT_MAX;
+            
+            for(unsigned int i = 0;i < pictureClerkLineLock.size(); i++){
+                if(pictureClerkBribeLineCount[i] < shortestPictureBribeLineSize){
+                    
+                    shortestPictureBribeLine = i;
+                    shortestPictureBribeLineSize = pictureClerkBribeLineCount[i];
+                    
+                }
+            }
+            myLine = shortestPictureBribeLine;
+            
+            // if(PictureClerkState[myLine] == BUSY){
+            //wait in the picture clerk line
+            pictureClerkBribeLineCount[myLine]++;
+           cout << "Customer[" << id << "] has gotten in bribe line for PictureClerk[" << myLine << "]" << endl;
+            pictureClerkBribeLineWaitCV[myLine]->Wait(&ClerkLineLock);
+            pictureClerkBribeLineCount[myLine]--;
+            // }
+            ClerkLineLock.Release();
+            pictureClerkLineLock[myLine]->Acquire();
+            pictureClerkData[myLine]=id;
+            cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]"<<endl;
+            
+            pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+            
+            pictureAcceptance[myLine] = rand() % 10; // customer decide whether receive the picture
+            pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            
+            //wait clerk to do their job
+            pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+            
+            pictureClerkLineLock[myLine]->Release();
+        
+        }
+        else{
+            int myLine;
+            int shortestPictureLine = -1;
+            int shortestPictureLineSize = INT_MAX;
+            
+            for(unsigned int i = 0; i < pictureClerkLineLock.size(); i++){
+                if(pictureClerkLineCount[i] < shortestPictureLineSize){
+                    
+                    shortestPictureLine = i;
+                    shortestPictureLineSize = pictureClerkLineCount[i];
+                    
+                }
+                
+            }
+            myLine = shortestPictureLine;
+            // if(PictureClerkState[myLine] == BUSY){
+            pictureClerkLineCount[myLine]++;
+            cout << "Customer[" << id << "] has gotten in regular line for PictureClerk[" << myLine << "]" << endl;
+            pictureClerkLineWaitCV[myLine]->Wait(&ClerkLineLock);
+            pictureClerkLineCount[myLine]--;
+            // }
+            ClerkLineLock.Release();
+            pictureClerkLineLock[myLine]->Acquire();
+            pictureClerkData[myLine]=id;
+            cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]"<<endl;
+            pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            //wait clerk to do their job
+            pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+            pictureAcceptance[myLine] = rand() % 10; // customer decide whether receive the picture
+            pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
+            //wait clerk to do their job
+            pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+            
+            pictureClerkLineLock[myLine]->Release();
+            
+            
+        }
+        
+        
+        
+        
+    }
     
+    else if(customerApplicationStatus[id]==2){//has finished picture clerk
+        if(money>500){//has bribe money
+            int myLine;
+            int shortestApplicationBribeLine = -1;
+            int shortestApplicationBribeLineSize = INT_MAX;
+            
+            for(unsigned int i = 0; i < ApplicationClerkLineLock.size(); i++){//avaliable application clerk check
+                
+                if(ApplicationClerkBribeLineCount[i] < shortestApplicationBribeLineSize){
+                    
+                    shortestApplicationBribeLine = i;
+                    shortestApplicationBribeLineSize = ApplicationClerkBribeLineCount[i];
+                    
+                }
+            }
+            myLine = shortestApplicationBribeLine;
+            
+            // if(ApplicationClerkState[myLine] == BUSY){
+            //wait in the application clerk line
+            ApplicationClerkBribeLineCount[myLine]++;
+            cout << "Customer[" << id << "] has gotten in bribe line for ApplicationClerk[" << myLine << "]" << endl;
+            
+            ApplicationClerkBribeLineWaitCV[myLine]->Wait(&ClerkLineLock);
+            ApplicationClerkBribeLineCount[myLine]--;
+            // }
+            ClerkLineLock.Release();
+            ApplicationClerkLineLock[myLine]->Acquire();
+            ApplicationClerkData[myLine]=id;
+            cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to ApplicationClerk["<<myLine<<"]"<<endl;
+            
+            ApplicationClerkBribeLineCV[myLine]->Signal(ApplicationClerkLineLock[myLine]);
+            
+            //wait clerk to do their job
+            ApplicationClerkBribeLineCV[myLine]->Wait(ApplicationClerkLineLock[myLine]);
+            
+            ApplicationClerkLineLock[myLine]->Release();
+            
+        }
+        else{//does not have bribe money
+            int myLine;
+            int shortestApplicationLine = -1;
+            int shortestApplicationLineSize = INT_MAX;
+            
+            for(unsigned int i = 0; i < ApplicationClerkLineLock.size(); i++){
+                if(ApplicationClerkLineCount[i] < shortestApplicationLineSize){
+                    
+                    shortestApplicationLine = i;
+                    shortestApplicationLineSize = ApplicationClerkLineCount[i];
+                    
+                }
+            }
+            
+            myLine = shortestApplicationLine;
+            
+            // if(ApplicationClerkState[myLine] == BUSY){
+            ApplicationClerkLineCount[myLine]++;
+            cout << "Customer[" << id << "] has gotten in regular line for ApplicationClerk[" << myLine << "]" << endl;
+            ApplicationClerkLineWaitCV[myLine]->Wait(&ClerkLineLock);
+            ApplicationClerkLineCount[myLine]--;
+            //}
+            ClerkLineLock.Release();
+            ApplicationClerkLineLock[myLine]->Acquire();
+            ApplicationClerkData[myLine]=id;
+            cout<<"Customer["<<id<<"] has given SSN ["<<id<<"] to ApplicationClerk["<<myLine<<"]"<<endl;
+            ApplicationClerkLineCV[myLine]->Signal(ApplicationClerkLineLock[myLine]);
+            //wait clerk to do their job
+            ApplicationClerkLineCV[myLine]->Wait(ApplicationClerkLineLock[myLine]);
+            ApplicationClerkLineLock[myLine]->Release();
+            
+        }
+        
+    }
     
     
 }
@@ -671,6 +838,7 @@ void ApplicationClerk(int myLine){
             cout<<"ApplicationClerk["<<myLine<<"] has received SSN ["<<ApplicationClerkData[myLine]<<"] from Customer ["<<ApplicationClerkData[myLine]<<"]"<<endl;
             cout<<"ApplicationClerk["<<myLine<<"] has recorded a completed application for Customer ["<<ApplicationClerkData[myLine]<<"]"<<endl;
             cout<<"ApplicationClerk["<<myLine<<"] has received $500 from Customer["<<ApplicationClerkData[myLine]<<"]"<<endl;
+            customerApplicationStatus[ApplicationClerkData[myLine]]++;
             for(int i = 0; i < 20; i++){
                 currentThread->Yield();
             }
@@ -682,6 +850,7 @@ void ApplicationClerk(int myLine){
             //do my job customer now waiting
             cout<<"ApplicationClerk["<<myLine<<"] has received SSN ["<<ApplicationClerkData[myLine]<<"] from Customer ["<<ApplicationClerkData[myLine]<<"]"<<endl;
             cout<<"ApplicationClerk["<<myLine<<"] has recorded a completed application for Customer ["<<ApplicationClerkData[myLine]<<"]"<<endl;
+            customerApplicationStatus[ApplicationClerkData[myLine]]++;
             for(int i = 0; i < 20; i++){
                 currentThread->Yield();
             }
@@ -696,20 +865,20 @@ void ApplicationClerk(int myLine){
 void PictureClerk(int myLine){
   cout << "pictureClerk debug" << endl;
   while(true){
-    // cout << "before lock" << endl;
+    //cout << "before lock" << endl;
     
     ClerkLineLock.Acquire();
-    // cout << "after lock" << endl;
+     //cout << "after lock" << endl;
     bool inBribeLine = false;
-    int id = pictureClerkData[myLine];
-    // cout << "get id" << endl;
+    int id = 0; 
+    //cout << "get id" << endl;
     if (pictureClerkBribeLineCount[myLine] > 0){
-      pictureClerkBribeLineCV[myLine]->Signal(&ClerkLineLock);
+      pictureClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
       cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
       pictureClerkState[myLine] = BUSY;
       inBribeLine = true;
     } else if(pictureClerkLineCount[myLine] > 0){
-      pictureClerkLineCV[myLine]->Signal(&ClerkLineLock);
+      pictureClerkLineWaitCV[myLine]->Signal(&ClerkLineLock);
       cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
       pictureClerkState[myLine] = BUSY;
     } else{
@@ -719,14 +888,12 @@ void PictureClerk(int myLine){
       continue;
     }
 
-    cout << "after costomer went to counter" << endl;
     pictureClerkLineLock[myLine]->Acquire();
     ClerkLineLock.Release();
-
     if (inBribeLine){
 
       pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
-
+      id = pictureClerkData[myLine];
       cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
       cout << "PictureClerk [" << myLine << "] has taken a picture of Customer [" << id << "]" << endl;
 
@@ -742,9 +909,9 @@ void PictureClerk(int myLine){
         }
 
         customerApplicationStatus[id] += 2;
-        if (pictureClerkCustomerWaiting[myLine] == true){
+        // if (pictureClerkCustomerWaiting[myLine] == true){
           pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
-        }
+        // }
       } else{
         cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
       }
@@ -752,6 +919,7 @@ void PictureClerk(int myLine){
     } else{
 
       pictureClerkLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+      id = pictureClerkData[myLine];
 
       cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
       cout << "PictureClerk [" << myLine << "] has taken a picture of Customer [" << id << "]" << endl;
@@ -768,9 +936,9 @@ void PictureClerk(int myLine){
         }
 
         customerApplicationStatus[id] += 2;
-        if (pictureClerkCustomerWaiting[myLine] == true){
+        // if (pictureClerkCustomerWaiting[myLine] == true){
           pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
-        }
+        // }
       } else{
         cout << "PictureClerk [" << myLine << "] has been told that Customer[" << id << "] does not like their picture" << endl;
       }
@@ -833,7 +1001,7 @@ void PassportOffice(){
     
     
     for(int i=0;i<numApplicationClerk;i++){
-      char lockName[100]="Lock";
+      char lockName[100]="ApplicationLock";
       strcat(lockName,integer);
       
       sprintf(integer,"%d",i );
@@ -874,7 +1042,7 @@ void PassportOffice(){
     }
    
     for(int i=0;i<numPictureClerk;i++){
-      char lockName[100]="Lock";
+      char lockName[100]="PictureLock";
       strcat(lockName,integer);
       
       sprintf(integer,"%d",i );
@@ -890,8 +1058,8 @@ void PassportOffice(){
       //application bribe CV initialize
       char pictureBribeCVName[100]="pictureBribeCV";
       strcat(pictureBribeCVName, integer);
-      Condition* applicationBribeCV=new Condition(pictureBribeCVName);
-      ApplicationClerkBribeLineCV.push_back(applicationBribeCV);
+      Condition* pictureBribeCV=new Condition(pictureBribeCVName);
+      pictureClerkBribeLineCV.push_back(pictureBribeCV);
       //application Wait CV initialize
       char pictureWaitCVName[100]="pictureWaitCV";
       strcat(pictureWaitCVName, integer);
@@ -911,12 +1079,12 @@ void PassportOffice(){
       pictureClerkState.push_back(ct);
       //application data initialize
       pictureClerkData.push_back(0);
+      pictureAcceptance.push_back(0);
       
     }
-    
-    
-    
-
+    for(int i =0 ;i<5 ;i++){
+      customerApplicationStatus.push_back(0);
+    }
         cout<<"Test case 1: 2 customers and 1 application clerk: "<<endl;
     
 //    for(int i=0;i<numApplicationClerk;i++){
