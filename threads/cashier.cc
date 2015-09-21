@@ -46,9 +46,9 @@ void Cashier(int myLine){
         if (inBribeLine){
             //In BribeLine
             
-            id = CashierCustomerId[myLine];
             
             CashierBribeLineCV[myLine]->Wait(&CashierLineLock[myLine]);
+            id = CashierCustomerId[myLine];
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
       
             
@@ -67,6 +67,8 @@ void Cashier(int myLine){
                 // Notify the customer he is done
                 cout << "Cashier [" << id << "] has provided Customer[identifier] their completed passport" << endl;
                 cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
+                customerApplicationStatus[id] += 4;
+                CashierBribeLineCV[myLine]->Signal(&CashierLineLock[myLine]);
             }
             else {  //Not yet certified
                
@@ -83,9 +85,9 @@ void Cashier(int myLine){
         else {
             // NOT inBribeLine
          
-            id = CashierCustomerId[myLine];
             
             CashierLineCV[myLine]->Wait(&CashierLineLock[myLine]);
+            id = CashierCustomerId[myLine];
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
             
@@ -107,6 +109,8 @@ void Cashier(int myLine){
                 cout << "Cashier [" << id << "] has provided Customer[identifier] their completed passport" << endl;
                 cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
                 
+                customerApplicationStatus[id] += 4;
+                CashierLineCV[myLine]->Signal(&CashierLineLock[myLine]);
             }
             else {  //Not yet Certified
                 //money += 100;
