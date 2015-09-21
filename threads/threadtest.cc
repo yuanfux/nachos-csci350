@@ -477,6 +477,8 @@ void Customer(){
     }
    // cout<<"c21"<<endl;
 //find the shortest line of application clerk line
+    while(customerApplicationStatus[id]!=10){
+        if(customerApplicationStatus[id]==0){
     if(hasSenator){
         cout<<"Customer["<<id<<"] is leaving the Passport Office."<<endl;
     }
@@ -632,10 +634,11 @@ void Customer(){
             pictureClerkLineLock[myLine]->Release();
         }
     }
+        }//if customer application status =0
     //second round
-    ClerkLineLock.Acquire();
-    if(customerApplicationStatus[id]==1){//has finished applicaiton clerk
+   else if(customerApplicationStatus[id]==1){//has finished applicaiton clerk
         cout<<"start second round"<<endl;
+        ClerkLineLock.Acquire();
         if(money>500){//can bribe
             int myLine;
             int shortestPictureBribeLine = -1;
@@ -790,6 +793,7 @@ void Customer(){
         }
         
     }
+    }//while loop
     
     
 }
