@@ -1,6 +1,6 @@
 vector<int> CashierCustomerId;
 vector<bool> CashierCustomerWaiting;
-vector<int> customerStatus;
+vector<int> customerApplicationStatus;
 vector<clerkState> CashierState;
 
 void Cashier(int myLine){
@@ -13,7 +13,7 @@ void Cashier(int myLine){
         bool inBribeLine = false;
         //int id = CashierCustomerId[myLine];
         
-        
+       
         if (CashierState[myLine] != ONBREAK){
             //When CashierState != ONBREAK
             if (CashierBribeLineCount[myLine] > 0){
@@ -26,11 +26,12 @@ void Cashier(int myLine){
                 cout << "Cashier [" << myLine << "] has signalled a Customer to come to their counter." << endl;
                 CashierState[myLine] = BUSY;
             }
-                else {
-                    CashierState[myLine] = ONBREAK;
-                    ClerkLineLock.Release();
-                    currentThread->Yield();
-                    continue;
+            else {
+                ClerkLineLock.Release();
+                CashierState[myLine] = ONBREAK;     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                CashierCV[myLine]->Wait(CashierLock[myLine]);
+                currentThread->Yield();
+                continue;
             }
         }
         else {  //When CashierState == ONBREAK, Do Nothing
@@ -52,7 +53,7 @@ void Cashier(int myLine){
       
             
             
-            if (customerStatus[id] == 6) {  // Passed All the tests (Certified)
+            if (customerApplicationStatus[id] == 6) {  // Passed All the tests (Certified)
                 cout << "Cashier [" << myLine << "] has verified that Customer [" << id << "] has been certified by a PassportClerk" << endl;
                 
                 //Collect Fee From Customer
@@ -88,7 +89,7 @@ void Cashier(int myLine){
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
             
-            if (customerStatus[id] == 6) {  // Passed All the tests (Certified)
+            if (customerApplicationStatus[id] == 6) {  // Passed All the tests (Certified)
                 cout << "Cashier [" << myLine << "] has verified that Customer [" << id << "] has been certified by a PassportClerk" << endl;
                 
                 
