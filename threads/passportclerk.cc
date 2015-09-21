@@ -2,43 +2,57 @@ vector<int> passportClerkCustomerId;
 vector<bool> passportClerkCustomerWaiting;
 vector<int> customerApplicationStatus;
 vector<clerkState> passportClerkState;
-vector<int> passportClerkPunishment;
 
 void PassportClerk(int myLine){
+	int id = 0;
+	passportClerkState[myLine] = ONBREAK;
+
 	while(true){
 		
-		clerkLineLock.Acquire();
+		ClerkLineLock.Acquire();
 		bool inBribeLine = false;
-		int id = passportClerkCustomerId[myLine];
 
-		if (passportClerkBribeLineCount[myLine] > 0){
-			passportClerkBribeLineCV[myLine].Signal(&clerkLineLock);
-			cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
-			passportClerkState[myLine] = BUSY;
-			inBribeLine = true;
-		} else if(passportClerkLineCount[myLine] > 0){
-			passportClerkLineCV[myLine].Signal(&clerkLineLock);
-			cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
-			passportClerkState[myLine] = BUSY;
-		} else{
-			passportClerkState[myLine] = AVAILABLE;
+		if (passportClerkState[myLine] != ONBREAK){
+			if (passportClerkBribeLineCount[myLine] > 0){
+				passportClerkBribeLineCV[myLine].Signal(&ClerkLineLock);
+				cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
+				passportClerkState[myLine] = BUSY;
+				inBribeLine = true;
+			} else if(passportClerkLineCount[myLine] > 0){
+				passportClerkLineCV[myLine].Signal(&ClerkLineLock);
+				cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
+				passportClerkState[myLine] = BUSY;
+			} else{
+				passportClerkState[myLine] = ONBREAK;
+				ClerkLineLock.Release();
+				currentThread->Yield();//context switch
+		      	continue;
+			}
+		}
+		else{
+			ClerkLineLock.Release();
+			currentThread->Yield();//context switch
+	      	continue;
 		}
 
 		passportClerkLineLock[myLine].Acquire();
-		clerkLineLock.Release();
+		ClerkLineLock.Release();
 
 		if (inBribeLine){
 
-			
+			passportClerkBribeLineCV[myLine].Wait(&passportClerkLineLock[myLine]);
+			id = passportClerkCustomerId[myLine];
+
             //Collect Bribe Money From Customer
             passportMoenyLock.Acquire();
             MoneyFromPassportClerk += 500;
+            cout<<"PassportClerk["<<myLine<<"] has received $500 from Customer["<<id<<"]"<<endl;
             passportMoenyLock.Release();
 
-			passportClerkBribeLineCV[myLine].Wait(&passportClerkLineLock[myLine]);
 			cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
-
-			if (customerApplicationStatus[id] == 3){
+			
+			int passportClerkPunishment = rand() % 100;
+			if (passportClerkPunishment > 5){
 
 				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] has both their application and picture completed" << endl;
 				
@@ -63,9 +77,8 @@ void PassportClerk(int myLine){
 			passportClerkLineCV[myLine].Wait(&passportClerkLineLock[myLine]);
 			cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
 
-			passportClerkPunishment[myLine] = rand() % 100;
-			if (passportClerkPunishment[myLine] > 5){
-
+			int passportClerkPunishment = rand() % 100;
+			if (passportClerkPunishment > 5){
 				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] has both their application and picture completed" << endl;
 
 				int numCalls = rand() % 80 + 20;
@@ -81,7 +94,7 @@ void PassportClerk(int myLine){
 
 				cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] does not have both their application and picture completed" << endl;
 				passportClerkLineCV[myLine].Signal(&passportClerkLineLock[myLine]);
-				
+                
 			}
 
 		}

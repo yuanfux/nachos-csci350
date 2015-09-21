@@ -5,13 +5,13 @@ vector<int> customerApplicationStatus;
 vector<clerkState> pictureClerkState;
 
 void PictureClerk(int myLine){
-	cout << "pictureClerk debug" << endl;
+    int id = 0;
+    
 	while(true){
     
 	    ClerkLineLock.Acquire();
 	    bool inBribeLine = false;
-	    int id = 0; 
-
+        
 	    if (pictureClerkState[myLine] != ONBREAK){
 		    if (pictureClerkBribeLineCount[myLine] > 0){
 				pictureClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
@@ -30,24 +30,25 @@ void PictureClerk(int myLine){
 		    }
 		}
 		else{
-				ClerkLineLock.Release();
-				currentThread->Yield();//context switch
-				continue;
-
+			ClerkLineLock.Release();
+			currentThread->Yield();//context switch
+			continue;
 		}
 
 	    pictureClerkLineLock[myLine]->Acquire();
 	    ClerkLineLock.Release();
 	    if (inBribeLine){
+            
+			pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
+			id = pictureClerkData[myLine];
 
 		    //Collect Bribe Money From Customer
 		    pictureMoenyLock.Acquire();
 		    MoneyFromPictureClerk += 500;
+            cout<<"PictureClerk["<<myLine<<"] has received $500 from Customer["<<id<<"]"<<endl;
 		    pictureMoenyLock.Release();
-
-			pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
-			id = pictureClerkData[myLine];
-			cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
+            
+            cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
 			cout << "PictureClerk [" << myLine << "] has taken a picture of Customer [" << id << "]" << endl;
 
 			pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
