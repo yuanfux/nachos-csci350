@@ -52,8 +52,8 @@ void Cashier(int myLine){
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
       
             
-            
-            if (customerApplicationStatus[id] == 6) {  // Passed All the tests (Certified)
+            int cashierPunishment = rand() % 100;
+            if (cashierPunishment > 5) {  // Passed All the tests (Certified)
                 cout << "Cashier [" << myLine << "] has verified that Customer [" << id << "] has been certified by a PassportClerk" << endl;
                 
                 //Collect Fee From Customer
@@ -73,7 +73,8 @@ void Cashier(int myLine){
             else {  //Not yet certified
                
                 //money += 100;
-                //cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
+                cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
+                CashierBribeLineCV[myLine]->Signal(&CashierLineLock[myLine]);
                 
                 
                 // To Get Verified?
@@ -90,8 +91,8 @@ void Cashier(int myLine){
             id = CashierCustomerId[myLine];
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
-            
-            if (customerApplicationStatus[id] == 6) {  // Passed All the tests (Certified)
+            int cashierPunishment = rand() % 100;
+            if (cashierPunishment > 5) {  // Passed All the tests (Certified)
                 cout << "Cashier [" << myLine << "] has verified that Customer [" << id << "] has been certified by a PassportClerk" << endl;
                 
                 
@@ -104,7 +105,6 @@ void Cashier(int myLine){
                 cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] after certification" << endl;
                 
                 // Give out the passport to the customer
-                // TODO: Check if the passport has given out already (Check with id)
                 // Notify the customer he is done
                 cout << "Cashier [" << id << "] has provided Customer[identifier] their completed passport" << endl;
                 cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
@@ -113,12 +113,8 @@ void Cashier(int myLine){
                 CashierLineCV[myLine]->Signal(&CashierLineLock[myLine]);
             }
             else {  //Not yet Certified
-                //money += 100;
-                //cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
-                
-                
-                // To Get Verified?
-                // Punish the Customer
+                cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
+                CashierLineCV[myLine]->Signal(&CashierLineLock[myLine]);
                 
                 
             }
