@@ -89,6 +89,7 @@ while (true){
             
         }
         
+        count++;
         clerkLineLock.Release();
     
     
@@ -96,5 +97,4 @@ while (true){
     
     
     
-    count++;
 }
