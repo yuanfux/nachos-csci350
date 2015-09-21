@@ -4,7 +4,6 @@ vector<clerkState> passportClerkState;
 
 void PassportClerk(int myLine){
 	int id = 0;
-	passportClerkState[myLine] = ONBREAK;
 
 	while(true){
 		

@@ -1,6 +1,6 @@
 void ApplicationClerk(int myLine){
     int id = 0;
-    ApplicationClerkState[myLine] = ONBREAK;
+    bool InBribeLine = false;
 
     while(true){
         senatorWaitLock->Acquire();
@@ -29,7 +29,7 @@ void ApplicationClerk(int myLine){
 
             }
             else{
-                ApplicationClerkState[myLine]=ONBREAK;
+                ApplicationClerkState[myLine]=AVAILABLE;
                 ClerkLineLock.Release();
                 currentThread->Yield();//context switch
                 continue;
@@ -51,10 +51,10 @@ void ApplicationClerk(int myLine){
             id = ApplicationClerkData[myLine];
 
             //Collect Bribe Money From Customer
-            applicationMoenyLock.Acquire();
+            applicationMoneyLock.Acquire();
             MoneyFromApplicationClerk += 500;
             cout<<"ApplicationClerk["<<myLine<<"] has received $500 from Customer["<<id<<"]"<<endl;
-            applicationMoenyLock.Release();
+            applicationMoneyLock.Release();
 
         //do my job customer now waiting
             cout<<"ApplicationClerk[" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
@@ -77,7 +77,7 @@ void ApplicationClerk(int myLine){
                 currentThread->Yield();
             }
 
-            customerApplicationStatus[ApplicationClerkData[myLine]]++;
+            customerApplicationStatus[id]++;
             cout<<"ApplicationClerk["<< myLine <<"] has recorded a completed application for Customer [" << id << "]" << endl;
             
             ApplicationClerkLineCV[myLine]->Signal(ApplicationClerkLineLock[myLine]);

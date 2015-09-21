@@ -4,7 +4,6 @@ vector<int> customerApplicationStatus;
 vector<clerkState> CashierState;
 
 void Cashier(int myLine){
-    CashierState[myLine] = ONBREAK;
     int id = 0;
     
     while (true){
@@ -36,7 +35,7 @@ void Cashier(int myLine){
         }
         else {  //When CashierState == ONBREAK, Do Nothing
             ClerkLineLock.Release();
-            currentThread.Yield();
+            currentThread->Yield();
             continue;
         }
         
@@ -47,7 +46,7 @@ void Cashier(int myLine){
             //In BribeLine
             
             
-            CashierBribeLineCV[myLine]->Wait(&CashierLineLock[myLine]);
+            CashierBribeLineCV[myLine]->Wait(CashierLineLock[myLine]);
             id = CashierCustomerId[myLine];
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
       
@@ -63,22 +62,17 @@ void Cashier(int myLine){
                 
                 cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] after certification" << endl;
                 // Give out the passport to the customer
-                // TODO: Check if the passport has given out already (Check with id)
                 // Notify the customer he is done
                 cout << "Cashier [" << id << "] has provided Customer[identifier] their completed passport" << endl;
                 cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
                 customerApplicationStatus[id] += 4;
-                CashierBribeLineCV[myLine]->Signal(&CashierLineLock[myLine]);
+                CashierBribeLineCV[myLine]->Signal(CashierLineLock[myLine]);
             }
             else {  //Not yet certified
                
-                //money += 100;
                 cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
-                CashierBribeLineCV[myLine]->Signal(&CashierLineLock[myLine]);
+                CashierBribeLineCV[myLine]->Signal(CashierLineLock[myLine]);
                 
-                
-                // To Get Verified?
-                // Punish the Customer
                 
             }
         }
@@ -87,7 +81,7 @@ void Cashier(int myLine){
             // NOT inBribeLine
          
             
-            CashierLineCV[myLine]->Wait(&CashierLineLock[myLine]);
+            CashierLineCV[myLine]->Wait(CashierLineLock[myLine]);
             id = CashierCustomerId[myLine];
             cout << "Cashier [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
@@ -110,16 +104,16 @@ void Cashier(int myLine){
                 cout << "Cashier [" << myLine << "] has recorded that Customer[" << id << "] has been given their completed passport" << endl;
                 
                 customerApplicationStatus[id] += 4;
-                CashierLineCV[myLine]->Signal(&CashierLineLock[myLine]);
+                CashierLineCV[myLine]->Signal(CashierLineLock[myLine]);
             }
             else {  //Not yet Certified
                 cout << "Cashier [" << myLine << "] has received the $100 from Customer[" << id << "] before certification. They are to go to the back of my line." << endl;
-                CashierLineCV[myLine]->Signal(&CashierLineLock[myLine]);
+                CashierLineCV[myLine]->Signal(CashierLineLock[myLine]);
                 
                 
             }
         }
         
-        CashierLineLock[myLine].Release();
+        CashierLineLock[myLine]->Release();
     }   //while loop
 }

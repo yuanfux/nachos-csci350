@@ -141,7 +141,7 @@ void Lock::Release() {
         return;
     }
 
-    if (!queue->IsEmpty()){                         //if the queue of waiting lock is empty
+    if (!queue->IsEmpty()){                         //if the queue of waiting lock is not empty
         lockHolder = (Thread *)queue->Remove();     //remove the first thread from the queue
         scheduler->ReadyToRun(lockHolder);          //put the thread to ready state
 
