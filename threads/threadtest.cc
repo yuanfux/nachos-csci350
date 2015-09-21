@@ -490,7 +490,7 @@ void Customer(){
     }
    // cout<<"c21"<<endl;
 //find the shortest line of application clerk line
-    while(customerApplicationStatus[id]!=10){
+    while(customerApplicationStatus[id]!=6){
     /*    if(customerApplicationStatus[id]==0){
     if(hasSenator){
         cout<<"Customer["<<id<<"] is leaving the Passport Office."<<endl;
@@ -1052,7 +1052,7 @@ void PictureClerk(int myLine){
 
 void PassportClerk(int myLine){
     int id = 0;
-    passportClerkState[myLine] = ONBREAK;
+//    passportClerkState[myLine] = ONBREAK;
     
     while(true){
         
@@ -1061,16 +1061,16 @@ void PassportClerk(int myLine){
         
         if (passportClerkState[myLine] != ONBREAK){
             if (passportClerkBribeLineCount[myLine] > 0){
-                passportClerkBribeLineCV[myLine]->Signal(&ClerkLineLock);
+                passportClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
                 cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
                 passportClerkState[myLine] = BUSY;
                 inBribeLine = true;
             } else if(passportClerkLineCount[myLine] > 0){
-                passportClerkLineCV[myLine]->Signal(&ClerkLineLock);
+                passportClerkLineWaitCV[myLine]->Signal(&ClerkLineLock);
                 cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
                 passportClerkState[myLine] = BUSY;
             } else{
-                passportClerkState[myLine] = ONBREAK;
+                passportClerkState[myLine] = AVAILABLE;
                 ClerkLineLock.Release();
                 currentThread->Yield();//context switch
                 continue;
@@ -1122,6 +1122,8 @@ void PassportClerk(int myLine){
         } else{
             
             passportClerkLineCV[myLine]->Wait(passportClerkLineLock[myLine]);
+            id = passportClerkCustomerId[myLine];
+
             cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer [" << id << "]" << endl;
             
             int passportClerkPunishment = rand() % 100;
@@ -1348,7 +1350,6 @@ void PassportOffice(){
     cout << "pictureClerk Threads Start" << endl;
     t1=new Thread("PictureClerk1");
     t1->Fork((VoidFunctionPtr)PictureClerk,0);
-
     t1=new Thread("PictureClerk2");
     t1->Fork((VoidFunctionPtr)PictureClerk,1);
     t1=new Thread("PictureClerk3");
@@ -1357,6 +1358,18 @@ void PassportOffice(){
     t1->Fork((VoidFunctionPtr)PictureClerk,3);
     t1=new Thread("PictureClerk5");
     t1->Fork((VoidFunctionPtr)PictureClerk,4);
+    
+    cout << "PassportClerk Threads Start" << endl;
+    t1=new Thread("PassportClerk1");
+    t1->Fork((VoidFunctionPtr)PassportClerk,0);
+    t1=new Thread("PassportClerk2");
+    t1->Fork((VoidFunctionPtr)PassportClerk,1);
+    t1=new Thread("PassportClerk3");
+    t1->Fork((VoidFunctionPtr)PassportClerk,2);
+    t1=new Thread("PassportClerk4");
+    t1->Fork((VoidFunctionPtr)PassportClerk,3);
+    t1=new Thread("PassportClerk5");
+    t1->Fork((VoidFunctionPtr)PassportClerk,4);
     
     cout << "Customer threads start" << endl;
     t1=new Thread("Customer1");
