@@ -1,5 +1,4 @@
 vector<int> passportClerkCustomerId;
-vector<bool> passportClerkCustomerWaiting;
 vector<int> customerApplicationStatus;
 vector<clerkState> passportClerkState;
 
@@ -14,12 +13,12 @@ void PassportClerk(int myLine){
 
 		if (passportClerkState[myLine] != ONBREAK){
 			if (passportClerkBribeLineCount[myLine] > 0){
-				passportClerkBribeLineCV[myLine].Signal(&ClerkLineLock);
+				passportClerkBribeLineWaitCV[myLine].Signal(&ClerkLineLock);
 				cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
 				passportClerkState[myLine] = BUSY;
 				inBribeLine = true;
 			} else if(passportClerkLineCount[myLine] > 0){
-				passportClerkLineCV[myLine].Signal(&ClerkLineLock);
+				passportClerkLineWaitCV[myLine].Signal(&ClerkLineLock);
 				cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
 				passportClerkState[myLine] = BUSY;
 			} else{

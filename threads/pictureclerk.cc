@@ -1,6 +1,5 @@
 vector<int> pictureClerkCustomerId;
 vector<int> pictureAcceptance;
-vector<bool> pictureClerkCustomerWaiting;
 vector<int> customerApplicationStatus;
 vector<clerkState> pictureClerkState;
 

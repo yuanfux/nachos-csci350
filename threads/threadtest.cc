@@ -446,7 +446,6 @@ vector<int> pictureAcceptance;
 vector<int> customerApplicationStatus;
 
 vector<int> passportClerkCustomerId;
-vector<bool> passportClerkCustomerWaiting;
 vector<clerkState> passportClerkState;
 vector<Lock*> passportClerkLineLock;
 vector<Condition*> passportClerkLineCV;
@@ -1285,6 +1284,48 @@ void PassportOffice(){
       pictureAcceptance.push_back(0);
       
     }
+   
+    for(int i=0;i<numPassportClerk;i++){
+      char lockName[100]="PassportLock";
+      strcat(lockName,integer);
+      
+      sprintf(integer,"%d",i );
+      //application lock initialize
+      Lock* passportLock=new Lock(lockName);
+      passportClerkLineLock.push_back(passportLock);
+      
+      //aplication CV initialize
+      char passportCVName[100]="passportCV";
+      strcat(passportCVName, integer);
+      Condition* passportCV=new Condition(passportCVName);
+      passportClerkLineCV.push_back(passportCV);
+      //application bribe CV initialize
+      char passportBribeCVName[100]="passportBribeCV";
+      strcat(passportBribeCVName, integer);
+      Condition* passportBribeCV=new Condition(passportBribeCVName);
+      passportClerkBribeLineCV.push_back(passportBribeCV);
+      //application Wait CV initialize
+      char passportWaitCVName[100]="passportWaitCV";
+      strcat(passportWaitCVName, integer);
+      Condition* passportWaitCV=new Condition(passportWaitCVName);
+      passportClerkLineWaitCV.push_back(passportWaitCV);
+      //application Bribe Wait CV initialize
+      char passportBribeWaitCVName[100]="passportWaitCV";
+      strcat(passportBribeWaitCVName, integer);
+      Condition* passportBribeWaitCV=new Condition(passportBribeWaitCVName);
+      passportClerkBribeLineWaitCV.push_back(passportBribeWaitCV);
+      //application line size intialize
+      passportClerkLineCount.push_back(0);
+      //application bribe line size initialize
+      passportClerkBribeLineCount.push_back(0);
+      //application clerk state initialize
+      clerkState ct=AVAILABLE;
+      passportClerkState.push_back(ct);
+      //application data initialize
+      passportClerkCustomerId.push_back(0);
+      
+    }
+
     for(int i =0 ;i<5 ;i++){
       customerApplicationStatus.push_back(0);
     }

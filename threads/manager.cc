@@ -43,7 +43,7 @@ while (true){
         // A vector of clerkState
         // A vector of clerkCV
         
-        clerkLineLock.Acquire();
+        ClerkLineLock.Acquire();
 
             //Application Clerks
             for (int i = 0; i < ApplicationClerkLineLock.size(); i++){
@@ -91,7 +91,7 @@ while (true){
             }
         
         count++;
-        clerkLineLock.Release();
+        ClerkLineLock.Release();
     
     
     
