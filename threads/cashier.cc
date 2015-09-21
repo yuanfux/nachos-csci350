@@ -5,6 +5,7 @@ vector<clerkState> CashierState;
 
 void Cashier(int myLine){
     int money = 0;
+    CashierState[myLine] = ONBREAK;
     
     while (true){
         
@@ -12,18 +13,30 @@ void Cashier(int myLine){
         bool inBribeLine = false;
         int id = CashierCustomerId[myLine];
         
-        if (CashierBribeLineCount[myLine] > 0){
-            CashierBribeLineCV[myLine].Signal(&clerkLineLock);
-            cout << "Cashier [" << id << "] has signalled a Customer to come to their counter." << endl;
-            CashierState[myLine] = BUSY;
-            inBribeLine = true;
-        }   else if (CashierLineCount[myLine] > 0){
-            CashierLineCV[myLine].Signal(&clerkLineLock);
-            cout << "Cashier [" << id << "] has signalled a Customer to come to their counter." << endl;
-            CashierState[myLine] = BUSY;
+        
+        if (CashierState[myLine] != ONBREAK){
+            //When CashierState != ONBREAK
+            if (CashierBribeLineCount[myLine] > 0){
+                CashierBribeLineCV[myLine].Signal(&clerkLineLock);
+                cout << "Cashier [" << id << "] has signalled a Customer to come to their counter." << endl;
+                CashierState[myLine] = BUSY;
+                inBribeLine = true;
+            }   else if (CashierLineCount[myLine] > 0){
+                CashierLineCV[myLine].Signal(&clerkLineLock);
+                cout << "Cashier [" << id << "] has signalled a Customer to come to their counter." << endl;
+                CashierState[myLine] = BUSY;
+            }
+                else {
+                    CashierState[myLine] = ONBREAK;
+                    clerkLineLock.Release();
+                    currentThread.Yield();
+                    continue;
+            }
         }
-            else {
-                CashierState[myLine] = AVAILABLE;
+        else {  //When CashierState == ONBREAK, Do Nothing
+            clerkLineLock.Release();
+            currentThread.Yield();
+            continue;
         }
         
         CashierLineLock[myLine].Acquire();
