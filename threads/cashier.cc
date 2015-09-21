@@ -27,8 +27,9 @@ void Cashier(int myLine){
                 CashierState[myLine] = BUSY;
             }
                 else {
-                    CashierState[myLine] = ONBREAK;
                     clerkLineLock.Release();
+                    CashierState[myLine] = ONBREAK;     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    CashierCV[myLine] ->Wait(CashierLock[myLine]);
                     currentThread->Yield();
                     continue;
             }

@@ -51,6 +51,7 @@ while (true){
                 && ApplicationClerkState[i] == ONBREAK){
                 
                 ApplicationClerkState[i] = AVAILABLE;
+                CashierCV[i]->Signal(CashierLock[i]);      //!!!!!!
                 cout << "Manager has woken up an ApplicationClerk" << endl;
             }
             
