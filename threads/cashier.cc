@@ -5,42 +5,42 @@ vector<clerkState> CashierState;
 
 void Cashier(int myLine){
     CashierState[myLine] = ONBREAK;
+    int id = 0;
     
     while (true){
         
-        clerkLineLock.Acquire();
+        ClerkLineLock.Acquire();
         bool inBribeLine = false;
-        int id = 0;
         //int id = CashierCustomerId[myLine];
         
         
         if (CashierState[myLine] != ONBREAK){
             //When CashierState != ONBREAK
             if (CashierBribeLineCount[myLine] > 0){
-                CashierBribeLineCV[myLine]->Signal(&clerkLineLock);
+                CashierBribeLineCV[myLine]->Signal(&ClerkLineLock);
                 cout << "Cashier [" << myLine << "] has signalled a Customer to come to their counter." << endl;
                 CashierState[myLine] = BUSY;
                 inBribeLine = true;
             }   else if (CashierLineCount[myLine] > 0){
-                CashierLineCV[myLine]->Signal(&clerkLineLock);
+                CashierLineCV[myLine]->Signal(&ClerkLineLock);
                 cout << "Cashier [" << myLine << "] has signalled a Customer to come to their counter." << endl;
                 CashierState[myLine] = BUSY;
             }
                 else {
                     CashierState[myLine] = ONBREAK;
-                    clerkLineLock.Release();
+                    ClerkLineLock.Release();
                     currentThread->Yield();
                     continue;
             }
         }
         else {  //When CashierState == ONBREAK, Do Nothing
-            clerkLineLock.Release();
+            ClerkLineLock.Release();
             currentThread.Yield();
             continue;
         }
         
         CashierLineLock[myLine]->Acquire();
-        clerkLineLock.Release();
+        ClerkLineLock.Release();
         
         if (inBribeLine){
             //In BribeLine
