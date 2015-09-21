@@ -654,10 +654,8 @@ void Customer(){
             // if(PictureClerkState[myLine] == BUSY){
             //wait in the picture clerk line
             pictureClerkBribeLineCount[myLine]++;
-           // cout << "Customer[" << id << "] has gotten in bribe line for PictureClerk[" << myLine << "]" << endl;
-           // ClerkLineLock.getLockName();
+           cout << "Customer[" << id << "] has gotten in bribe line for PictureClerk[" << myLine << "]" << endl;
             pictureClerkBribeLineWaitCV[myLine]->Wait(&ClerkLineLock);
-          //  cout << "my fault" << endl;
             pictureClerkBribeLineCount[myLine]--;
             // }
             ClerkLineLock.Release();
@@ -895,11 +893,8 @@ void PictureClerk(int myLine){
       continue;
     }
 
-    cout << "after costomer went to counter" << endl;
     pictureClerkLineLock[myLine]->Acquire();
-    cout<<"after acquiring picture clerk line lock"<<endl;
     ClerkLineLock.Release();
-    cout<<"after releasing clerk line lock"<<endl;
     if (inBribeLine){
 
       pictureClerkBribeLineCV[myLine]->Wait(pictureClerkLineLock[myLine]);
@@ -1067,8 +1062,8 @@ void PassportOffice(){
       //application bribe CV initialize
       char pictureBribeCVName[100]="pictureBribeCV";
       strcat(pictureBribeCVName, integer);
-      Condition* applicationBribeCV=new Condition(pictureBribeCVName);
-      ApplicationClerkBribeLineCV.push_back(applicationBribeCV);
+      Condition* pictureBribeCV=new Condition(pictureBribeCVName);
+      pictureClerkBribeLineCV.push_back(pictureBribeCV);
       //application Wait CV initialize
       char pictureWaitCVName[100]="pictureWaitCV";
       strcat(pictureWaitCVName, integer);
