@@ -483,6 +483,7 @@ Condition* senatorWaitCV;
 bool hasSenator=false;
 bool isFirst=true;
 int customerNum=-1;
+int remainingCustomer = 0;
 
 int senatorNum=-1;
 void Customer(){
@@ -667,7 +668,6 @@ void Customer(){
             ApplicationClerkData[myLine]=id;
             cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to ApplicationClerk["<<myLine<<"]" << endl;
             ApplicationClerkLineCV[myLine]->Signal(ApplicationClerkLineLock[myLine]);
-            cout << "debugging " << myLine << endl;
             //wait clerk to do their job
             ApplicationClerkLineCV[myLine]->Wait(ApplicationClerkLineLock[myLine]);
             ApplicationClerkLineLock[myLine]->Release();
@@ -831,9 +831,12 @@ void Customer(){
 
         
         
-    }
+      }
     }//while loop
-    
+     
+     ClerkLineLock.Acquire();
+     remainingCustomer--;
+     ClerkLineLock.Release();
     
 }
 
@@ -947,7 +950,7 @@ void PictureClerk(int myLine){
           cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
           pictureClerkState[myLine] = BUSY;
         } else{
-          pictureClerkState[myLine] = AVAILABLE;
+          pictureClerkState[myLine] = ONBREAK;
           ClerkLineLock.Release();
           currentThread->Yield();//context switch
             continue;
@@ -1050,7 +1053,7 @@ void PassportClerk(int myLine){
                 cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
                 passportClerkState[myLine] = BUSY;
             } else{
-                passportClerkState[myLine] = AVAILABLE;
+                passportClerkState[myLine] = ONBREAK;
                 ClerkLineLock.Release();
                 currentThread->Yield();//context switch
                 continue;
@@ -1157,7 +1160,7 @@ void Cashier(int myLine){
             }
             else {
                 ClerkLineLock.Release();
-                CashierState[myLine] = AVAILABLE;     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                CashierState[myLine] = ONBREAK;     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // CashierCV[myLine]->Wait(CashierLock[myLine]);
                 currentThread->Yield();
                 continue;
@@ -1250,6 +1253,16 @@ void Cashier(int myLine){
 
 void Manager(){
     int count = 0;
+    int maxNumClerk = 0;
+    int numApplicationClerk = ApplicationClerkLineLock.size();
+    int numPictureClerk = pictureClerkLineLock.size();
+    int numPassportClerk = passportClerkLineLock.size();
+    int numCashier = CashierLineLock.size();
+
+    if (maxNumClerk < numApplicationClerk) maxNumClerk = numApplicationClerk;
+    if (maxNumClerk < numPictureClerk) maxNumClerk = numPictureClerk;
+    if (maxNumClerk < numPassportClerk) maxNumClerk = numPassportClerk;
+    if (maxNumClerk < numCashier) maxNumClerk = numCashier;
     while (true){
         for (int i = 0; i < 100; ++i) {
             currentThread->Yield();
@@ -1288,46 +1301,73 @@ void Manager(){
             ClerkLineLock.Acquire();
 
                 //Application Clerks
-                for (unsigned int i = 0; i < ApplicationClerkLineLock.size(); i++){
+                for ( int i = 0; i < numApplicationClerk; i++){
                     if (ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] >= 3
                         && ApplicationClerkState[i] == ONBREAK){
                         
                         ApplicationClerkState[i] = AVAILABLE;
                         cout << "Manager has woken up an ApplicationClerk" << endl;
                     }
+                    else if (remainingCustomer < maxNumClerk * 3 && 
+                              ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] > 0){
+                        
+                        ApplicationClerkState[i] = AVAILABLE;
+                        cout << "Manager has woken up an ApplicationClerk" << endl;
+
+                    }
                     
                 }
                 
                 //Picture Clerks
-                for (unsigned int i = 0; i < pictureClerkLineLock.size(); i++){
+                for ( int i = 0; i < numPictureClerk; i++){
                     if (pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] >= 3
                         && pictureClerkState[i] == ONBREAK){
                         
                         pictureClerkState[i] = AVAILABLE;
                         cout << "Manager has woken up a PictureClerk" << endl;
                     }
+                    else if (remainingCustomer < maxNumClerk * 3 && 
+                              pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] > 0){
+                        
+                        pictureClerkState[i] = AVAILABLE;
+                        cout << "Manager has woken up a PictureClerk" << endl;
+
+                    }
                     
                 }
                 
                 //Passport Clerks
-                for (unsigned int i = 0; i < passportClerkLineLock.size(); i++){
+                for ( int i = 0; i < numPassportClerk; i++){
                     if (passportClerkLineCount[i] + passportClerkBribeLineCount[i] >= 3
                         && passportClerkState[i] == ONBREAK){
                         
                         passportClerkState[i] = AVAILABLE;
                         cout << "Manager has woken up a PassportClerk" << endl;
                     }
+                    else if (remainingCustomer < maxNumClerk * 3 && 
+                              passportClerkLineCount[i] + passportClerkBribeLineCount[i] > 0){
+                        
+                        passportClerkState[i] = AVAILABLE;
+                        cout << "Manager has woken up a PassportClerk" << endl;
+
+                    }
 
                 }
                 
                 //Cashiers
-                for (unsigned int i = 0; i < CashierLineLock.size(); i++){
+                for ( int i = 0; i < numCashier; i++){
                     if (CashierLineCount[i] + CashierBribeLineCount[i] >= 3
                         && CashierState[i] == ONBREAK){
                         
                         CashierState[i] = AVAILABLE;
-                        // CashierCV[i]->Signal(CashierLock[i]);      //!!!!!!
                         cout << "Manager has woken up a Cashier" << endl;
+                    }
+                    else if (remainingCustomer < maxNumClerk * 3 && 
+                              CashierLineCount[i] + CashierBribeLineCount[i] > 0){
+                        
+                        CashierState[i] = AVAILABLE;
+                        cout << "Manager has woken up a Cashier" << endl;
+
                     }
                     
                 }
@@ -1411,6 +1451,7 @@ void PassportOffice(){
       cout << "Enter the numebr of customers: " << endl;
       cin >> numCustomer;
     }
+    remainingCustomer = numCustomer;
 
     cout << "Enter the number of senators: " << endl;
     cin >> numSenator;
