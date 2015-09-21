@@ -24,7 +24,7 @@ while (true){
         cout << "Manager has counted a total of $" << MoneyFromCashierClerk << " for Cashiers" << endl;
         
         MoneyTotal = MoneyFromApplicationClerk + MoneyFromPictureClerk + MoneyFromPassportClerk + MoneyFromCashier;
-        cout << "Manager has counted a total of $" << MoneyTotal << " for The Passport Office" << endl;
+        cout << "Manager has counted a total of $" << MoneyTotal << " for The passport Office" << endl;
         
         applicationMoenyLock.Release();
         pictureMoenyLock.Release();
@@ -42,7 +42,54 @@ while (true){
         
         // A vector of clerkState
         // A vector of clerkCV
-    
+        
+        clerkLineLock.Acquire();
+        
+        //Application Clerks
+        for (int i = 0; i < ApplicationClerkLineLock.size(); i++){
+            if (ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] >= 3
+                && ApplicationClerkState[i] == ONBREAK){
+                
+                ApplicationClerkState[i] = AVAILABLE;
+                cout << "Manager has woken up an ApplicationClerk" << endl;
+            }
+            
+        }
+        
+        //Picture Clerks
+        for (int i = 0; i < pictureClerkLineLock.size(); i++){
+            if (pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] >= 3
+                && pictureClerkState[i] == ONBREAK){
+                
+                pictureClerkState[i] = AVAILABLE;
+                cout << "Manager has woken up a PictureClerk" << endl;
+            }
+            
+        }
+        
+        //Passport Clerks
+        for (int i = 0; i < passportClerkLineLock.size(); i++){
+            if (passportClerkLineCount[i] + passportClerkBribeLineCount[i] >= 3
+                && passportClerkState[i] == ONBREAK){
+                
+                passportClerkState[i] = AVAILABLE;
+                cout << "Manager has woken up a PassportClerk" << endl;
+            }
+
+        }
+        
+        //Cashiers
+        for (int i = 0; i < CashierLineLock.size(); i++){
+            if (CashierLineCount[i] + CashierBribeLineCount[i] >= 3
+                && CashierState[i] == ONBREAK){
+                
+                CashierState[i] = AVAILABLE;
+                cout << "Manager has woken up a Cashier" << endl;
+            }
+            
+        }
+        
+        clerkLineLock.Release();
     
     
     
