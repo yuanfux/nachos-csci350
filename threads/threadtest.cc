@@ -863,11 +863,14 @@ void ApplicationClerk(int myLine){
                 senatorApplicationWaitCV->Signal(senatorWaitLock);
                 senatorWaitLock->Release();
         }
+        else if(hasSenator && myLine != 0){
+            ApplicationClerkState[myLine] = ONBREAK;
+        }
         // cout<<"44"<<endl;
         ClerkLineLock.Acquire();
         // cout<<"55"<<endl;
       //  cout << ApplicationClerkBribeLineCount[myLine] << "      " << ApplicationClerkLineCount[myLine] << endl;
-        if (ApplicationClerkState[myLine] != ONBREAK){
+        if (ApplicationClerkState[myLine] != ONBREAK && !hasSenator){
            // cout << "66" << endl;
             if(ApplicationClerkBribeLineCount[myLine]>0){
                 ApplicationClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
@@ -973,10 +976,13 @@ void PictureClerk(int myLine){
            senatorPictureWaitCV->Signal(senatorWaitLock);
            senatorWaitLock->Release();
        }
+        else if(hasSenator && myLine != 0){
+            pictureClerkState[myLine] = ONBREAK;
+        }
 
         ClerkLineLock.Acquire();
 
-        if (pictureClerkState[myLine] != ONBREAK){
+        if (pictureClerkState[myLine] != ONBREAK && !hasSenator){
             if (pictureClerkBribeLineCount[myLine] > 0){
                 pictureClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
                 cout << "PictureClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
@@ -1099,10 +1105,13 @@ void PassportClerk(int myLine){
            senatorPassportWaitCV->Signal(senatorWaitLock);
            senatorWaitLock->Release();
        }
+        else if(hasSenator && myLine != 0){
+            passportClerkState[myLine] = ONBREAK;
+        }
         
         ClerkLineLock.Acquire();
 
-        if (passportClerkState[myLine] != ONBREAK){
+        if (passportClerkState[myLine] != ONBREAK && !hasSenator){
             if (passportClerkBribeLineCount[myLine] > 0){
                 passportClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
                 cout << "PassportClerk [" << myLine << "] has signalled a Customer to come to their counter." << endl;
@@ -1233,10 +1242,13 @@ void Cashier(int myLine){
            senatorCashierWaitCV->Signal(senatorWaitLock);
            senatorWaitLock->Release();
        }
+        else if(hasSenator && myLine != 0){
+            CashierState[myLine] = ONBREAK;
+        }
 
         ClerkLineLock.Acquire();
 
-        if (CashierState[myLine] != ONBREAK){
+        if (CashierState[myLine] != ONBREAK && !hasSenator){
             //When CashierState != ONBREAK
             if (CashierLineCount[myLine] > 0){
                 CashierLineWaitCV[myLine]->Signal(&ClerkLineLock);
@@ -1764,18 +1776,18 @@ void PassportOffice(){
         t1 = new Thread(threadName);
         t1->Fork((VoidFunctionPtr)Customer, 0);
     }
+
+    for (int i = 0; i < numSenator; i){
+        char threadName[100] = "Senator";
+        strcat(threadName, integer);
+        t1 = new Thread(threadName);
+        t1->Fork((VoidFunctionPtr)Senator, 0);
+    }
+
     t1 = new Thread("Manager");
     t1->Fork((VoidFunctionPtr)Manager, 0);
-    for(int i=0;i<10;i++){
-        
-        currentThread->Yield();
-    }
-    t1=new Thread("Senator");
-    t1->Fork((VoidFunctionPtr)Senator, 0);
 
 }
-
-
 
 
 #endif
