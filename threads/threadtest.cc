@@ -480,6 +480,8 @@ Condition* senatorWaitCV;
 Condition* customerWaitCV;
 Lock* customerWaitLock;
 
+vector<int> numCustomerWaiting;
+
 int senatorData;
 int senatorServiceId;
 bool hasSenator = false;
@@ -526,6 +528,7 @@ void Customer(){
 //        
 //    }
     //each customer needs to go through all the counters before leaving
+    numCustomerWaiting.push_back(id);
     while(customerApplicationStatus[id]!=10){
         customerWaitLock->Acquire();
         
@@ -819,9 +822,19 @@ void Customer(){
         
     }
      
-    ClerkLineLock.Acquire();
+    incrementCount.Acquire();
     remainingCustomer--;
-    ClerkLineLock.Release();
+    
+    for(int i=0;i<numCustomerWaiting.size();i++){
+        if(numCustomerWaiting[i]==id){
+            
+            numCustomerWaiting.erase(numCustomerWaiting.begin()+i);
+            
+        }
+        
+        
+    }
+    incrementCount.Release();
     
 }
 
@@ -1349,6 +1362,10 @@ void Senator(){
     int id=senatorNum+1;
     senatorNum++;
     cout << "Senator ["<< id<<"] has came into passport office"<< endl;
+    
+    for(int i=0;i<numCustomerWaiting.size();i++){
+        cout<<"Customer ["<<numCustomerWaiting[i]<<"] is going outside the Passport Office because their is a Senator present."<<endl;
+    }
     hasSenator=TRUE;
    // cout << "mighty" << endl;
     cout << "Senator ["<<id<<"] has gotten in regular line for ApplicationClerk ["<< senatorServiceId << "]." << endl;
