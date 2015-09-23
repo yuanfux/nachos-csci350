@@ -1429,11 +1429,12 @@ void Senator(){
     int id=senatorNum+1;
     senatorNum++;
     cout << "Senator ["<< id<<"] has came into passport office"<< endl;
-    
+
+	hasSenator = TRUE;
     for(unsigned int i=0;i<numCustomerWaiting.size();i++){
         cout<<"Customer ["<<numCustomerWaiting[i]<<"] is going outside the Passport Office because their is a Senator present."<<endl;
     }
-    hasSenator=TRUE;
+    
    // cout << "mighty" << endl;
     cout << "Senator ["<<id<<"] has gotten in regular line for ApplicationClerk ["<< senatorServiceId << "]." << endl;
     // senatorApplicationWaitCV->Signal(senatorWaitLock);//signal a clerk
