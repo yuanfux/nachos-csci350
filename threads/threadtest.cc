@@ -476,6 +476,7 @@ int MoneyFromCashier = 0;
 int MoneyTotal = 0;
 
 Lock* senatorWaitLock;
+Lock* senatorApplicationWaitLock;
 Lock* senatorPictureWaitLock;
 Lock* senatorPassportWaitLock;
 Lock* senatorCashierWaitLock;
@@ -528,12 +529,6 @@ void Customer(){
     }
     cout <<"Customer[" << id << "] has $" << money << endl;
     
-//    if(hasSenator){
-//        
-//        //cout<<"Customer ["<<id<<"] is going outside the Passport Office because their is a Senator present."<<endl;
-//        //customerWaitLock->Acquire();
-//        
-//    }
     //each customer needs to go through all the counters before leaving
     numCustomerWaiting.push_back(id);
     while(customerApplicationStatus[id]!=10){
@@ -571,7 +566,7 @@ void Customer(){
 
                 pictureClerkLineLock[myLine]->Acquire();
                 pictureClerkData[myLine]=id; //gives clerk the ssn
-                cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]" << endl;
+                cout << "Customer[" << id << "] has given SSN [" << id << "] to PictureClerk["<<myLine<<"]" << endl;
                 pictureClerkBribeLineCV[myLine]->Signal(pictureClerkLineLock[myLine]);
 
                 //wait for picture clerk to take picture
@@ -613,7 +608,7 @@ void Customer(){
 
                 pictureClerkLineLock[myLine]->Acquire();
                 pictureClerkData[myLine]=id; //gives clerk the ssn
-                cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to PictureClerk["<<myLine<<"]" << endl;
+                cout << "Customer[" << id << "] has given SSN [" << id << "] to PictureClerk["<<myLine<<"]" << endl;
                 pictureClerkLineCV[myLine]->Signal(pictureClerkLineLock[myLine]); 
 
                 //wait for picture clerk to take picture
@@ -661,7 +656,7 @@ void Customer(){
 
                 ApplicationClerkLineLock[myLine]->Acquire();
                 ApplicationClerkData[myLine]=id; //give ssn to clerk
-                cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to ApplicationClerk["<<myLine<<"]" << endl;
+                cout << "Customer[" << id << "] has given SSN [" << id << "] to ApplicationClerk["<<myLine<<"]" << endl;
                 ApplicationClerkBribeLineCV[myLine]->Signal(ApplicationClerkLineLock[myLine]);
                 
                 //wait for clerk to do the job
@@ -696,7 +691,7 @@ void Customer(){
                 
                 ApplicationClerkLineLock[myLine]->Acquire();
                 ApplicationClerkData[myLine]=id; //give ssn to clerk
-                cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to ApplicationClerk["<<myLine<<"]" << endl;
+                cout << "Customer[" << id << "] has given SSN [" << id << "] to ApplicationClerk["<<myLine<<"]" << endl;
                 ApplicationClerkLineCV[myLine]->Signal(ApplicationClerkLineLock[myLine]);
                 
                 //wait for clerk to do the job
@@ -739,7 +734,7 @@ void Customer(){
                 //give ssn to passport clerk
                 passportClerkLineLock[myLine]->Acquire();
                 passportClerkCustomerId[myLine]=id;
-                cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to PassportClerk["<<myLine<<"]" << endl;
+                cout << "Customer[" << id << "] has given SSN [" << id << "] to PassportClerk["<<myLine<<"]" << endl;
                 passportClerkBribeLineCV[myLine]->Signal(passportClerkLineLock[myLine]);
                 
                 //wait for clerk to do the job
@@ -776,7 +771,7 @@ void Customer(){
                 //give ssn to passport clerk
                 passportClerkLineLock[myLine]->Acquire();
                 passportClerkCustomerId[myLine]=id;
-                cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to PassportClerk["<<myLine<<"]" << endl;
+                cout << "Customer[" << id << "] has given SSN [" << id << "] to PassportClerk["<<myLine<<"]" << endl;
                 passportClerkLineCV[myLine]->Signal(passportClerkLineLock[myLine]);
                 
                 //wait for clerk to do the job
@@ -818,7 +813,7 @@ void Customer(){
             //give cashier ssn
             CashierLineLock[myLine]->Acquire();
             CashierCustomerId[myLine]=id;
-            cout << "Customer["<<id<<"] has given SSN ["<<id<<"] to Cashier["<<myLine<<"]" << endl;
+            cout << "Customer[" << id << "] has given SSN [" << id << "] to Cashier["<<myLine<<"]" << endl;
             CashierLineCV[myLine]->Signal(CashierLineLock[myLine]);
             
             //wait for cashier to do the job
@@ -850,32 +845,31 @@ void ApplicationClerk(int myLine){
 
     while(true){
       bool InBribeLine = false;
-        //cout<<"33"<<endl;
+
         if(hasSenator && (myLine==0) && senatorStatus == 0){
-           // cout<<"11"<<endl;
+
+            senatorApplicationWaitLock->Acquire();
             senatorWaitLock->Acquire();
-           // cout<<"22"<<endl;
+
                 senatorServiceId=myLine;
-                // senatorApplicationWaitCV->Wait(senatorWaitLock);
                 senatorApplicationWaitCV->Signal(senatorWaitLock);
                 cout<<"ApplicationClerk ["<<myLine<<"] has signalled a Senator to come to their counter."<<endl;
                 senatorApplicationWaitCV->Wait(senatorWaitLock);
-                cout << "ApplicationClerk[" << myLine << "] has received SSN [" << senatorData << "] from Senator [" << senatorData << "]" << endl;
+                cout << "ApplicationClerk[" << myLine << "] has received SSN [" << senatorData + 100 << "] from Senator [" << senatorData << "]" << endl;
                 cout << "ApplicationClerk[" << myLine << "] has recorded a completed application for Senator [" << senatorData << "]" << endl;
                 senatorStatus++;
                 senatorApplicationWaitCV->Signal(senatorWaitLock);
-                cout << "1" << endl;
-                senatorWaitLock->Release();
+
+            senatorApplicationWaitLock->Release();
+            senatorWaitLock->Release();
         }
         else if(hasSenator && myLine != 0){
             ApplicationClerkState[myLine] = ONBREAK;
         }
-        // cout<<"44"<<endl;
+
         ClerkLineLock.Acquire();
-        // cout<<"55"<<endl;
-      //  cout << ApplicationClerkBribeLineCount[myLine] << "      " << ApplicationClerkLineCount[myLine] << endl;
+
         if (ApplicationClerkState[myLine] != ONBREAK && !hasSenator){
-           // cout << "66" << endl;
             if(ApplicationClerkBribeLineCount[myLine]>0){
                 ApplicationClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
                 cout << "ApplicationClerk["<<myLine<<"] has signalled a Customer to come to their counter." << endl;
@@ -913,7 +907,7 @@ void ApplicationClerk(int myLine){
             //Collect Bribe Money From Customer
             applicationMoneyLock.Acquire();
             MoneyFromApplicationClerk += 500;
-            cout << "ApplicationClerk["<<myLine<<"] has received $500 from Customer["<<id<<"]" << endl;
+            cout << "ApplicationClerk["<<myLine<<"] has received $500 from Customer[" << id << "]" << endl;
             applicationMoneyLock.Release();
 
         //do my job customer now waiting
@@ -956,16 +950,14 @@ void PictureClerk(int myLine){
       
         bool inBribeLine = false;
        if(hasSenator && (myLine==0) && senatorStatus <= 1){
-           // cout<<"11"<<endl;
-           senatorWaitLock->Acquire();
            senatorPictureWaitLock->Acquire();
-           cout<<"22"<<endl;
+           senatorWaitLock->Acquire();
+
            senatorServiceId=myLine;
-           senatorPictureWaitCV->Wait(senatorWaitLock);
            senatorPictureWaitCV->Signal(senatorWaitLock);
            cout<<"PictureClerk ["<<myLine<<"] has signalled a Senator to come to their counter."<<endl;
            senatorPictureWaitCV->Wait(senatorWaitLock);
-           cout << "PictureClerk[" << myLine << "] has received SSN [" << senatorData << "] from Senator [" << senatorData << "]" << endl;
+           cout << "PictureClerk[" << myLine << "] has received SSN [" << senatorData + 100 << "] from Senator [" << senatorData << "]" << endl;
            
            int photoAcceptance = rand() % 100;
            while (photoAcceptance <= 5){
@@ -986,11 +978,8 @@ void PictureClerk(int myLine){
             pictureClerkState[myLine] = ONBREAK;
         }
 
-        cout << myLine << " 33" << endl;
         ClerkLineLock.Acquire();
-        cout << myLine << " 44" << endl;
         if (pictureClerkState[myLine] != ONBREAK && !hasSenator){
-        cout << myLine << " 55" << endl;
 
             if (pictureClerkBribeLineCount[myLine] > 0){
                 pictureClerkBribeLineWaitCV[myLine]->Signal(&ClerkLineLock);
@@ -1024,7 +1013,7 @@ void PictureClerk(int myLine){
             //Collect Bribe Money From Customer
             pictureMoneyLock.Acquire();
             MoneyFromPictureClerk += 500;
-            cout << "PictureClerk["<<myLine<<"] has received $500 from Customer["<<id<<"]" << endl;
+            cout << "PictureClerk["<<myLine<<"] has received $500 from Customer[" << id << "]" << endl;
             pictureMoneyLock.Release();
                   
             cout << "PictureClerk [" << myLine << "] has received SSN [" << id << "] from Customer[" << id << "]" << endl;
@@ -1085,24 +1074,20 @@ void PictureClerk(int myLine){
 }
 
 void PassportClerk(int myLine){
-   // cout<<"start passportClerk"<<endl;
     int id = 0;
-//    passportClerkState[myLine] = ONBREAK;
     
     while(true){
         
         bool inBribeLine = false;
        if(hasSenator && (myLine==0) && senatorStatus <= 3){
-           // cout<<"11"<<endl;
-           senatorWaitLock->Acquire();
-           // cout<<"22"<<endl;
            senatorPassportWaitLock->Acquire();
+           senatorWaitLock->Acquire();
+
            senatorServiceId=myLine;
-           senatorPassportWaitCV->Wait(senatorWaitLock);
            senatorPassportWaitCV->Signal(senatorWaitLock);
            cout<<"PassportClerk ["<<myLine<<"] has signalled a Senator to come to their counter."<<endl;
            senatorPassportWaitCV->Wait(senatorWaitLock);
-           cout << "PassportClerk[" << myLine << "] has received SSN [" << senatorData << "] from Senator [" << senatorData << "]" << endl;
+           cout << "PassportClerk[" << myLine << "] has received SSN [" << senatorData + 100 << "] from Senator [" << senatorData << "]" << endl;
            
            int photoAcceptance = rand() % 100;
            while (photoAcceptance <= 5){
@@ -1156,13 +1141,12 @@ void PassportClerk(int myLine){
             //Collect Bribe Money From Customer
            passportMoneyLock.Acquire();
            MoneyFromPassportClerk += 500;
-           cout << "PassportClerk["<<myLine<<"] has received $500 from Customer["<<id<<"]" << endl;
+           cout << "PassportClerk["<<myLine<<"] has received $500 from Customer[" << id << "]" << endl;
            passportMoneyLock.Release();
             
             cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer[" << id << "]" << endl;
             
             int passportClerkPunishment = rand() % 100;
-           // int passportClerkPunishment = 6;
             if (passportClerkPunishment > 5){
                 
                 cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] has both their application and picture completed" << endl;
@@ -1191,7 +1175,6 @@ void PassportClerk(int myLine){
             cout << "PassportClerk [" << myLine << "] has received SSN [" << id << "] from Customer[" << id << "]" << endl;
             
             int passportClerkPunishment = rand() % 100;
-            //int passportClerkPunishment = 6;
             if (passportClerkPunishment > 5){
                 cout << "PassportClerk [" << myLine << "] has determined that Customer[" << id << "] has both their application and picture completed" << endl;
                 
@@ -1224,16 +1207,15 @@ void Cashier(int myLine){
     while (true){
        
        if(hasSenator && (myLine==0) && senatorStatus <= 6){
-           // cout<<"11"<<endl;
-           senatorWaitLock->Acquire();
+
            senatorCashierWaitLock->Acquire();
-           // cout<<"22"<<endl;
+           senatorWaitLock->Acquire();
+
            senatorServiceId=myLine;
-           senatorCashierWaitCV->Wait(senatorWaitLock);
            senatorCashierWaitCV->Signal(senatorWaitLock);
            cout<<"Cashier ["<<myLine<<"] has signalled a Senator to come to their counter."<<endl;
            senatorCashierWaitCV->Wait(senatorWaitLock);
-           cout << "Cashier[" << myLine << "] has received SSN [" << senatorData << "] from Senator [" << senatorData << "]" << endl;
+           cout << "Cashier[" << myLine << "] has received SSN [" << senatorData + 100 << "] from Senator [" << senatorData << "]" << endl;
            
            int photoAcceptance = rand() % 100;
            while (photoAcceptance <= 5){
@@ -1247,7 +1229,7 @@ void Cashier(int myLine){
             cashierMoneyLock.Release();
             
             
-            cout << "Senator [" << senatorData << "] has given Cashier [" << myLine << "] $100." << endl;
+           cout << "Senator [" << senatorData << "] has given Cashier [" << myLine << "] $100." << endl;
             
            cout << "Cashier[" << myLine << "] has recorded a completed application for Senator [" << senatorData << "]" << endl;
            senatorStatus += 4;
@@ -1453,21 +1435,23 @@ void Senator(){
     senatorPictureWaitLock->Acquire();
     senatorPassportWaitLock->Acquire();
     senatorCashierWaitLock->Acquire();
+    senatorApplicationWaitLock->Acquire();
     senatorWaitLock->Acquire();
-    int id=senatorNum+1;
+    int id = senatorNum + 1;
+    int ssn = id + 100;
     senatorNum++;
     cout << "Senator ["<< id<<"] has came into passport office"<< endl;
-    
+
+	  hasSenator = TRUE;
     for(unsigned int i=0;i<numCustomerWaiting.size();i++){
         cout<<"Customer ["<<numCustomerWaiting[i]<<"] is going outside the Passport Office because their is a Senator present."<<endl;
     }
-    hasSenator=TRUE;
-   // cout << "mighty" << endl;
-    cout << "Senator ["<<id<<"] has gotten in regular line for ApplicationClerk ["<< senatorServiceId << "]." << endl;
-    // senatorApplicationWaitCV->Signal(senatorWaitLock);//signal a clerk
+    
+    senatorApplicationWaitLock->Release();
+    cout << "Senator [" << id << "] has gotten in regular line for ApplicationClerk [" << senatorServiceId << "]." << endl;
     senatorApplicationWaitCV->Wait(senatorWaitLock);//wait for a clerk
     
-    cout << "Senator ["<<id<<"] has given SSN ["<<id<<"] to ApplicationClerk ["<<senatorServiceId<<"]."<<endl;
+    cout << "Senator [" << id << "] has given SSN [" << ssn << "] to ApplicationClerk [" << senatorServiceId << "]."<<endl;
     senatorData=id;
     senatorApplicationWaitCV->Signal(senatorWaitLock);//signal a clerk
     cout << "2" << endl;
@@ -1476,33 +1460,30 @@ void Senator(){
     
 
     senatorPictureWaitLock->Release();
-    cout << "Senator ["<<id<<"] has gotten in regular line for PictureClerk ["<< senatorServiceId << "]." << endl;
-    senatorPictureWaitCV->Signal(senatorWaitLock);//signal  a clerk
+    cout << "Senator [" << id << "] has gotten in regular line for PictureClerk [" << senatorServiceId << "]." << endl;
     senatorPictureWaitCV->Wait(senatorWaitLock);//wait for a clerk
     
-    cout << "Senator ["<<id<<"] has given SSN ["<<id<<"] to PictureClerk ["<<senatorServiceId<<"]."<<endl;
+    cout << "Senator [" << id << "] has given SSN [" << ssn << "] to PictureClerk [" << senatorServiceId << "]."<<endl;
     senatorData=id;
     senatorPictureWaitCV->Signal(senatorWaitLock);//signal a clerk
     senatorPictureWaitCV->Wait(senatorWaitLock);//wait for a filed application
     
     
     senatorPassportWaitLock->Release();
-    cout << "Senator ["<<id<<"] has gotten in regular line for PassportClerk ["<< senatorServiceId << "]." << endl;
-    senatorPassportWaitCV->Signal(senatorWaitLock);//signal  a clerk
+    cout << "Senator [" << id << "] has gotten in regular line for PassportClerk [" << senatorServiceId << "]." << endl;
     senatorPassportWaitCV->Wait(senatorWaitLock);//wait for a clerk
     
-    cout << "Senator ["<<id<<"] has given SSN ["<<id<<"] to PassportClerk ["<<senatorServiceId<<"]."<<endl;
+    cout << "Senator [" << id << "] has given SSN [" << ssn << "] to PassportClerk [" << senatorServiceId << "]."<<endl;
     senatorData=id;
     senatorPassportWaitCV->Signal(senatorWaitLock);//signal a clerk
     senatorPassportWaitCV->Wait(senatorWaitLock);//wait for a filed application
     
     
     senatorCashierWaitLock->Release();
-    cout << "Senator ["<<id<<"] has gotten in regular line for Cashier ["<< senatorServiceId << "]." << endl;
-    senatorCashierWaitCV->Signal(senatorWaitLock);//signal  a clerk
+    cout << "Senator [" << id << "] has gotten in regular line for Cashier [" << senatorServiceId << "]." << endl;
     senatorCashierWaitCV->Wait(senatorWaitLock);//wait for a clerk
     
-    cout << "Senator ["<<id<<"] has given SSN ["<<id<<"] to Cashier ["<<senatorServiceId<<"]."<<endl;
+    cout << "Senator [" << id << "] has given SSN [" << ssn << "] to Cashier [" << senatorServiceId << "]."<<endl;
     senatorData=id;
     senatorCashierWaitCV->Signal(senatorWaitLock);//signal a clerk
     senatorCashierWaitCV->Wait(senatorWaitLock);//wait for a filed application
@@ -1510,12 +1491,9 @@ void Senator(){
     
     hasSenator=FALSE;
     senatorStatus = 0;
-    cout<<"senator finished"<<endl;
-   // cout<<"33"<<endl;
+    cout<<"Senator[" << id << "] has finished and left"<<endl;
     customerWaitLock->Release();
-    //cout<<"44"<<endl;
     senatorWaitLock->Release();
-     //cout<<"55"<<endl;
 }
 
 
@@ -1748,6 +1726,7 @@ void PassportOffice(){
     }
 
     senatorWaitLock = new Lock("senator");
+    senatorApplicationWaitLock = new Lock("senatorApplicationWaitLock");
     senatorPictureWaitLock = new Lock("senatorPictureWaitLock");
     senatorPassportWaitLock = new Lock("senatorPassportWaitLock");
     senatorCashierWaitLock = new Lock("senatorCashierWaitLock");
@@ -1806,6 +1785,10 @@ void PassportOffice(){
     }
 
 
+    t1 = new Thread("Manager");
+    t1->Fork((VoidFunctionPtr)Manager, 0);
+
+
     for (int i = 0; i < numSenator; i++){
         char threadName[100] = "Senator";
         sprintf(integer,"%d",i );
@@ -1813,10 +1796,6 @@ void PassportOffice(){
         t1 = new Thread(threadName);
         t1->Fork((VoidFunctionPtr)Senator, 0);
     }
-
-
-    t1 = new Thread("Manager");
-    t1->Fork((VoidFunctionPtr)Manager, 0);
     
 
 }
