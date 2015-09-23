@@ -842,12 +842,28 @@ void Customer(){
 
 void ApplicationClerk(int myLine){
     int id = 0;
+    bool printed = false;
 
     while(true){
       bool InBribeLine = false;
+        
+        if (ApplicationClerkState[myLine] == ONBREAK && !printed){
+          cout << "ApplicationClerk [" << myLine << "] is going on break" << endl;
+          printed = true;
+        }
+        else if (ApplicationClerkState[myLine] != ONBREAK){
+          printed = false;
+        }
 
         if(hasSenator && (myLine==0) && senatorStatus == 0){//if there is a senator present and i am the index 0 clerk
 
+           if (ApplicationClerkState[myLine] == ONBREAK){
+              ApplicationClerkState[myLine] = BUSY;
+              cout << "ApplicationClerk [" << myLine << "] sees a senator" << endl;
+              cout << "ApplicationClerk [" << myLine << "] is coming off break" << endl;
+              printed = false;
+           }
+           
             senatorApplicationWaitLock->Acquire();
             senatorWaitLock->Acquire();
 
@@ -945,11 +961,29 @@ void ApplicationClerk(int myLine){
 
 void PictureClerk(int myLine){
     int id = 0;
+    bool printed = false;
     
     while(true){
       
         bool inBribeLine = false;
+        
+        if (pictureClerkState[myLine] == ONBREAK && !printed){
+          cout << "PictureClerk [" << myLine << "] is going on break" << endl;
+          printed = true;
+        }
+        else if (pictureClerkState[myLine] != ONBREAK){
+          printed = false;
+        }
+
        if(hasSenator && (myLine==0) && senatorStatus <= 1){//if there is a senator present and i am the index 0 clerk
+           
+           if (pictureClerkState[myLine] == ONBREAK){
+              pictureClerkState[myLine] = BUSY;
+              cout << "PictureClerk [" << myLine << "] sees a senator" << endl;
+              cout << "PictureClerk [" << myLine << "] is coming off break" << endl;
+              printed = false;
+           }
+           
            senatorPictureWaitLock->Acquire();
            senatorWaitLock->Acquire();
 
@@ -1077,11 +1111,29 @@ void PictureClerk(int myLine){
 
 void PassportClerk(int myLine){
     int id = 0;
+    bool printed = false;
     
     while(true){
         
         bool inBribeLine = false;
+
+        if (passportClerkState[myLine] == ONBREAK && !printed){
+          cout << "PassportClerk [" << myLine << "] is going on break" << endl;
+          printed = true;
+        }
+        else if (passportClerkState[myLine] != ONBREAK){
+          printed = false;
+        }
+
        if(hasSenator && (myLine==0) && senatorStatus <= 3){//if there is a senator present and I am the index 0 clerk
+           
+           if (passportClerkState[myLine] == ONBREAK){
+              passportClerkState[myLine] = BUSY;
+              cout << "PassportClerk [" << myLine << "] sees a senator" << endl;
+              cout << "PassportClerk [" << myLine << "] is coming off break" << endl;
+              printed = false;
+           }
+
            senatorPassportWaitLock->Acquire();
            senatorWaitLock->Acquire();
 
@@ -1105,6 +1157,8 @@ void PassportClerk(int myLine){
        }
         else if(hasSenator && myLine != 0){//if there is no senator present and I am not the index 0 clerk. Put myself on break
             passportClerkState[myLine] = ONBREAK;
+            currentThread->Yield();//context switch
+            continue;
         }
         
         ClerkLineLock.Acquire();
@@ -1205,10 +1259,26 @@ void PassportClerk(int myLine){
 
 void Cashier(int myLine){
     int id = 0;
+    bool printed = false;
     
     while (true){
-       
+        
+        if (CashierState[myLine] == ONBREAK && !printed){
+          cout << "Cashier [" << myLine << "] is going on break" << endl;
+          printed = true;
+        }
+        else if (CashierState[myLine] != ONBREAK){
+          printed = false;
+        }
+
        if(hasSenator && (myLine==0) && senatorStatus <= 6){//if has senator and my index is 0
+
+           if (CashierState[myLine] == ONBREAK){
+              CashierState[myLine] = BUSY;
+              cout << "Cashier [" << myLine << "] sees a senator" << endl;
+              cout << "Cashier [" << myLine << "] is coming off break" << endl;
+              printed = false;
+           }
 
            senatorCashierWaitLock->Acquire();
            senatorWaitLock->Acquire();
@@ -1357,12 +1427,14 @@ void Manager(){
                 
                 ApplicationClerkState[i] = AVAILABLE;
                 cout << "Manager has woken up an ApplicationClerk" << endl;
+                cout << "ApplicationClerk [" << i << "] is coming off break" << endl;
             }
             else if (remainingCustomer <= maxNumClerk * 3 && 
                       ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] > 0){
                 
                 ApplicationClerkState[i] = AVAILABLE;
                 cout << "Manager has woken up an ApplicationClerk" << endl;
+                cout << "ApplicationClerk [" << i << "] is coming off break" << endl;
 
             }
             
@@ -1375,12 +1447,14 @@ void Manager(){
                 
                 pictureClerkState[i] = AVAILABLE;
                 cout << "Manager has woken up a PictureClerk" << endl;
+                cout << "PictureClerk [" << i << "] is coming off break" << endl;
             }
             else if (remainingCustomer <= maxNumClerk * 3 && 
                       pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] > 0){
                 
                 pictureClerkState[i] = AVAILABLE;
                 cout << "Manager has woken up a PictureClerk" << endl;
+                cout << "PictureClerk [" << i << "] is coming off break" << endl;
 
             }
             
@@ -1393,12 +1467,14 @@ void Manager(){
                 
                 passportClerkState[i] = AVAILABLE;
                 cout << "Manager has woken up a PassportClerk" << endl;
+                cout << "PassportClerk [" << i << "] is coming off break" << endl;
             }
             else if (remainingCustomer <= maxNumClerk * 3 && 
                       passportClerkLineCount[i] + passportClerkBribeLineCount[i] > 0){
                 
                 passportClerkState[i] = AVAILABLE;
                 cout << "Manager has woken up a PassportClerk" << endl;
+                cout << "PassportClerk [" << i << "] is coming off break" << endl;
 
             }
 
@@ -1411,12 +1487,14 @@ void Manager(){
                 
                 CashierState[i] = AVAILABLE;
                 cout << "Manager has woken up a Cashier" << endl;
+                cout << "Cashier [" << i << "] is coming off break" << endl;
             }
             else if (remainingCustomer <= maxNumClerk * 3 && 
                       CashierLineCount[i] > 0){
                 
                 CashierState[i] = AVAILABLE;
                 cout << "Manager has woken up a Cashier" << endl;
+                cout << "Cashier [" << i << "] is coming off break" << endl;
 
             }
             
