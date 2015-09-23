@@ -902,12 +902,14 @@ void ApplicationClerk(int myLine){
                 ApplicationClerkState[myLine]=ONBREAK;
                 ClerkLineLock.Release();
                 currentThread->Yield();//context switch
+                if (remainingCustomer == 0) break;
                 continue;
             }
         }
         else{//if there is no customers, put myself on break
             ClerkLineLock.Release();
             currentThread->Yield();//context switch
+            if (remainingCustomer == 0) break;
             continue;
         }
 
@@ -956,6 +958,7 @@ void ApplicationClerk(int myLine){
             
         ApplicationClerkLineLock[myLine]->Release();
 
+        if (remainingCustomer == 0) break;
     }//while
 }
 
@@ -1028,12 +1031,14 @@ void PictureClerk(int myLine){
                 pictureClerkState[myLine] = ONBREAK;
                 ClerkLineLock.Release();
                 currentThread->Yield();//context switch
+                if (remainingCustomer == 0) break;
                 continue;
             }
         }
         else{//if there is no customers, put myself on break
             ClerkLineLock.Release();
             currentThread->Yield();//context switch
+            if (remainingCustomer == 0) break;
             continue;
         }
 
@@ -1106,6 +1111,7 @@ void PictureClerk(int myLine){
         //customer service ends
         pictureClerkLineLock[myLine]->Release();
 
+        if (remainingCustomer == 0) break;
     }
 }
 
@@ -1157,8 +1163,6 @@ void PassportClerk(int myLine){
        }
         else if(hasSenator && myLine != 0){//if there is no senator present and I am not the index 0 clerk. Put myself on break
             passportClerkState[myLine] = ONBREAK;
-            currentThread->Yield();//context switch
-            continue;
         }
         
         ClerkLineLock.Acquire();
@@ -1177,12 +1181,14 @@ void PassportClerk(int myLine){
                 passportClerkState[myLine] = ONBREAK;
                 ClerkLineLock.Release();
                 currentThread->Yield();//context switch
+                if (remainingCustomer == 0) break;
                 continue;
             }
         }
         else{
             ClerkLineLock.Release();
             currentThread->Yield();//context switch
+            if (remainingCustomer == 0) break;
             continue;
         }
         
@@ -1254,6 +1260,7 @@ void PassportClerk(int myLine){
         
         passportClerkLineLock[myLine]->Release();
         
+        if (remainingCustomer == 0) break;
     }
 }
 
@@ -1327,12 +1334,14 @@ void Cashier(int myLine){
                 CashierState[myLine] = ONBREAK;     //
                 // CashierCV[myLine]->Wait(CashierLock[myLine]);
                 currentThread->Yield();
+                if (remainingCustomer == 0) break;
                 continue;
             }
         }
         else {  //When CashierState == ONBREAK, Do Nothing
             ClerkLineLock.Release();
             currentThread->Yield();
+            if (remainingCustomer == 0) break;
             continue;
         }
         
@@ -1374,6 +1383,8 @@ void Cashier(int myLine){
         
         
         CashierLineLock[myLine]->Release();
+
+        if (remainingCustomer == 0) break;
     }   //while loop
 }
 
@@ -1504,9 +1515,18 @@ void Manager(){
         
         count++;
         
-        if (remainingCustomer == 0) break;
+        if (remainingCustomer == 0) {
+          cout << "No customer. Manager is closing the office" << endl;
+          break;
+        }
         
     }
+
+    cout << endl;
+    cout << "===================================" << endl;
+    cout << "Passport Office Simulation Finshed." << endl;
+    cout << "===================================" << endl;
+    cout << endl;
 
 }
 
@@ -1589,7 +1609,10 @@ void PassportOffice(){
     Thread* t1;
     char integer[32];
 
+    cout << "===================================" << endl;
     cout << "Passport Office Simulation started." << endl;
+    cout << "===================================" << endl;
+    cout << endl;
 
     cout << "Number of Customers = ";
     cin >> numCustomer;
@@ -1600,7 +1623,7 @@ void PassportOffice(){
     }
     remainingCustomer = numCustomer;
 
-    cout << "Number of ApplicationClerks = " << endl;
+    cout << "Number of ApplicationClerks = ";
     cin >> numApplicationClerk;
     while (numApplicationClerk > 5 || numApplicationClerk < 1){
         cout << "Number of ApplicationClerks should be 1-5" << endl;
@@ -1608,7 +1631,7 @@ void PassportOffice(){
         cin >> numApplicationClerk;
     }
 
-    cout << "Number of PictureClerks = " << endl;
+    cout << "Number of PictureClerks = ";
     cin >> numPictureClerk;
     while (numPictureClerk > 5 || numPictureClerk < 1){
         cout << "Number of PictureClerks should be 1-5" << endl;
@@ -1878,7 +1901,7 @@ void PassportOffice(){
         t1 = new Thread(threadName);
         t1->Fork((VoidFunctionPtr)Senator, 0);
     }
-    
+
 
 }
 

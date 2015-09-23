@@ -85,20 +85,22 @@ main(int argc, char **argv)
     DEBUG('t', "Entering main");
     (void) Initialize(argc, argv);
     
-#ifdef THREADS
-    //ThreadTest();
-   // TestSuite();
-    if (!strcmp(*argv, "-T"))               // Test Suite
-        TestSuite();
-    if (!strcmp(*argv, "-P2"))               // Problem 2
-        PassportOffice();
-#endif //THREADS
-#endif
+
     
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
         argCount = 1;
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);
+#ifdef THREADS
+    //ThreadTest();
+   // TestSuite();
+    if (!strcmp(*argv, "-T")){               // Test Suite
+        TestSuite();
+    }
+    if (!strcmp(*argv, "-P2")){               // Problem 2
+        PassportOffice();
+    }
+#endif // THREADS
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {        	// run a user program
             ASSERT(argc > 1);
