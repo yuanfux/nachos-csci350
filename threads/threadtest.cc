@@ -1591,52 +1591,53 @@ void PassportOffice(){
 
     cout << "Passport Office Simulation started." << endl;
 
-    cout << "Enter the numebr of application clerks(1-5): " << endl;
-    cin >> numApplicationClerk;
-    while (numApplicationClerk > 5 || numApplicationClerk < 1){
-        cout << "Invalid input." << endl;
-        cout << "Enter the numebr of application clerks(1-5): " << endl;
-        cin >> numApplicationClerk;
-    }
-
-    cout << "Enter the numebr of picture clerks(1-5): " << endl;
-    cin >> numPictureClerk;
-    while (numPictureClerk > 5 || numPictureClerk < 1){
-        cout << "Invalid input." << endl;
-        cout << "Enter the numebr of picture clerks(1-5): " << endl;
-        cin >> numPictureClerk;
-    }
-
-    cout << "Enter the numebr of passport clerks(1-5): " << endl;
-    cin >> numPassportClerk;
-    while (numPassportClerk > 5 || numPassportClerk < 1){
-        cout << "Invalid input." << endl;
-        cout << "Enter the numebr of passport clerks(1-5): " << endl;
-        cin >> numPassportClerk;
-    }
-
-    cout << "Enter the numebr of cashiers(1-5): " << endl;
-    cin >> numCashier;
-    while (numApplicationClerk > 5 || numApplicationClerk < 1){
-        cout << "Invalid input. " << endl;
-        cout << "Enter the numebr of cashiers(1-5): " << endl;
-        cin >> numApplicationClerk;
-    }
-
-    cout << "Enter the numebr of customers: " << endl;
+    cout << "Number of Customers = ";
     cin >> numCustomer;
     while (numCustomer > 50 || numCustomer < 0){
         cout << "Customer number should be less than 50." << endl;
-        cout << "Enter the numebr of customers: " << endl;
+        cout << "Number of Customers = ";
         cin >> numCustomer;
     }
     remainingCustomer = numCustomer;
 
-    cout << "Enter the number of senators: " << endl;
+    cout << "Number of ApplicationClerks = " << endl;
+    cin >> numApplicationClerk;
+    while (numApplicationClerk > 5 || numApplicationClerk < 1){
+        cout << "Number of ApplicationClerks should be 1-5" << endl;
+        cout << "Number of ApplicationClerks = " << endl;
+        cin >> numApplicationClerk;
+    }
+
+    cout << "Number of PictureClerks = " << endl;
+    cin >> numPictureClerk;
+    while (numPictureClerk > 5 || numPictureClerk < 1){
+        cout << "Number of PictureClerks should be 1-5" << endl;
+        cout << "Number of PictureClerks = " << endl;
+        cin >> numPictureClerk;
+    }
+
+    cout << "Number of PassportClerks = ";
+    cin >> numPassportClerk;
+    while (numPassportClerk > 5 || numPassportClerk < 1){
+        cout << "Number of PassportClerks should be 1-5" << endl;
+        cout << "Number of PassportClerks = ";
+        cin >> numPassportClerk;
+    }
+
+    cout << "Number of Cashiers = ";
+    cin >> numCashier;
+    while (numApplicationClerk > 5 || numApplicationClerk < 1){
+        cout << "Number of Cashiers should be 1-5" << endl;
+        cout << "Number of Cashiers = ";
+        cin >> numApplicationClerk;
+    }
+
+
+    cout << "Number of Senators = ";
     cin >> numSenator;
     while (numSenator > 10 || numSenator < 0){
         cout << "Senator number should be less than 10." << endl;
-        cout << "Enter the number of senators: " << endl;
+        cout << "Number of Senators = ";
         cin >> numSenator;
     }
     

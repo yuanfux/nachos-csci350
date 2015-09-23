@@ -88,7 +88,11 @@ main(int argc, char **argv)
 #ifdef THREADS
     //ThreadTest();
    // TestSuite();
-    PassportOffice();
+    if (!strcmp(*argv, "-T"))               // Test Suite
+        TestSuite();
+    if (!strcmp(*argv, "-P2"))               // Problem 2
+        PassportOffice();
+#endif //THREADS
 #endif
     
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
