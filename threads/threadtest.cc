@@ -1,9 +1,9 @@
 // threadtest.cc
-//	Simple test case for the threads assignment.
+//  Simple test case for the threads assignment.
 //
-//	Create two threads, and have them context switch
-//	back and forth between themselves by calling Thread::Yield,
-//	to illustratethe inner workings of the thread system.
+//  Create two threads, and have them context switch
+//  back and forth between themselves by calling Thread::Yield,
+//  to illustratethe inner workings of the thread system.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation
@@ -22,11 +22,11 @@
 #ifdef CHANGED
 //----------------------------------------------------------------------
 // SimpleThread
-// 	Loop 5 times, yielding the CPU to another ready thread
-//	each iteration.
+//  Loop 5 times, yielding the CPU to another ready thread
+//  each iteration.
 //
-//	"which" is simply a number identifying the thread, for debugging
-//	purposes.
+//  "which" is simply a number identifying the thread, for debugging
+//  purposes.
 //----------------------------------------------------------------------
 
 void
@@ -42,8 +42,8 @@ SimpleThread(int which)
 
 //----------------------------------------------------------------------
 // ThreadTest
-// 	Set up a ping-pong between two threads, by forking a thread
-//	to call SimpleThread, and then calling SimpleThread ourselves.
+//  Set up a ping-pong between two threads, by forking a thread
+//  to call SimpleThread, and then calling SimpleThread ourselves.
 //----------------------------------------------------------------------
 
 void
@@ -57,7 +57,7 @@ ThreadTest()
     SimpleThread(0);
 }
 
-//	Simple test cases for the threads assignment.
+//  Simple test cases for the threads assignment.
 //
 
 // --------------------------------------------------
@@ -77,7 +77,7 @@ Semaphore t1_s3("t1_s3",0);       // To make sure t1_t1 does not release the
 Semaphore t1_done("t1_done",0);   // So that TestSuite knows when Test 1 is
                                   // done
 
-Lock t1_l1("t1_l1");		  // the lock tested in Test 1
+Lock t1_l1("t1_l1");      // the lock tested in Test 1
 
 // --------------------------------------------------
 // t1_t1() -- test1 thread 1
@@ -104,7 +104,7 @@ void t1_t1() {
 // --------------------------------------------------
 void t1_t2() {
 
-    t1_s1.P();	// Wait until t1 has the lock
+    t1_s1.P();  // Wait until t1 has the lock
     t1_s2.V();  // Let t3 try to acquire the lock
 
     printf("%s: trying to acquire lock %s\n",currentThread->getName(),
@@ -127,9 +127,9 @@ void t1_t2() {
 // --------------------------------------------------
 void t1_t3() {
 
-    t1_s2.P();	// Wait until t2 is ready to try to acquire the lock
+    t1_s2.P();  // Wait until t2 is ready to try to acquire the lock
 
-    t1_s3.V();	// Let t1 do it's stuff
+    t1_s3.V();  // Let t1 do it's stuff
     for ( int i = 0; i < 3; i++ ) {
        printf("%s: Trying to release Lock %s\n",currentThread->getName(),
         t1_l1.getName());
@@ -140,9 +140,9 @@ void t1_t3() {
 // --------------------------------------------------
 // Test 2 - see TestSuite() for details
 // --------------------------------------------------
-Lock t2_l1("t2_l1");		// For mutual exclusion
-Condition t2_c1("t2_c1");	// The condition variable to test
-Semaphore t2_s1("t2_s1",0);	// To ensure the Signal comes before the wait
+Lock t2_l1("t2_l1");    // For mutual exclusion
+Condition t2_c1("t2_c1"); // The condition variable to test
+Semaphore t2_s1("t2_s1",0); // To ensure the Signal comes before the wait
 Semaphore t2_done("t2_done",0);     // So that TestSuite knows when Test 2 is
                                   // done
 
@@ -158,7 +158,7 @@ void t2_t1() {
     printf("%s: Releasing Lock %s\n",currentThread->getName(),
         t2_l1.getName());
     t2_l1.Release();
-    t2_s1.V();	// release t2_t2
+    t2_s1.V();  // release t2_t2
     t2_done.V();
 }
 
@@ -167,7 +167,7 @@ void t2_t1() {
 //     This thread will wait on a pre-signalled variable
 // --------------------------------------------------
 void t2_t2() {
-    t2_s1.P();	// Wait for t2_t1 to be done with the lock
+    t2_s1.P();  // Wait for t2_t1 to be done with the lock
     t2_l1.Acquire();
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
         t2_l1.getName(), t2_c1.getName());
@@ -179,9 +179,9 @@ void t2_t2() {
 // --------------------------------------------------
 // Test 3 - see TestSuite() for details
 // --------------------------------------------------
-Lock t3_l1("t3_l1");		// For mutual exclusion
-Condition t3_c1("t3_c1");	// The condition variable to test
-Semaphore t3_s1("t3_s1",0);	// To ensure the Signal comes before the wait
+Lock t3_l1("t3_l1");    // For mutual exclusion
+Condition t3_c1("t3_c1"); // The condition variable to test
+Semaphore t3_s1("t3_s1",0); // To ensure the Signal comes before the wait
 Semaphore t3_done("t3_done",0); // So that TestSuite knows when Test 3 is
                                 // done
 
@@ -192,7 +192,7 @@ Semaphore t3_done("t3_done",0); // So that TestSuite knows when Test 3 is
 // --------------------------------------------------
 void t3_waiter() {
     t3_l1.Acquire();
-    t3_s1.V();		// Let the signaller know we're ready to wait
+    t3_s1.V();    // Let the signaller know we're ready to wait
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
         t3_l1.getName(), t3_c1.getName());
     t3_c1.Wait(&t3_l1);
@@ -225,9 +225,9 @@ void t3_signaller() {
 // --------------------------------------------------
 // Test 4 - see TestSuite() for details
 // --------------------------------------------------
-Lock t4_l1("t4_l1");		// For mutual exclusion
-Condition t4_c1("t4_c1");	// The condition variable to test
-Semaphore t4_s1("t4_s1",0);	// To ensure the Signal comes before the wait
+Lock t4_l1("t4_l1");    // For mutual exclusion
+Condition t4_c1("t4_c1"); // The condition variable to test
+Semaphore t4_s1("t4_s1",0); // To ensure the Signal comes before the wait
 Semaphore t4_done("t4_done",0); // So that TestSuite knows when Test 4 is
                                 // done
 
@@ -238,7 +238,7 @@ Semaphore t4_done("t4_done",0); // So that TestSuite knows when Test 4 is
 // --------------------------------------------------
 void t4_waiter() {
     t4_l1.Acquire();
-    t4_s1.V();		// Let the signaller know we're ready to wait
+    t4_s1.V();    // Let the signaller know we're ready to wait
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
         t4_l1.getName(), t4_c1.getName());
     t4_c1.Wait(&t4_l1);
@@ -270,10 +270,10 @@ void t4_signaller() {
 // --------------------------------------------------
 // Test 5 - see TestSuite() for details
 // --------------------------------------------------
-Lock t5_l1("t5_l1");		// For mutual exclusion
-Lock t5_l2("t5_l2");		// Second lock for the bad behavior
-Condition t5_c1("t5_c1");	// The condition variable to test
-Semaphore t5_s1("t5_s1",0);	// To make sure t5_t2 acquires the lock after
+Lock t5_l1("t5_l1");    // For mutual exclusion
+Lock t5_l2("t5_l2");    // Second lock for the bad behavior
+Condition t5_c1("t5_c1"); // The condition variable to test
+Semaphore t5_s1("t5_s1",0); // To make sure t5_t2 acquires the lock after
                                 // t5_t1
 
 // --------------------------------------------------
@@ -282,7 +282,7 @@ Semaphore t5_s1("t5_s1",0);	// To make sure t5_t2 acquires the lock after
 // --------------------------------------------------
 void t5_t1() {
     t5_l1.Acquire();
-    t5_s1.V();	// release t5_t2
+    t5_s1.V();  // release t5_t2
     printf("%s: Lock %s acquired, waiting on %s\n",currentThread->getName(),
         t5_l1.getName(), t5_c1.getName());
     t5_c1.Wait(&t5_l1);
@@ -298,7 +298,7 @@ void t5_t1() {
 //     a Fatal error
 // --------------------------------------------------
 void t5_t2() {
-    t5_s1.P();	// Wait for t5_t1 to get into the monitor
+    t5_s1.P();  // Wait for t5_t1 to get into the monitor
     t5_l1.Acquire();
     t5_l2.Acquire();
     printf("%s: Lock %s acquired, signalling %s\n",currentThread->getName(),
@@ -325,7 +325,7 @@ void t5_t2() {
 //
 //       3.  Show that Signal only wakes 1 thread
 //
-//	 4.  Show that Broadcast wakes all waiting threads
+//   4.  Show that Broadcast wakes all waiting threads
 //
 //       5.  Show that Signalling a thread waiting under one lock
 //       while holding another is a Fatal error
@@ -414,6 +414,15 @@ void TestSuite() {
    t->Fork((VoidFunctionPtr)t5_t2,0);
     
 }
+
+
+
+
+
+Semaphore p2_done("p2_done",0);
+
+
+
 using namespace std;
 
 enum clerkState{AVAILABLE, BUSY, ONBREAK};
@@ -838,6 +847,7 @@ void Customer(){
     }
     incrementCount.Release();
     
+    p2_done.V();
 }
 
 void ApplicationClerk(int myLine){
@@ -960,6 +970,9 @@ void ApplicationClerk(int myLine){
 
         if (remainingCustomer == 0) break;
     }//while
+  
+
+    p2_done.V();
 }
 
 void PictureClerk(int myLine){
@@ -1113,6 +1126,10 @@ void PictureClerk(int myLine){
 
         if (remainingCustomer == 0) break;
     }
+
+
+    p2_done.V();
+
 }
 
 void PassportClerk(int myLine){
@@ -1262,6 +1279,9 @@ void PassportClerk(int myLine){
         
         if (remainingCustomer == 0) break;
     }
+
+
+    p2_done.V();
 }
 
 void Cashier(int myLine){
@@ -1386,6 +1406,9 @@ void Cashier(int myLine){
 
         if (remainingCustomer == 0) break;
     }   //while loop
+ 
+
+    p2_done.V();
 }
 
 void Manager(){
@@ -1522,11 +1545,8 @@ void Manager(){
         
     }
 
-    cout << endl;
-    cout << "===================================" << endl;
-    cout << "Passport Office Simulation Finshed." << endl;
-    cout << "===================================" << endl;
-    cout << endl;
+
+    p2_done.V();
 
 }
 
@@ -1544,7 +1564,7 @@ void Senator(){
     senatorNum++;
     cout << "Senator ["<< id<<"] has came into passport office"<< endl;
 
-	  hasSenator = TRUE;
+    hasSenator = TRUE;
     for(unsigned int i=0;i<numCustomerWaiting.size();i++){
         cout<<"Customer ["<<numCustomerWaiting[i]<<"] is going outside the Passport Office because their is a Senator present."<<endl;
     }
@@ -1595,17 +1615,21 @@ void Senator(){
     cout<<"Senator[" << id << "] is leaving the Passport Office"<<endl;//senator is leaving the passport office
     customerWaitLock->Release();
     senatorWaitLock->Release();
+    
+
+    p2_done.V();
 }
 
 
-void PassportOffice(){
+int numApplicationClerk;
+int numPictureClerk;
+int numPassportClerk;
+int numCashier;
+int numCustomer;
+int numSenator;
+
+void PassportOffice(int test2){
     
-    int numApplicationClerk;
-    int numPictureClerk;
-    int numPassportClerk;
-    int numCashier;
-    int numCustomer;
-    int numSenator;
     Thread* t1;
     char integer[32];
 
@@ -1613,7 +1637,7 @@ void PassportOffice(){
     cout << "Passport Office Simulation started." << endl;
     cout << "===================================" << endl;
     cout << endl;
-
+    if (!test2){
     cout << "Number of Customers = ";
     cin >> numCustomer;
     while (numCustomer > 50 || numCustomer < 0){
@@ -1621,7 +1645,6 @@ void PassportOffice(){
         cout << "Number of Customers = ";
         cin >> numCustomer;
     }
-    remainingCustomer = numCustomer;
 
     cout << "Number of ApplicationClerks = ";
     cin >> numApplicationClerk;
@@ -1663,7 +1686,9 @@ void PassportOffice(){
         cout << "Number of Senators = ";
         cin >> numSenator;
     }
+  }
     
+    remainingCustomer = numCustomer;
     
     //Initialize all variables for all clerks
     for(int i = 0; i < numApplicationClerk; i++){
@@ -1902,7 +1927,44 @@ void PassportOffice(){
         t1->Fork((VoidFunctionPtr)Senator, 0);
     }
 
+    p2_done.V();
+}
 
+void Problem2(){
+
+  cout << "Test 1 tests these senarios: " << endl;
+  cout << "1. Customers always take shortest line " << endl;
+  cout << "2. No 2 customers choose the same shortest line" << endl;
+  cout << "3. Clerks go on break when they have no one waiting in their line " << endl;
+  cout << "4. Customers do not leave until they are given their passport by the Cashier. The Cashier does not start on another customer until they know that the last Customer has left their area" << endl;
+  cout << "5. The behavior of Customers is proper when Senators arrive. This is before, during, and after." << endl;
+  cout << "6. Managers get Clerks off their break when lines get too long" << endl;
+  cout << "7. Total sales never suffers from a race condition: they sum up in all tests" << endl;
+
+    numApplicationClerk = 3;
+    numPictureClerk = 3;
+    numPassportClerk = 3;
+    numCashier = 3;
+    numCustomer = 2;
+    numSenator = 1;
+  Thread *t2 = new Thread("P2_t1");
+  t2->Fork((VoidFunctionPtr)PassportOffice, 1);
+  cout << endl;
+  for (int i = 0; i < 16; i++)
+    p2_done.P();
+
+    cout << endl;
+    cout << "===================================" << endl;
+    cout << "Passport Office Test 1  Finshed." << endl;
+    cout << "===================================" << endl;
+    cout << endl;
+
+
+
+  cout << "Test 3: manually input numbers of all people" << endl;
+  t2 = new Thread("P2_manual");
+  t2->Fork((VoidFunctionPtr)PassportOffice, 0);
+  cout << endl;
 }
 
 
