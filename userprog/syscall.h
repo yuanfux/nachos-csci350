@@ -30,6 +30,17 @@
 #define SC_Fork		9
 #define SC_Yield	10
 
+#define SC_Acquire  11
+#define SC_Release  12
+#define SC_Wait     13
+#define SC_Signal   14
+#define SC_Broadcast 15
+#define SC_CreateLock 16
+#define SC_DestroyLock 17
+#define SC_CreateConditon 18
+#define SC_DestroyCondition 19
+
+
 #define MAXFILENAME 256
 
 #ifndef IN_ASM
@@ -125,6 +136,26 @@ void Fork(void (*func)());
  * or not. 
  */
 void Yield();		
+
+int Acquire(int lockIndex);
+
+int Release(int lockIndex);
+
+int Wait(int conditionIndex, int lockIndex);
+
+int Signal(int conditionIndex, int lockIndex);
+
+int Broadcast(int conditionIndex, int lockIndex);
+
+int CreateLock();
+
+int DestroyLock(int lockIndex);
+
+int CreateCondition();
+
+int DestroyCondition(int lockIndex);
+
+
 
 #endif /* IN_ASM */
 
