@@ -231,6 +231,25 @@ void Close_Syscall(int fd) {
     }
 }
 
+
+int Acquire_Syscall(int lockIndex){}
+
+int Release_Syscall(int lockIndex){}
+
+int Wait_Syscall(int conditionIndex, int lockIndex){}
+
+int Signal_Syscall(int conditionIndex, int lockIndex){}
+
+int Broadcast_Syscall(int conditionIndex, int lockIndex){}
+
+int CreateLock_Syscall(){}
+
+int DestroyLock_Syscall(int lockIndex){}
+
+int CreateCondition_Syscall(){}
+
+int DestroyCondition_Syscall(int conditionIndex){}
+
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
     int rv=0; 	// the return value from a syscall
@@ -243,6 +262,18 @@ void ExceptionHandler(ExceptionType which) {
 		DEBUG('a', "Shutdown, initiated by user program.\n");
 		interrupt->Halt();
 		break;
+      case SC_Exit:
+    DEBUG('a', "Exit syscall.\n");
+    Exit_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_Exec:
+    DEBUG('a', "Exec syscall.\n");
+    rv = Exec_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_Join:
+    DEBUG('a', "Join syscall.\n");
+    rv = Join_Syscall(machine->ReadRegister(4));
+    break;
 	    case SC_Create:
 		DEBUG('a', "Create syscall.\n");
 		Create_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
@@ -263,10 +294,53 @@ void ExceptionHandler(ExceptionType which) {
 			      machine->ReadRegister(5),
 			      machine->ReadRegister(6));
 		break;
-	    case SC_Close:
-		DEBUG('a', "Close syscall.\n");
-		Close_Syscall(machine->ReadRegister(4));
-		break;
+      case SC_Fork:
+    DEBUG('a', "Fork syscall.\n");
+    Fork_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_Yield:
+    DEBUG('a', "Yield syscall.\n");
+    Yield_Syscall();
+    break;
+      case SC_Acquire:
+    DEBUG('a', "Acquire syscall.\n");
+    rv = Acquire_Syscall();
+    break;
+      case SC_Release:
+    DEBUG('a', "Release syscall.\n");
+    rv = Release_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_Wait:
+    DEBUG('a', "Wait syscall.\n");
+    rv = Wait_Syscall(machine->ReadRegister(4),
+            machine->ReadRegister(5));
+    break;
+      case SC_Signal:
+    DEBUG('a', "Signal syscall.\n");
+    rv = Signal_Syscall(machine->ReadRegister(4),
+            machine->ReadRegister(5));
+    break;
+      case SC_Broadcast:
+    DEBUG('a', "Broadcast syscall.\n");
+    rv = Broadcast_Syscall(machine->ReadRegister(4),
+            machine->ReadRegister(5));
+    break;
+      case SC_CreateLock:
+    DEBUG('a', "CreateLock syscall.\n");
+    rv = CreateLock_Syscall();
+    break;
+      case SC_DestroyLock:
+    DEBUG('a', "DestroyLock syscall.\n");
+    rv = DestroyLock_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_CreateCondition:
+    DEBUG('a', "CreateCondition syscall.\n");
+    rv = CreateCondition_Syscall();
+    break;
+      case SC_DestroyCondition:
+    DEBUG('a', "DestroyCondition syscall.\n");
+    rv = DestroyCondition_Syscall(machine->ReadRegister(4));
+    break;
 	}
 
 	// Put in the return value and increment the PC
