@@ -26,8 +26,13 @@
 #include "syscall.h"
 #include <stdio.h>
 #include <iostream>
+#include <vector>
+#include "synch.h"
 
 using namespace std;
+
+vector<Lock *> locks;
+vector<Condition *> cvs;
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -79,6 +84,20 @@ int copyout(unsigned int vaddr, int len, char *buf) {
     }
 
     return n;
+}
+
+typedef int SpaceId;  
+
+void Exit_Syscall(int status){}
+
+SpaceId Exec_Syscall(char *name){
+    SpaceId id;
+    return id;
+}
+
+int Join_Syscall(SpaceId id){
+    int i;
+    return i;
 }
 
 void Create_Syscall(unsigned int vaddr, int len) {
@@ -231,24 +250,70 @@ void Close_Syscall(int fd) {
     }
 }
 
+void Fork_Syscall(void (*func)()){}
 
-int Acquire_Syscall(int lockIndex){}
+void Yield_Syscall(){
+    currentThread->Yield();
+}   
 
-int Release_Syscall(int lockIndex){}
+int CreateLock_Syscall(){
 
-int Wait_Syscall(int conditionIndex, int lockIndex){}
+    Lock *newLock = new Lock("name");
+    locks.push_back(newLock);
+    int lockNumber = locks.size() - 1;
+    return lockNumber;
+}
 
-int Signal_Syscall(int conditionIndex, int lockIndex){}
+int DestroyLock_Syscall(int lockIndex){
+    locks.erase(locks.begin() + lockIndex);
+    return 0;
+  }
 
-int Broadcast_Syscall(int conditionIndex, int lockIndex){}
+int CreateCondition_Syscall(){
+    Condition *newCV = new Condition("name");
+    cvs.push_back(newCV);
+    int cvNumber = cvs.size() - 1;
+    return cvNumber;
+  }
 
-int CreateLock_Syscall(){}
+int DestroyCondition_Syscall(int conditionIndex){
+    cvs.erase(cvs.begin() + conditionIndex);
+    return 0;
+  }
 
-int DestroyLock_Syscall(int lockIndex){}
+int Acquire_Syscall(int lockIndex){
+    Lock *lock = locks[lockIndex];
+    lock->Acquire();
+    return 0;
+}
 
-int CreateCondition_Syscall(){}
+int Release_Syscall(int lockIndex){
+    Lock *lock = locks[lockIndex];
+    lock->Release();
+    return 0;
+}
 
-int DestroyCondition_Syscall(int conditionIndex){}
+int Wait_Syscall(int conditionIndex, int lockIndex){
+    Condition *condition = cvs[conditionIndex];
+    Lock *lock = locks[lockIndex];
+    condition->Wait(lock);
+    return 0;
+
+}
+
+int Signal_Syscall(int conditionIndex, int lockIndex){
+    Condition *condition = cvs[conditionIndex];
+    Lock *lock = locks[lockIndex];
+    condition->Signal(lock);
+    return 0;
+  }
+
+int Broadcast_Syscall(int conditionIndex, int lockIndex){
+    Condition *condition = cvs[conditionIndex];
+    Lock *lock = locks[lockIndex];
+    condition->Broadcast(lock);
+    return 0;
+  }
 
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
@@ -268,7 +333,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_Exec:
     DEBUG('a', "Exec syscall.\n");
-    rv = Exec_Syscall(machine->ReadRegister(4));
+    rv = Exec_Syscall((char *)machine->ReadRegister(4));
     break;
       case SC_Join:
     DEBUG('a', "Join syscall.\n");
@@ -296,7 +361,7 @@ void ExceptionHandler(ExceptionType which) {
 		break;
       case SC_Fork:
     DEBUG('a', "Fork syscall.\n");
-    Fork_Syscall(machine->ReadRegister(4));
+    Fork_Syscall((void (*)())machine->ReadRegister(4));
     break;
       case SC_Yield:
     DEBUG('a', "Yield syscall.\n");
@@ -304,7 +369,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_Acquire:
     DEBUG('a', "Acquire syscall.\n");
-    rv = Acquire_Syscall();
+    rv = Acquire_Syscall(machine->ReadRegister(4));
     break;
       case SC_Release:
     DEBUG('a', "Release syscall.\n");

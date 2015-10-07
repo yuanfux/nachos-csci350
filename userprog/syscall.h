@@ -37,7 +37,7 @@
 #define SC_Broadcast 15
 #define SC_CreateLock 16
 #define SC_DestroyLock 17
-#define SC_CreateConditon 18
+#define SC_CreateCondition 18
 #define SC_DestroyCondition 19
 
 
