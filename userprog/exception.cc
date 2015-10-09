@@ -33,6 +33,7 @@ using namespace std;
 
 vector<Lock *> locks;
 vector<Condition *> cvs;
+Lock* forkLock =new Lock("forkLock");
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -250,7 +251,34 @@ void Close_Syscall(int fd) {
     }
 }
 
-void Fork_Syscall(void (*func)()){}
+void kernel_thread(int virtualAddress){
+    //increment the program counter
+    machine->WriteRegister(PCReg, virtualAddress);
+    machine->WriteRegister(NextPCReg, virtualAddress+4);
+    //restore state
+    currentThread->space->RestoreState();
+    machine->WriteRegister(StackReg, machine->ReadRegister(StackReg)-16);
+    machine->Run();
+    
+}
+
+
+void Fork_Syscall(void (*func)()){
+    
+    forkLock->Acquire();
+    
+    int virtualAddr = machine->ReadRegister(4);
+    
+    Thread *thread=new Thread("newThread");
+    
+    AddrSpace* addressSpace=currentThread->space;
+    
+    addressSpace->allocateSpaceForNewThread();
+    
+    thread->Fork(kernel_thread, virtualAddr);
+    
+    forkLock->Release();
+}
 
 void Yield_Syscall(){
     currentThread->Yield();

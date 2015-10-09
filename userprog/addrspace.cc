@@ -180,7 +180,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
 //
-// 	Dealloate an address space.  release pages, page tables, files
+// 	Dealloate an address space.  release pages, page tables, ts
 // 	and file tables
 //----------------------------------------------------------------------
 
@@ -244,4 +244,30 @@ void AddrSpace::RestoreState()
 {
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
+}
+
+void AddrSpace::allocateSpaceForNewThread(){
+    
+    TranslationEntry *newPageTable = new TranslationEntry[numPages];
+    
+    for (unsigned int i = 0; i < numPages; i++) {
+        newPageTable[i] = pageTable[i];
+    }
+    
+    numPages += 8;
+    for (unsigned int i = numPages - 8; i < numPages; i++){
+        newPageTable[i].virtualPage = i;
+        newPageTable[i].physicalPage = i;
+        newPageTable[i].valid = TRUE;
+        newPageTable[i].use = FALSE;
+        newPageTable[i].dirty = FALSE;
+        newPageTable[i].readOnly = FALSE;
+    }
+    
+    delete pageTable;
+    
+    pageTable = newPageTable;
+
+    
+    
 }
