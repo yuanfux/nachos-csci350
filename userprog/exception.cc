@@ -34,6 +34,7 @@ using namespace std;
 vector<Lock *> locks;
 vector<Condition *> cvs;
 Lock* forkLock =new Lock("forkLock");
+Lock* executeLock =new Lock("execLock");
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -91,9 +92,50 @@ typedef int SpaceId;
 
 void Exit_Syscall(int status){}
 
+
+void exec_thread(int virtualAddress){
+    executeLock->Acquire();
+    //initialize register
+    currentThread->space->InitRegisters();
+    //restore state
+    currentThread->space->RestoreState();
+    
+    executeLock->Release();
+    
+    machine->Run();
+}
+
+
 SpaceId Exec_Syscall(char *name){
-    SpaceId id;
-    return id;
+    executeLock->Acquire();
+    int virtualAddress = machine->ReadRegister(4);
+    
+    char* file=new char[100];
+    
+    copyin(virtualAddress, 100, file);
+    
+    OpenFile *newFile = fileSystem->Open(file);
+    
+    if(newFile){
+        AddrSpace* addressSpace = new AddrSpace(newFile);
+        Thread *thread = new Thread("thread");
+        addressSpace->allocateSpaceForNewThread();
+        thread->space = addressSpace;
+        
+        int spaceId = processTable.Put(addressSpace);
+        
+        machine->WriteRegister(2, spaceId);
+        
+        thread->Fork(exec_thread, virtualAddress);
+        executeLock->Release();
+        return 0;
+    }
+    else{
+        printf("%s", "Cannot open file");
+        executeLock->Release();
+        return -1;
+    }
+    
 }
 
 int Join_Syscall(SpaceId id){
