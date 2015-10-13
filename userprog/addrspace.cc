@@ -24,7 +24,7 @@
 
 extern "C" { int bzero(char *, int); };
 
-Table::Table(int s) : map(s), table(0), lock(0), size(s) {
+Table::Table(int s) : map(s), table(0), lock(0), size(s), numElements(0) {
     table = new void *[size];
     lock = new Lock("TableLock");
 }
@@ -55,8 +55,11 @@ int Table::Put(void *f) {
     lock->Acquire();
     i = map.Find();
     lock->Release();
-    if ( i != -1)
-	table[i] = f;
+    if ( i != -1){
+        numElements++;
+        table[i] = f;
+        
+    }
     return i;
 }
 
@@ -72,10 +75,15 @@ void *Table::Remove(int i) {
 	    map.Clear(i);
 	    f = table[i];
 	    table[i] = 0;
+        numElements--;
 	}
 	lock->Release();
     }
     return f;
+}
+
+int Table::GetNumElements(){
+    return numElements;
 }
 
 //----------------------------------------------------------------------
@@ -120,7 +128,7 @@ SwapHeader (NoffHeader *noffH)
 AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     NoffHeader noffH;
     unsigned int i, size;
-
+    numThread=0;//initialize number of threads in a process
     // Don't allocate the input or output to disk files
     fileTable.Put(0);
     fileTable.Put(0);
@@ -246,7 +254,7 @@ void AddrSpace::RestoreState()
     machine->pageTableSize = numPages;
 }
 
-void AddrSpace::allocateSpaceForNewThread(){
+void AddrSpace::AllocateSpaceForNewThread(){
     
     TranslationEntry *newPageTable = new TranslationEntry[numPages];
     
@@ -267,7 +275,44 @@ void AddrSpace::allocateSpaceForNewThread(){
     delete pageTable;
     
     pageTable = newPageTable;
-
     
+    numThread++;
+    
+    
+}
+
+void AddrSpace::DeallocateSpaceForThread(){
+
+    numPages -= 8;
+    
+    TranslationEntry *newPageTable = new TranslationEntry[numPages];
+    
+    for (unsigned int i = 0; i < numPages; i++) {
+        newPageTable[i] = pageTable[i];
+    }
+    
+    delete pageTable;
+    
+    pageTable = newPageTable;
+    
+    numThread--;
+    
+}
+
+int AddrSpace::GetNumThread(){
+    
+    return numThread;
+    
+}
+
+int AddrSpace::GetSpaceID(){
+    
+    return spaceID;
+    
+}
+
+void AddrSpace::SetSpaceID(int spaceid){
+    
+    spaceID=spaceid;
     
 }

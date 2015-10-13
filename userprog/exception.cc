@@ -90,7 +90,30 @@ int copyout(unsigned int vaddr, int len, char *buf) {
 
 typedef int SpaceId;  
 
-void Exit_Syscall(int status){}
+void Exit_Syscall(int status){
+    AddrSpace* addressSpace=currentThread->space;
+    
+    //has more than 1 thread in current process
+    if(addressSpace->GetNumThread() > 1){
+        addressSpace->DeallocateSpaceForThread();
+        currentThread->Finish();
+        
+    }
+    //the main thread case
+    if(addressSpace->GetNumThread() == 1){
+        processTable.Remove(addressSpace->GetSpaceID());
+        addressSpace->DeallocateSpaceForThread();
+        currentThread->Finish();
+        
+        //if this is the last process
+        if(processTable.GetNumElements() == 0){
+            interrupt->Halt();
+        }
+        
+    }
+
+
+}
 
 
 void exec_thread(int virtualAddress){
@@ -119,10 +142,12 @@ SpaceId Exec_Syscall(char *name){
     if(newFile){
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
-        addressSpace->allocateSpaceForNewThread();
+        addressSpace->AllocateSpaceForNewThread();
         thread->space = addressSpace;
         
         int spaceId = processTable.Put(addressSpace);
+        //set space ID for process
+        thread->space->SetSpaceID(spaceId);
         
         machine->WriteRegister(2, spaceId);
         
@@ -315,7 +340,7 @@ void Fork_Syscall(void (*func)()){
     
     AddrSpace* addressSpace=currentThread->space;
     
-    addressSpace->allocateSpaceForNewThread();
+    addressSpace->AllocateSpaceForNewThread();
     
     thread->Fork(kernel_thread, virtualAddr);
     

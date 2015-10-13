@@ -35,11 +35,17 @@ class AddrSpace {
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch
     Table fileTable;			// Table of openfiles
-    void allocateSpaceForNewThread();
+    void AllocateSpaceForNewThread();
+    void DeallocateSpaceForThread();
+    int GetNumThread();
+    int GetSpaceID();
+    void SetSpaceID(int spaceid);
  private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
-    unsigned int numPages;		// Number of pages in the virtual 
+    unsigned int numPages;		// Number of pages in the virtual
+    int numThread;
+    int spaceID;
 					// address space
 };
 
