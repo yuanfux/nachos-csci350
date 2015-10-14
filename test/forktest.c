@@ -15,4 +15,6 @@ main(){
         Fork(forkTest);
         Fork(forkTest);
         Fork(forkTest);
+        Fork(0xffffff);
+        Fork(0x000000);
 }

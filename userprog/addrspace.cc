@@ -286,19 +286,19 @@ void AddrSpace::AllocateSpaceForNewThread(){
 
 void AddrSpace::DeallocateSpaceForThread(){
 
-    numPages -= 8;
+    // numPages -= 8;
     
-    TranslationEntry *newPageTable = new TranslationEntry[numPages];
+    // TranslationEntry *newPageTable = new TranslationEntry[0];
     
-    for (unsigned int i = 0; i < numPages; i++) {
-        newPageTable[i] = pageTable[i];
-    }
+    // for (unsigned int i = 0; i < numPages; i++) {
+    //     newPageTable[i] = pageTable[i];
+    // }
     
     delete pageTable;
     
-    pageTable = newPageTable;
+    // pageTable = newPageTable;
     
-    numThread--;
+    // numThread--;
     
 }
 
@@ -318,4 +318,8 @@ void AddrSpace::SetSpaceID(int spaceid){
     
     spaceID=spaceid;
     
+}
+
+int AddrSpace::GetMemorySize(){
+    return numPages * PageSize;
 }

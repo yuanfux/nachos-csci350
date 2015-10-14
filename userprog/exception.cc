@@ -35,6 +35,7 @@ vector<Lock *> locks;
 vector<Condition *> cvs;
 Lock* forkLock =new Lock("forkLock");
 Lock* executeLock =new Lock("execLock");
+Lock* exitLock =new Lock("exitLock");
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -120,23 +121,27 @@ int copyout(unsigned int vaddr, int len, char *buf) {
 typedef int SpaceId;  
 
 void Exit_Syscall(int status){
+    exitLock->Acquire();
     printf ("In Exit_Syscall\n");
     AddrSpace* addressSpace=currentThread->space;
     
     //has more than 1 thread in current process
     if(addressSpace->GetNumThread() > 1){
-        addressSpace->DeallocateSpaceForThread();
+        //addressSpace->DeallocateSpaceForThread();
+        exitLock->Release();
         currentThread->Finish();
         
     }
     //the main thread case
     if(addressSpace->GetNumThread() == 1){
         processTable.Remove(addressSpace->GetSpaceID());
-        addressSpace->DeallocateSpaceForThread();
+        // addressSpace->DeallocateSpaceForThread();
+        exitLock->Release();
         currentThread->Finish();
         
         //if this is the last process
         if(processTable.GetNumElements() == 0){
+            exitLock->Release();
             interrupt->Halt();
         }
         
@@ -356,6 +361,7 @@ void kernel_thread(int virtualAddress){
     //restore state
     currentThread->space->RestoreState();
     machine->WriteRegister(StackReg, machine->ReadRegister(StackReg)-16);
+    machine->Run();
     
 }
 
@@ -370,11 +376,19 @@ void Fork_Syscall(int vaddr){
     Thread *thread=new Thread("newThread");
     
     thread->space = currentThread->space;
-    
     thread->space->AllocateSpaceForNewThread();
     thread->space->RestoreState();
-    thread->Fork(kernel_thread, virtualAddr);
-    
+    if (thread->space->GetMemorySize() < virtualAddr){
+        // addressSpace->DeallocateSpaceForThread();
+        printf("Error: Virtual Address larger than physical address size\n");
+    }
+    else if(virtualAddr == 0){
+        // addressSpace->DeallocateSpaceForThread();
+        printf("Error: Virtual Address is zero\n");
+    }
+    else{
+        thread->Fork(kernel_thread, virtualAddr);
+    }
     forkLock->Release();
 }
 
@@ -529,6 +543,10 @@ void ExceptionHandler(ExceptionType which) {
 			      machine->ReadRegister(5),
 			      machine->ReadRegister(6));
 		break;
+      case SC_Close:
+    DEBUG('a', "Close syscall.\n");
+    Exit_Syscall(machine->ReadRegister(4));
+    break;
       case SC_Fork:
     DEBUG('a', "Fork syscall.\n");
     Fork_Syscall(machine->ReadRegister(4));
