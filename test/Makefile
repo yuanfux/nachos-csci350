@@ -92,6 +92,18 @@ releasetest: releasetest.o start.o
 	$(LD) $(LDFLAGS) start.o releasetest.o -o releasetest.coff
 	../bin/coff2noff releasetest.coff releasetest
 
+releasetest2.o: releasetest2.c
+	$(CC) $(CFLAGS) -c releasetest2.c
+releasetest2: releasetest2.o start.o
+	$(LD) $(LDFLAGS) start.o releasetest2.o -o releasetest2.coff
+	../bin/coff2noff releasetest2.coff releasetest2
+
+multithread.o: multithread.c
+	$(CC) $(CFLAGS) -c multithread.c
+multithread: multithread.o start.o
+	$(LD) $(LDFLAGS) start.o multithread.o -o multithread.coff
+	../bin/coff2noff multithread.coff multithread
+
 testfiles.o: testfiles.c
 	$(CC) $(CFLAGS) -c testfiles.c
 testfiles: testfiles.o start.o
