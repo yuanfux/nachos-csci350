@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles
+all: halt matmult sort testfiles exectest forktest releasetest waittest yieldtest signaltest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -55,6 +55,42 @@ matmult.o: matmult.c
 matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
+
+exectest.o: exectest.c
+	$(CC) $(CFLAGS) -c exectest.c
+exectest: exectest.o start.o
+	$(LD) $(LDFLAGS) start.o exectest.o -o exectest.coff
+	../bin/coff2noff exectest.coff exectest
+
+forktest.o: forktest.c
+	$(CC) $(CFLAGS) -c forktest.c
+forktest: forktest.o start.o
+	$(LD) $(LDFLAGS) start.o forktest.o -o forktest.coff
+	../bin/coff2noff forktest.coff forktest
+
+waittest.o: waittest.c
+	$(CC) $(CFLAGS) -c waittest.c
+waittest: waittest.o start.o
+	$(LD) $(LDFLAGS) start.o waittest.o -o waittest.coff
+	../bin/coff2noff waittest.coff waittest
+
+signaltest.o: signaltest.c
+	$(CC) $(CFLAGS) -c signaltest.c
+signaltest: signaltest.o start.o
+	$(LD) $(LDFLAGS) start.o signaltest.o -o signaltest.coff
+	../bin/coff2noff signaltest.coff signaltest
+
+yieldtest.o: yieldtest.c
+	$(CC) $(CFLAGS) -c yieldtest.c
+yieldtest: yieldtest.o start.o
+	$(LD) $(LDFLAGS) start.o yieldtest.o -o yieldtest.coff
+	../bin/coff2noff yieldtest.coff yieldtest
+
+releasetest.o: releasetest.c
+	$(CC) $(CFLAGS) -c releasetest.c
+releasetest: releasetest.o start.o
+	$(LD) $(LDFLAGS) start.o releasetest.o -o releasetest.coff
+	../bin/coff2noff releasetest.coff releasetest
 
 testfiles.o: testfiles.c
 	$(CC) $(CFLAGS) -c testfiles.c

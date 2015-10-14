@@ -65,6 +65,35 @@ int copyin(unsigned int vaddr, int len, char *buf) {
     return len;
 }
 
+int copyinint(unsigned int vaddr, int len, int *buf) {
+    // Copy len bytes from the current thread's virtual address vaddr.
+    // Return the number of bytes so read, or -1 if an error occors.
+    // Errors can generally mean a bad virtual address was passed in.
+    bool result;
+    int n=0;                    // The number of bytes copied in
+    int *paddr = new int;
+
+    while ( n >= 0 && n < len) {
+      result = machine->ReadMem( vaddr, 4, paddr );
+      while(!result) // FALL 09 CHANGES
+          {
+                        result = machine->ReadMem( vaddr, 4, paddr ); // FALL 09 CHANGES: TO HANDLE PAGE FAULT IN THE ReadMem SYS CALL
+          }     
+      
+      buf[n++] = *paddr;
+     
+      if ( !result ) {
+        //translation failed
+        return -1;
+      }
+
+      vaddr+=4;
+    }
+
+    delete paddr;
+    return len;
+}
+
 int copyout(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes to the current thread's virtual address vaddr.
     // Return the number of bytes so written, or -1 if an error
@@ -347,6 +376,41 @@ void Fork_Syscall(void (*func)()){
     forkLock->Release();
 }
 
+void Print_Syscall(unsigned int vaddr, int len, unsigned int args, int argsSize) {
+    // Print string of length len to synchronized console including 
+    // the integer arguments supplied in the args array. 
+    // printLock->Acquire();
+        char* c_buf;
+    c_buf=new char[len];
+    copyin(vaddr,len,c_buf);
+    
+    int* i_buf;
+    i_buf = new int[argsSize];
+    copyinint(args,argsSize,i_buf);
+    
+    switch(argsSize){
+                case 0:
+                printf(c_buf);
+                break;
+        case 1:
+                printf(c_buf,*i_buf);
+                break;
+        case 2:
+                printf(c_buf,*i_buf,*(i_buf+1));
+                break;
+        case 3:
+                printf(c_buf,*i_buf,*(i_buf+1),*(i_buf+2));
+                break;
+        case 4:
+                printf(c_buf,*i_buf,*(i_buf+1),*(i_buf+2),*(i_buf+3));
+                break;
+    }
+    delete c_buf;
+    delete i_buf;
+    // printLock->Release();
+
+}
+
 void Yield_Syscall(){
     currentThread->Yield();
 }   
@@ -500,6 +564,13 @@ void ExceptionHandler(ExceptionType which) {
       case SC_DestroyCondition:
     DEBUG('a', "DestroyCondition syscall.\n");
     rv = DestroyCondition_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_Print:
+    DEBUG('a', "Print syscall.\n");
+    Print_Syscall(machine->ReadRegister(4),
+                machine->ReadRegister(5),
+                machine->ReadRegister(6),
+                machine->ReadRegister(7));
     break;
 	}
 

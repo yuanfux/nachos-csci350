@@ -40,6 +40,8 @@
 #define SC_CreateCondition 18
 #define SC_DestroyCondition 19
 
+#define SC_Print 20
+
 
 #define MAXFILENAME 256
 
@@ -155,6 +157,8 @@ int CreateCondition();
 
 int DestroyCondition(int lockIndex);
 
+
+void Print(char *buffer, int size, int* arguments,int argLen);
 
 
 #endif /* IN_ASM */
