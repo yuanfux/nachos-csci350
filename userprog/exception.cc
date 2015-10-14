@@ -26,13 +26,15 @@
 #include "syscall.h"
 #include <stdio.h>
 #include <iostream>
-#include <vector>
 #include "synch.h"
 
 using namespace std;
 
-vector<Lock *> locks;
-vector<Condition *> cvs;
+#define MAX_NUM_LOCK 100
+#define MAX_NUM_CONDITION 100
+
+Table lockTable(MAX_NUM_LOCK);
+Table cvTable(MAX_NUM_CONDITION);
 Lock* forkLock =new Lock("forkLock");
 Lock* executeLock =new Lock("execLock");
 Lock* exitLock =new Lock("exitLock");
@@ -435,68 +437,145 @@ void Yield_Syscall(){
 int CreateLock_Syscall(){
     printf ("In CreateLock_Syscall\n");
     Lock *newLock = new Lock("name");
-    locks.push_back(newLock);
-    int lockNumber = locks.size() - 1;
+    lockTable.Put(newLock);
+    int lockNumber = lockTable.GetNumElements() - 1;
     return lockNumber;
 }
 
 int DestroyLock_Syscall(int lockIndex){
     printf ("In DestroyLock_Syscall\n");
-    locks.erase(locks.begin() + lockIndex);
-    return 0;
+    if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0){
+        printf("Error in DestroyLock: lock index out of boundary\n");
+        return -1;
+    }
+    else{
+        lockTable.Remove(lockIndex);
+        return 0;
+    }
   }
 
 int CreateCondition_Syscall(){
     printf ("In CreateCondition_Syscall\n");
     Condition *newCV = new Condition("name");
-    cvs.push_back(newCV);
-    int cvNumber = cvs.size() - 1;
+    cvTable.Put(newCV);
+    int cvNumber = cvTable.GetNumElements() - 1;
     return cvNumber;
   }
 
 int DestroyCondition_Syscall(int conditionIndex){
     printf ("In DestroyCondition_Syscall\n");
-    cvs.erase(cvs.begin() + conditionIndex);
-    return 0;
+    if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0){
+        printf("Error in DestroyCondition: condition index out of boundary\n");
+        return -1;
+    }
+    else{
+        cvTable.Remove(conditionIndex);
+        return 0;
+    }
   }
 
 int Acquire_Syscall(int lockIndex){
     printf ("In Acquire_Syscall\n");
-    Lock *lock = locks[lockIndex];
-    lock->Acquire();
-    return 0;
+    if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0){
+        printf("Error in Acquire: lock index out of boundary\n");
+        return -1;
+    }
+    else{
+        Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        if (lock == NULL){
+            printf("Error: lock doesn't exist\n");
+            return -1;
+        }
+        lock->Acquire();
+        return 0;
+    }
 }
 
 int Release_Syscall(int lockIndex){
     printf ("In Release_Syscall\n");
-    Lock *lock = locks[lockIndex];
-    lock->Release();
-    return 0;
+    if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0){
+        printf("Error in Release: lock index out of boundary\n");
+        return -1;
+    }
+    else{
+        Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        if (lock == NULL){
+            printf("Error: lock doesn't exist\n");
+            return -1;
+        }
+        lock->Release();
+        return 0;
+    }
 }
 
 int Wait_Syscall(int conditionIndex, int lockIndex){
     printf ("In Wait_Syscall\n");
-    Condition *condition = cvs[conditionIndex];
-    Lock *lock = locks[lockIndex];
-    condition->Wait(lock);
-    return 0;
+    if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
+        lockIndex >= MAX_NUM_LOCK || lockIndex < 0){
+        printf("Error in Wait: condition or lock index out of boundary\n");
+        return -1;
+    }
+    else{
+        Condition *condition = (Condition*)cvTable.Get(conditionIndex);
+        if (condition == NULL){
+            printf("Error: condition doesn't exist\n");
+            return -1;
+        }
+        Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        if (lock == NULL){
+            printf("Error: lock doesn't exist\n");
+            return -1;
+        }
+        condition->Wait(lock);
+        return 0;
+    }
 
 }
 
 int Signal_Syscall(int conditionIndex, int lockIndex){
     printf ("In Signal_Syscall\n");
-    Condition *condition = cvs[conditionIndex];
-    Lock *lock = locks[lockIndex];
-    condition->Signal(lock);
-    return 0;
+    if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
+        lockIndex >= MAX_NUM_LOCK || lockIndex < 0){
+        printf("Error in Signal: condition or lock index out of boundary\n");
+        return -1;
+    }
+    else{
+        Condition *condition = (Condition*)cvTable.Get(conditionIndex);
+        if (condition == NULL){
+            printf("Error: condition doesn't exist\n");
+            return -1;
+        }
+        Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        if (lock == NULL){
+            printf("Error: lock doesn't exist\n");
+            return -1;
+        }
+        condition->Signal(lock);
+        return 0;
+    }
   }
 
 int Broadcast_Syscall(int conditionIndex, int lockIndex){
     printf ("In Broadcast_Syscall\n");
-    Condition *condition = cvs[conditionIndex];
-    Lock *lock = locks[lockIndex];
-    condition->Broadcast(lock);
-    return 0;
+    if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
+        lockIndex >= MAX_NUM_LOCK || lockIndex < 0){
+        printf("Error in Broadcast: condition or lock index out of boundary\n");
+        return -1;
+    }
+    else{
+        Condition *condition = (Condition*)cvTable.Get(conditionIndex);
+        if (condition == NULL){
+            printf("Error: condition doesn't exist\n");
+            return -1;
+        }
+        Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        if (lock == NULL){
+            printf("Error: lock doesn't exist\n");
+            return -1;
+        }
+        condition->Broadcast(lock);
+        return 0;
+    }
   }
 
 void ExceptionHandler(ExceptionType which) {

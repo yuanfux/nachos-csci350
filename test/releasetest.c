@@ -13,8 +13,8 @@ main(){
         lock1 = CreateLock("Lock1");
         lock2 = CreateLock("Lock2");
         Release(lock1);
-        Acquire("Lock2");
-        Release("Lock2");
+        Acquire(lock2);
+        Release(lock2);
         Exec("../test/releasetest2");
         
 
