@@ -259,13 +259,13 @@ void AddrSpace::RestoreState()
 
 void AddrSpace::AllocateSpaceForNewThread(){
     
+    numPages += 8;
     TranslationEntry *newPageTable = new TranslationEntry[numPages];
     
-    for (unsigned int i = 0; i < numPages; i++) {
+    for (unsigned int i = 0; i < numPages - 8; i++) {
         newPageTable[i] = pageTable[i];
     }
     
-    numPages += 8;
     for (unsigned int i = numPages - 8; i < numPages; i++){
         newPageTable[i].virtualPage = i;
         newPageTable[i].physicalPage = i;

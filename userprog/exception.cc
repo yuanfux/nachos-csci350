@@ -120,6 +120,7 @@ int copyout(unsigned int vaddr, int len, char *buf) {
 typedef int SpaceId;  
 
 void Exit_Syscall(int status){
+    printf ("In Exit_Syscall\n");
     AddrSpace* addressSpace=currentThread->space;
     
     //has more than 1 thread in current process
@@ -158,9 +159,10 @@ void exec_thread(int virtualAddress){
 }
 
 
-SpaceId Exec_Syscall(char *name){
+SpaceId Exec_Syscall(int vaddr){
+    printf ("In Exec_Syscall\n");
     executeLock->Acquire();
-    int virtualAddress = machine->ReadRegister(4);
+    int virtualAddress = vaddr;
     
     char* file=new char[100];
     
@@ -354,23 +356,23 @@ void kernel_thread(int virtualAddress){
     //restore state
     currentThread->space->RestoreState();
     machine->WriteRegister(StackReg, machine->ReadRegister(StackReg)-16);
-    machine->Run();
     
 }
 
 
-void Fork_Syscall(void (*func)()){
+void Fork_Syscall(int vaddr){
     
+    printf ("In Fork_Syscall\n");
     forkLock->Acquire();
     
-    int virtualAddr = machine->ReadRegister(4);
+    int virtualAddr = vaddr;
     
     Thread *thread=new Thread("newThread");
     
-    AddrSpace* addressSpace=currentThread->space;
+    thread->space = currentThread->space;
     
-    addressSpace->AllocateSpaceForNewThread();
-    
+    thread->space->AllocateSpaceForNewThread();
+    thread->space->RestoreState();
     thread->Fork(kernel_thread, virtualAddr);
     
     forkLock->Release();
@@ -412,11 +414,12 @@ void Print_Syscall(unsigned int vaddr, int len, unsigned int args, int argsSize)
 }
 
 void Yield_Syscall(){
+    printf ("Thread yield successfully!\n");
     currentThread->Yield();
 }   
 
 int CreateLock_Syscall(){
-
+    printf ("In CreateLock_Syscall\n");
     Lock *newLock = new Lock("name");
     locks.push_back(newLock);
     int lockNumber = locks.size() - 1;
@@ -424,11 +427,13 @@ int CreateLock_Syscall(){
 }
 
 int DestroyLock_Syscall(int lockIndex){
+    printf ("In DestroyLock_Syscall\n");
     locks.erase(locks.begin() + lockIndex);
     return 0;
   }
 
 int CreateCondition_Syscall(){
+    printf ("In CreateCondition_Syscall\n");
     Condition *newCV = new Condition("name");
     cvs.push_back(newCV);
     int cvNumber = cvs.size() - 1;
@@ -436,23 +441,27 @@ int CreateCondition_Syscall(){
   }
 
 int DestroyCondition_Syscall(int conditionIndex){
+    printf ("In DestroyCondition_Syscall\n");
     cvs.erase(cvs.begin() + conditionIndex);
     return 0;
   }
 
 int Acquire_Syscall(int lockIndex){
+    printf ("In Acquire_Syscall\n");
     Lock *lock = locks[lockIndex];
     lock->Acquire();
     return 0;
 }
 
 int Release_Syscall(int lockIndex){
+    printf ("In Release_Syscall\n");
     Lock *lock = locks[lockIndex];
     lock->Release();
     return 0;
 }
 
 int Wait_Syscall(int conditionIndex, int lockIndex){
+    printf ("In Wait_Syscall\n");
     Condition *condition = cvs[conditionIndex];
     Lock *lock = locks[lockIndex];
     condition->Wait(lock);
@@ -461,6 +470,7 @@ int Wait_Syscall(int conditionIndex, int lockIndex){
 }
 
 int Signal_Syscall(int conditionIndex, int lockIndex){
+    printf ("In Signal_Syscall\n");
     Condition *condition = cvs[conditionIndex];
     Lock *lock = locks[lockIndex];
     condition->Signal(lock);
@@ -468,6 +478,7 @@ int Signal_Syscall(int conditionIndex, int lockIndex){
   }
 
 int Broadcast_Syscall(int conditionIndex, int lockIndex){
+    printf ("In Broadcast_Syscall\n");
     Condition *condition = cvs[conditionIndex];
     Lock *lock = locks[lockIndex];
     condition->Broadcast(lock);
@@ -492,7 +503,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_Exec:
     DEBUG('a', "Exec syscall.\n");
-    rv = Exec_Syscall((char *)machine->ReadRegister(4));
+    rv = Exec_Syscall(machine->ReadRegister(4));
     break;
       case SC_Join:
     DEBUG('a', "Join syscall.\n");
@@ -520,7 +531,7 @@ void ExceptionHandler(ExceptionType which) {
 		break;
       case SC_Fork:
     DEBUG('a', "Fork syscall.\n");
-    Fork_Syscall((void (*)())machine->ReadRegister(4));
+    Fork_Syscall(machine->ReadRegister(4));
     break;
       case SC_Yield:
     DEBUG('a', "Yield syscall.\n");

@@ -14,5 +14,5 @@ main(){
         Print("\nFORK_SYSCALL TEST\n",sizeof("\nFORK_SYSCALL TEST\n"),a,0);
         Fork(forkTest);
         Fork(forkTest);
-        Fork(0xffff);
+        Fork(forkTest);
 }
