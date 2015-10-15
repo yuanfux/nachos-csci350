@@ -263,7 +263,12 @@ void AddrSpace::AllocateSpaceForNewThread(){
     TranslationEntry *newPageTable = new TranslationEntry[numPages];
     
     for (unsigned int i = 0; i < numPages - 8; i++) {
-        newPageTable[i] = pageTable[i];
+        newPageTable[i].virtualPage = pageTable[i].virtualPage;
+        newPageTable[i].physicalPage = pageTable[i].physicalPage;
+        newPageTable[i].valid = pageTable[i].valid;
+        newPageTable[i].use = pageTable[i].use;
+        newPageTable[i].dirty = pageTable[i].dirty;
+        newPageTable[i].readOnly = pageTable[i].readOnly;
     }
     
     for (unsigned int i = numPages - 8; i < numPages; i++){
