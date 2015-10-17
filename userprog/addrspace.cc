@@ -154,7 +154,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
           numPages, size);
-    numThread = 0;
+    numThread = 1;
 // first, set up the translation
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
@@ -327,4 +327,8 @@ void AddrSpace::SetSpaceID(int spaceid) {
 
 int AddrSpace::GetMemorySize() {
     return numPages * PageSize;
+}
+
+void AddrSpace::UpdateThreadNum(){
+    numThread--;
 }

@@ -125,17 +125,20 @@ typedef int SpaceId;
 void Exit_Syscall(int status) {
     exitLock->Acquire();
     printf ("In Exit_Syscall\n");
+
     AddrSpace* addressSpace = currentThread->space;
 
     //has more than 1 thread in current process
     if (addressSpace->GetNumThread() > 1) {
         //addressSpace->DeallocateSpaceForThread();
+        addressSpace->UpdateThreadNum();
         exitLock->Release();
         currentThread->Finish();
 
     }
     //the main thread case
-    if (addressSpace->GetNumThread() == 1) {
+    else if (addressSpace->GetNumThread() == 1) {
+        addressSpace->UpdateThreadNum();
         processTable.Remove(addressSpace->GetSpaceID());
         // addressSpace->DeallocateSpaceForThread();
         exitLock->Release();
@@ -147,6 +150,11 @@ void Exit_Syscall(int status) {
             interrupt->Halt();
         }
 
+    }
+    else if (addressSpace->GetNumThread() <= 0){
+        printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
+        exitLock->Release();
+        interrupt->Halt();
     }
 
 
@@ -578,6 +586,10 @@ int Broadcast_Syscall(int conditionIndex, int lockIndex) {
     }
 }
 
+void Printint_Syscall(int num){
+    printf("%d", num);
+}
+
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
     int rv = 0; // the return value from a syscall
@@ -680,7 +692,12 @@ void ExceptionHandler(ExceptionType which) {
                           machine->ReadRegister(6),
                           machine->ReadRegister(7));
             break;
+        case SC_Printint:
+            DEBUG('a', "Printint syscall.\n");
+            Printint_Syscall(machine->ReadRegister(4));
+            break;
         }
+
 
         // Put in the return value and increment the PC
         machine->WriteRegister(2, rv);

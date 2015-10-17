@@ -210,6 +210,14 @@ DestroyCondition:
 	j	$31
 	.end DestroyCondition
 
+	.globl Printint
+	.ent	Printint
+Printint:
+	addiu $2,$0,SC_Printint
+	syscall
+	j	$31
+	.end Printint
+
 
 /* dummy function to keep gcc happy */
         .globl  __main

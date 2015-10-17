@@ -1,23 +1,15 @@
 /* testfiles.c
- *	Simple program to test the file handling system calls
+ *  Simple program to test the file handling system calls
  */
 
 #include "syscall.h"
 
 int main() {
-  OpenFileId fd;
-  int bytesread;
-  char buf[20];
+  int bytesread = 1000;
 
-    Create("testfile", 8);
-    fd = Open("testfile", 8);
+  Printint(bytesread);
 
-    Write("testing a write\n", 16, fd );
-    Close(fd);
-
-
-    fd = Open("testfile", 8);
-    bytesread = Read( buf, 100, fd );
-    Write( buf, bytesread, ConsoleOutput );
-    Close(fd);
+  Write("who", 3, ConsoleOutput);
+  Exit(0);
+  return 0;
 }

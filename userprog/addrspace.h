@@ -41,6 +41,7 @@ public:
     int GetSpaceID();
     void SetSpaceID(int spaceid);
     int GetMemorySize();
+    void UpdateThreadNum();
 private:
     TranslationEntry *pageTable;    // Assume linear page table translation
     // for now!
