@@ -50,10 +50,10 @@ vector<Condition*> CashierLineWaitCV;//need new cv to prevent the different lock
 vector<int> CashierLineCount;
 
 //variables for Manager
-Lock applicationMoneyLock("applicationMoenyLock"); //each money variable needs a lock
-Lock pictureMoneyLock("pictureMoenyLock");
-Lock passportMoneyLock("passportMoenyLock");
-Lock cashierMoneyLock("cashierMoenyLock");
+Lock applicationMoneyLock("applicationMoneyLock"); //each money variable needs a lock
+Lock pictureMoneyLock("pictureMoneyLock");
+Lock passportMoneyLock("passportMoneyLock");
+Lock cashierMoneyLock("cashierMoneyLock");
 int MoneyFromApplicationClerk = 0;
 int MoneyFromPictureClerk = 0;
 int MoneyFromPassportClerk = 0;
@@ -1492,8 +1492,7 @@ void PassportOffice() {
 }
 
 int main() {
-
-    PassportOffice();
+    Exec(PassportOffice);
     return 0;
 
 }
