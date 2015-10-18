@@ -138,20 +138,21 @@ void Exit_Syscall(int status) {
     }
     //the main thread case
     else if (addressSpace->GetNumThread() == 1) {
-        addressSpace->UpdateThreadNum();
-        processTable.Remove(addressSpace->GetSpaceID());
-        // addressSpace->DeallocateSpaceForThread();
-        exitLock->Release();
-        currentThread->Finish();
-
         //if this is the last process
         if (processTable.GetNumElements() == 0) {
             exitLock->Release();
             interrupt->Halt();
         }
-
+        else{
+            addressSpace->UpdateThreadNum();
+            processTable.Remove(addressSpace->GetSpaceID());
+            // addressSpace->DeallocateSpaceForThread();
+            exitLock->Release();
+            currentThread->Finish();
+        }
     }
-    else if (addressSpace->GetNumThread() <= 0){
+    //(addressSpace->GetNumThread() <= 0)
+    else {
         printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
         exitLock->Release();
         interrupt->Halt();
@@ -188,7 +189,7 @@ SpaceId Exec_Syscall(int vaddr) {
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
-        addressSpace->AllocateSpaceForNewThread();
+       // addressSpace->AllocateSpaceForNewThread();
         thread->space = addressSpace;
 
         int spaceId = processTable.Put(addressSpace);
@@ -389,11 +390,11 @@ void Fork_Syscall(int vaddr) {
     thread->space->AllocateSpaceForNewThread();
     thread->space->RestoreState();
     if (thread->space->GetMemorySize() < virtualAddr) {
-        // addressSpace->DeallocateSpaceForThread();
+        thread->space->UpdateThreadNum();
         printf("Error: Virtual Address larger than physical address size\n");
     }
     else if (virtualAddr == 0) {
-        // addressSpace->DeallocateSpaceForThread();
+        thread->space->UpdateThreadNum();
         printf("Error: Virtual Address is zero\n");
     }
     else {
