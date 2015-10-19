@@ -20,7 +20,8 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
-
+#include <stdlib.h>
+#include <time.h>
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
@@ -606,6 +607,14 @@ void Printint_Syscall(int num){
     printf("%d", num);
 }
 
+int Random_Syscall(int limit){
+    
+    return rand() % limit;
+    
+    
+}
+
+
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
     int rv = 0; // the return value from a syscall
@@ -711,6 +720,10 @@ void ExceptionHandler(ExceptionType which) {
         case SC_Printint:
             DEBUG('a', "Printint syscall.\n");
             Printint_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_Random:
+            DEBUG('a', "Random syscall.\n");
+            rv = Random_Syscall(machine->ReadRegister(4));
             break;
         }
 
