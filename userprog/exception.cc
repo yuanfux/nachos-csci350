@@ -169,7 +169,10 @@ void Exit_Syscall(int status) {
     }
     else {
         printf("Main thread calls Exit_Syscall\n");
-        if (processTable.GetNumElements() == 1) {
+        printf("ProcessTable size: %d\n", processTable.GetNumElements());
+        if (processTable.GetNumElements() >= 0) {
+            printf("ProcessTable size is less than zero\n");
+            exitLock->Release();
             currentThread->Finish();
         }
         exitLock->Release();
@@ -180,7 +183,9 @@ void Exit_Syscall(int status) {
 
 
 void exec_thread(int virtualAddress) {
+    printf("In exec_thread\n");
     executeThreadLock->Acquire();
+    printf("Current Thread name in exec_thread: %s\n", currentThread->getName());
     //initialize register
     currentThread->space->InitRegisters();
     //restore state
@@ -206,8 +211,9 @@ int Exec_Syscall(int vaddr) {
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("exec thread");
-        // addressSpace->AllocateSpaceForNewThread();
+        addressSpace->AllocateSpaceForNewThread();
         thread->space = addressSpace;
+        delete newFile;
 
         printf("processTable number before put: %d\n", processTable.GetNumElements());
         int spaceId = processTable.Put(addressSpace);
@@ -217,7 +223,7 @@ int Exec_Syscall(int vaddr) {
         machine->WriteRegister(2, spaceId);
         thread->Fork(exec_thread, virtualAddress);
         executeLock->Release();
-        return spaceId;
+        return 0;
     }
     else {
         printf("%s", "Cannot open file\n");
@@ -616,7 +622,7 @@ void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
     int rv = 0; // the return value from a syscall
 
-    printf("which: %d, SyscallException: %d, type: %d\n", which, SyscallException, type);
+    printf("\n\nSyscall type: %d which: %d SyscallException: %d\n", type, which, SyscallException);
     if ( which == SyscallException ) {
         switch (type) {
         default:
@@ -721,8 +727,7 @@ void ExceptionHandler(ExceptionType which) {
             Printint_Syscall(machine->ReadRegister(4));
             break;
         }
-
-
+        
         // Put in the return value and increment the PC
         machine->WriteRegister(2, rv);
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));

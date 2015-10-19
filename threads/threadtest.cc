@@ -1905,7 +1905,7 @@ void PassportOffice(){
     
 }
 
-Problem2(){
+void Problem2(){
     
     PassportOffice();
     

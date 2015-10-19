@@ -36,8 +36,7 @@ StartProcess(char *filename)
     space = new AddrSpace(executable);
 
     currentThread->space = space;
-    int spaceId = processTable.Put(space);
-    thread->space->SetSpaceID(spaceId);
+    processTable.Put(space);
 
     delete executable;          // close file
 

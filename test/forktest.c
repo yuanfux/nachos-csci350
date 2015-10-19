@@ -1,5 +1,5 @@
 #include "syscall.h"
-int i = 1, j = 1;
+int i = 0, j = 1;
 
 void forkTest(){
         int a[] = {i};
@@ -14,17 +14,17 @@ main(){
         Print("\nFORK_SYSCALL TEST\n",sizeof("\nFORK_SYSCALL TEST\n"),a,0);
         Print("\n-----------------begin fork test1\n",sizeof("\n-----------------begin fork test1\n"),a,0);
         Fork(forkTest);
-        Print("\n-----------------after fork test1\n",sizeof("\n-----------------begin fork test1\n"),a,0);
+        Print("-----------------after fork test1\n\n",sizeof("-----------------after fork test1\n\n"),a,0);
         Print("\n-----------------begin fork test2\n",sizeof("\n-----------------begin fork test1\n"),a,0);
         Fork(forkTest);
-        Print("\n-----------------after fork test2\n",sizeof("\n-----------------begin fork test1\n"),a,0);
+        Print("-----------------after fork test1\n\n",sizeof("-----------------after fork test1\n\n"),a,0);
         Print("\n-----------------begin fork test3\n",sizeof("\n-----------------begin fork test1\n"),a,0);
         Fork(forkTest);
-        Print("\n-----------------after fork test3\n",sizeof("\n-----------------begin fork test1\n"),a,0);
+        Print("-----------------after fork test1\n\n",sizeof("-----------------after fork test1\n\n"),a,0);
         Fork(0xffffff);
         Fork(0x000000);
         Print("\nFORK_SYSCALL TEST DONE\n",sizeof("\nFORK_SYSCALL TEST DONE\n"),a,0);
-        Print("\n------------------------\n",sizeof("\n------------------------\n"),a,0);
+        Print("------------------------\n\n",sizeof("------------------------\n\n"),a,0);
 
         return 0;
 }

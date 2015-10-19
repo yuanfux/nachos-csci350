@@ -80,26 +80,26 @@ int
 main(int argc, char **argv)
 {
     int argCount;           // the number of arguments
-                            // for a particular command
-    
+    // for a particular command
+
     DEBUG('t', "Entering main");
     (void) Initialize(argc, argv);
-    
 
-    
+
+
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
         argCount = 1;
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);
 #ifdef THREADS
-    //ThreadTest();
-   // TestSuite();
-    if (!strcmp(*argv, "-T")){               // Test Suite
-        TestSuite();
-    }
-    if (!strcmp(*argv, "-P2")){               // Problem 2
-        Problem2();
-    }
+        //ThreadTest();
+        // TestSuite();
+        if (!strcmp(*argv, "-T")) {              // Test Suite
+            TestSuite();
+        }
+        if (!strcmp(*argv, "-P2")) {              // Problem 2
+            Problem2();
+        }
 #endif // THREADS
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {         // run a user program
@@ -115,8 +115,8 @@ main(int argc, char **argv)
                 argCount = 3;
             }
             interrupt->Halt();      // once we start the console, then
-                                    // Nachos will loop forever waiting
-                                    // for console input
+            // Nachos will loop forever waiting
+            // for console input
         }
 #endif // USER_PROGRAM
 #ifdef FILESYS
@@ -144,21 +144,21 @@ main(int argc, char **argv)
         if (!strcmp(*argv, "-o")) {
             ASSERT(argc > 1);
             Delay(2);               // delay for 2 seconds
-                                    // to give the user time to
-                                    // start up another nachos
+            // to give the user time to
+            // start up another nachos
             MailTest(atoi(*(argv + 1)));
             argCount = 2;
         }
 #endif // NETWORK
     }
-    
+
     currentThread->Finish();    // NOTE: if the procedure "main"
-                                // returns, then the program "nachos"
-                                // will exit (as any other normal program
-                                // would).  But there may be other
-                                // threads on the ready list.  We switch
-                                // to those threads by saying that the
-                                // "main" thread is finished, preventing
-                                // it from returning.
-    return(0);          // Not reached...
+    // returns, then the program "nachos"
+    // will exit (as any other normal program
+    // would).  But there may be other
+    // threads on the ready list.  We switch
+    // to those threads by saying that the
+    // "main" thread is finished, preventing
+    // it from returning.
+    return (0);         // Not reached...
 }
