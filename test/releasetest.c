@@ -15,7 +15,8 @@ main(){
         Release(lock1);
         Acquire(lock2);
         Release(lock2);
-        Exec("../test/releasetest2");
-        
+        Release(0);
+        Release(1);
+    
 
 }

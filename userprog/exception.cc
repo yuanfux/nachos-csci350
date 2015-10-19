@@ -127,9 +127,11 @@ void Exit_Syscall(int status) {
     printf ("In Exit_Syscall\n");
 
     AddrSpace* addressSpace = currentThread->space;
-
+    
     //has more than 1 thread in current process
-    if (addressSpace->GetNumThread() > 1) {
+    if (addressSpace->GetNumThread() > 0) {
+        
+        printf("\nThread:%s exits current thread number: %d, current process number: %d \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements() );
         //addressSpace->DeallocateSpaceForThread();
         addressSpace->UpdateThreadNum();
         exitLock->Release();
@@ -137,14 +139,16 @@ void Exit_Syscall(int status) {
 
     }
     //the main thread case
-    else if (addressSpace->GetNumThread() == 1) {
+    else if (addressSpace->GetNumThread() == 0) {
         //if this is the last process
-        if (processTable.GetNumElements() == 0) {
+        if (processTable.GetNumElements() == 1) {
+            printf("\nlast Thread in last process:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
             exitLock->Release();
             interrupt->Halt();
         }
-        else{
-            addressSpace->UpdateThreadNum();
+        else if(processTable.GetNumElements() > 1 ){
+             printf("\nlast Thread:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
+            //addressSpace->UpdateThreadNum();
             processTable.Remove(addressSpace->GetSpaceID());
             // addressSpace->DeallocateSpaceForThread();
             exitLock->Release();
@@ -163,15 +167,18 @@ void Exit_Syscall(int status) {
 
 
 void exec_thread(int virtualAddress) {
+     printf("5\n");
     executeLock->Acquire();
+     printf("6\n");
     //initialize register
     currentThread->space->InitRegisters();
+     printf("7\n");
     //restore state
     currentThread->space->RestoreState();
-
+     printf("8\n");
     executeLock->Release();
-
     machine->Run();
+    ASSERT(FALSE);
 }
 
 
@@ -189,18 +196,23 @@ SpaceId Exec_Syscall(int vaddr) {
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
-       // addressSpace->AllocateSpaceForNewThread();
+        //addressSpace->AllocateSpaceForThread();
+        
         thread->space = addressSpace;
-
+        printf("before put, the process number: %d \n", processTable.GetNumElements());
+        
         int spaceId = processTable.Put(addressSpace);
+        printf("after put, the process number: %d \n", processTable.GetNumElements());
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-
+        printf("1\n");
         machine->WriteRegister(2, spaceId);
-
-        thread->Fork(exec_thread, virtualAddress);
+        printf("2\n");
         executeLock->Release();
-        return 0;
+        printf("3\n");
+        thread->Fork(exec_thread, 0);
+         printf("4\n");
+        return spaceId;
     }
     else {
         printf("%s", "Cannot open file");
@@ -371,7 +383,8 @@ void kernel_thread(int virtualAddress) {
     machine->WriteRegister(NextPCReg, virtualAddress + 4);
     //restore state
     currentThread->space->RestoreState();
-    machine->WriteRegister(StackReg, machine->ReadRegister(StackReg) - 16);
+    machine->WriteRegister(StackReg, currentThread->space->GetMemorySize() - 16);// - divRoundUp(UserStackSize,PageSize));
+   // printf("starkreg: %d\n", StackReg);
     machine->Run();
 
 }
@@ -381,7 +394,14 @@ void Fork_Syscall(int vaddr) {
 
     printf ("In Fork_Syscall\n");
     forkLock->Acquire();
-
+    if (currentThread->space->GetMemorySize() < vaddr) {
+        printf("Error: Virtual Address larger than physical address size\n");
+        return;
+    }
+    else if (vaddr == 0) {
+        printf("Error: Virtual Address is zero\n");
+        return;
+    }
     int virtualAddr = vaddr;
 
     Thread *thread = new Thread("newThread");
@@ -389,17 +409,7 @@ void Fork_Syscall(int vaddr) {
     thread->space = currentThread->space;
     thread->space->AllocateSpaceForNewThread();
     thread->space->RestoreState();
-    if (thread->space->GetMemorySize() < virtualAddr) {
-        thread->space->UpdateThreadNum();
-        printf("Error: Virtual Address larger than physical address size\n");
-    }
-    else if (virtualAddr == 0) {
-        thread->space->UpdateThreadNum();
-        printf("Error: Virtual Address is zero\n");
-    }
-    else {
-        thread->Fork(kernel_thread, virtualAddr);
-    }
+    thread->Fork(kernel_thread, virtualAddr);
     forkLock->Release();
 }
 
@@ -496,6 +506,7 @@ int Acquire_Syscall(int lockIndex) {
             return -1;
         }
         lock->Acquire();
+        printf("Acquire Lock successfully!\n");
         return 0;
     }
 }
@@ -508,6 +519,7 @@ int Release_Syscall(int lockIndex) {
     }
     else {
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        printf("current thread name: %s",currentThread->getName());
         if (lock == NULL) {
             printf("Error: lock doesn't exist\n");
             return -1;
@@ -536,6 +548,7 @@ int Wait_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Wait(lock);
+        printf("Wait successfully!\n");
         return 0;
     }
 
@@ -560,6 +573,7 @@ int Signal_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Signal(lock);
+        printf("Signal successfully!\n");
         return 0;
     }
 }
@@ -583,6 +597,7 @@ int Broadcast_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Broadcast(lock);
+        printf("Broadcast successfully");
         return 0;
     }
 }
