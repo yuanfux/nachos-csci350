@@ -104,7 +104,7 @@ Lock::Lock(char* debugName) {
     name = debugName;
     state = FREE;
     queue = new List;
-    lockHolder = currentThread;
+    lockHolder = NULL;
 }
 
 Lock::~Lock() {
