@@ -218,6 +218,14 @@ Printint:
 	j	$31
 	.end Printint
 
+	.globl Random
+	.ent	Random
+Random:
+	addiu $2,$0,SC_Random
+	syscall
+	j	$31
+	.end Random
+
 
 /* dummy function to keep gcc happy */
         .globl  __main
