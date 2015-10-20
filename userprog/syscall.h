@@ -41,7 +41,8 @@
 #define SC_DestroyCondition 19
 
 #define SC_Print 20
-
+#define SC_Printint 21
+#define SC_Random 22
 
 #define MAXFILENAME 256
 
@@ -72,7 +73,7 @@ typedef int SpaceId;
 /* Run the executable, stored in the Nachos file "name", and return the
  * address space identifier
  */
-SpaceId Exec(char *name);
+SpaceId Exec(char *name, int len);
 
 /* Only return once the the user program "id" has finished.
  * Return the exit status.
@@ -159,6 +160,10 @@ int DestroyCondition(int lockIndex);
 
 
 void Print(char *buffer, int size, int* arguments, int argLen);
+
+void Printint(int num);
+
+int Random(int limit);
 
 
 #endif /* IN_ASM */

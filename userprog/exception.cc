@@ -20,7 +20,8 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
-
+#include <stdlib.h>
+#include <time.h>
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
@@ -123,30 +124,43 @@ int copyout(unsigned int vaddr, int len, char *buf) {
 typedef int SpaceId;
 
 void Exit_Syscall(int status) {
-    exitLock->Acquire();
+    executeLock->Acquire();
     printf ("In Exit_Syscall\n");
-    AddrSpace* addressSpace = currentThread->space;
 
+    AddrSpace* addressSpace = currentThread->space;
+    
     //has more than 1 thread in current process
     if (addressSpace->GetNumThread() > 1) {
+        
+        printf("\nThread:%s exits current thread number: %d, current process number: %d \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements() );
         //addressSpace->DeallocateSpaceForThread();
-        exitLock->Release();
+        addressSpace->UpdateThreadNum();
+        executeLock->Release();
         currentThread->Finish();
 
     }
     //the main thread case
-    if (addressSpace->GetNumThread() == 1) {
-        processTable.Remove(addressSpace->GetSpaceID());
-        // addressSpace->DeallocateSpaceForThread();
-        exitLock->Release();
-        currentThread->Finish();
-
+    else if (addressSpace->GetNumThread() == 1) {
         //if this is the last process
-        if (processTable.GetNumElements() == 0) {
-            exitLock->Release();
+        if (processTable.GetNumElements() == 1) {
+            printf("\nlast Thread in last process:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
+            executeLock->Release();
             interrupt->Halt();
         }
-
+        else if(processTable.GetNumElements() > 1 ){
+             printf("\nlast Thread:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
+            //addressSpace->UpdateThreadNum();
+            processTable.Remove(addressSpace->GetSpaceID());
+            // addressSpace->DeallocateSpaceForThread();
+            executeLock->Release();
+            currentThread->Finish();
+        }
+    }
+    //(addressSpace->GetNumThread() <= 0)
+    else {
+        printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
+        executeLock->Release();
+        interrupt->Halt();
     }
 
 
@@ -159,21 +173,20 @@ void exec_thread(int virtualAddress) {
     currentThread->space->InitRegisters();
     //restore state
     currentThread->space->RestoreState();
-
     executeLock->Release();
-
     machine->Run();
+    ASSERT(FALSE);
 }
 
 
-SpaceId Exec_Syscall(int vaddr) {
+SpaceId Exec_Syscall(int vaddr, int len) {
     printf ("In Exec_Syscall\n");
     executeLock->Acquire();
     int virtualAddress = vaddr;
 
-    char* file = new char[100];
+    char* file = new char[len+1];
 
-    copyin(virtualAddress, 100, file);
+    copyin(virtualAddress, len+1, file);
 
     OpenFile *newFile = fileSystem->Open(file);
 
@@ -181,17 +194,21 @@ SpaceId Exec_Syscall(int vaddr) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
         addressSpace->AllocateSpaceForNewThread();
+        
         thread->space = addressSpace;
-
+        printf("before put, the process number: %d \n", processTable.GetNumElements());
+        
         int spaceId = processTable.Put(addressSpace);
+        printf("after put, the process number: %d \n", processTable.GetNumElements());
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-
-        machine->WriteRegister(2, spaceId);
-
-        thread->Fork(exec_thread, virtualAddress);
+      //  printf("1\n");
+       // machine->WriteRegister(2, spaceId);
+       // printf("3\n");
+        thread->Fork(exec_thread, 0);
         executeLock->Release();
-        return 0;
+       //  printf("4\n");
+        return spaceId;
     }
     else {
         printf("%s", "Cannot open file");
@@ -358,11 +375,14 @@ void Close_Syscall(int fd) {
 
 void kernel_thread(int virtualAddress) {
     //increment the program counter
+    executeLock->Acquire();
     machine->WriteRegister(PCReg, virtualAddress);
     machine->WriteRegister(NextPCReg, virtualAddress + 4);
     //restore state
     currentThread->space->RestoreState();
-    machine->WriteRegister(StackReg, machine->ReadRegister(StackReg) - 16);
+    machine->WriteRegister(StackReg, currentThread->space->GetMemorySize() - 16);// - divRoundUp(UserStackSize,PageSize));
+   // printf("starkreg: %d\n", StackReg);
+    executeLock->Release();
     machine->Run();
 
 }
@@ -371,8 +391,15 @@ void kernel_thread(int virtualAddress) {
 void Fork_Syscall(int vaddr) {
 
     printf ("In Fork_Syscall\n");
-    forkLock->Acquire();
-
+    executeLock->Acquire();
+    if (currentThread->space->GetMemorySize() < vaddr) {
+        printf("Error: Virtual Address larger than physical address size\n");
+        return;
+    }
+    else if (vaddr == 0) {
+        printf("Error: Virtual Address is zero\n");
+        return;
+    }
     int virtualAddr = vaddr;
 
     Thread *thread = new Thread("newThread");
@@ -380,18 +407,8 @@ void Fork_Syscall(int vaddr) {
     thread->space = currentThread->space;
     thread->space->AllocateSpaceForNewThread();
     thread->space->RestoreState();
-    if (thread->space->GetMemorySize() < virtualAddr) {
-        // addressSpace->DeallocateSpaceForThread();
-        printf("Error: Virtual Address larger than physical address size\n");
-    }
-    else if (virtualAddr == 0) {
-        // addressSpace->DeallocateSpaceForThread();
-        printf("Error: Virtual Address is zero\n");
-    }
-    else {
-        thread->Fork(kernel_thread, virtualAddr);
-    }
-    forkLock->Release();
+    thread->Fork(kernel_thread, virtualAddr);
+    executeLock->Release();
 }
 
 void Print_Syscall(unsigned int vaddr, int len, unsigned int args, int argsSize) {
@@ -487,6 +504,7 @@ int Acquire_Syscall(int lockIndex) {
             return -1;
         }
         lock->Acquire();
+        printf("Acquire Lock successfully!\n");
         return 0;
     }
 }
@@ -499,6 +517,7 @@ int Release_Syscall(int lockIndex) {
     }
     else {
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
+        printf("current thread name: %s",currentThread->getName());
         if (lock == NULL) {
             printf("Error: lock doesn't exist\n");
             return -1;
@@ -527,6 +546,7 @@ int Wait_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Wait(lock);
+        printf("Wait successfully!\n");
         return 0;
     }
 
@@ -551,6 +571,7 @@ int Signal_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Signal(lock);
+        printf("Signal successfully!\n");
         return 0;
     }
 }
@@ -574,9 +595,22 @@ int Broadcast_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Broadcast(lock);
+        printf("Broadcast successfully");
         return 0;
     }
 }
+
+void Printint_Syscall(int num){
+    printf("%d", num);
+}
+
+int Random_Syscall(int limit){
+    
+    return rand() % limit;
+    
+    
+}
+
 
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
@@ -596,7 +630,7 @@ void ExceptionHandler(ExceptionType which) {
             break;
         case SC_Exec:
             DEBUG('a', "Exec syscall.\n");
-            rv = Exec_Syscall(machine->ReadRegister(4));
+            rv = Exec_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
             break;
         case SC_Join:
             DEBUG('a', "Join syscall.\n");
@@ -680,7 +714,16 @@ void ExceptionHandler(ExceptionType which) {
                           machine->ReadRegister(6),
                           machine->ReadRegister(7));
             break;
+        case SC_Printint:
+            DEBUG('a', "Printint syscall.\n");
+            Printint_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_Random:
+            DEBUG('a', "Random syscall.\n");
+            rv = Random_Syscall(machine->ReadRegister(4));
+            break;
         }
+
 
         // Put in the return value and increment the PC
         machine->WriteRegister(2, rv);

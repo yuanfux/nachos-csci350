@@ -134,14 +134,13 @@ void Lock::Acquire() {
 
 void Lock::Release() {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-
     if (!isHeldByCurrentThread()){                                  //if a thread tries to release the lock
         printf("Error. Current thread is not the lock holder\n");   //but is not the holder, send error message
         (void) interrupt->SetLevel(oldLevel);                       //and exit
         return;
     }
-
-    if (!queue->IsEmpty()){                         //if the queue of waiting lock is not empty
+    if (!queue->IsEmpty()){
+        //if the queue of waiting lock is not empty
         lockHolder = (Thread *)queue->Remove();     //remove the first thread from the queue
         scheduler->ReadyToRun(lockHolder);          //put the thread to ready state
 
@@ -150,7 +149,7 @@ void Lock::Release() {
         state = FREE;           //if the queue is empty, then simply free the lock
         lockHolder = NULL;      //set holder of the lock to be NULL
     }
-
+    
     (void) interrupt->SetLevel(oldLevel);
 }
 

@@ -41,12 +41,15 @@ public:
     int GetSpaceID();
     void SetSpaceID(int spaceid);
     int GetMemorySize();
+    void UpdateThreadNum();
+    void AllocateSpaceForProcess(int vaddr);
 private:
     TranslationEntry *pageTable;    // Assume linear page table translation
     // for now!
     unsigned int numPages;      // Number of pages in the virtual
     int numThread;
     int spaceID;
+    Lock* lock;
     // address space
 };
 
