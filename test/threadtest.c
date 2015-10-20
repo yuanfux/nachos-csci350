@@ -898,7 +898,7 @@ void PassportClerk(int myLine) {
         bool inBribeLine = false;
 
         if (passportClerkState[myLine] == ONBREAK && !printed) {
-            Write("PassportClerk [");
+            Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] is going on break\n", sizeof("] is going on break\n"), ConsoleOutput);
             printed = true;
@@ -910,10 +910,10 @@ void PassportClerk(int myLine) {
 
             if (passportClerkState[myLine] == ONBREAK) {
                 passportClerkState[myLine] = BUSY;
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] sees a senator\n", sizeof("] sees a senator\n"), ConsoleOutput);
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
                 printed = false;
@@ -924,11 +924,11 @@ void PassportClerk(int myLine) {
 
             senatorServiceId = myLine;
             Signal(senatorPassportWaitCV, senatorWaitLock);
-            Write("PassportClerk [");
+            Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
             Wait(senatorPassportWaitCV, senatorWaitLock);
-            Write("PassportClerk[");
+            Write("PassportClerk[", sizeof("PassportClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
             Printint(senatorData + 100);
@@ -940,13 +940,13 @@ void PassportClerk(int myLine) {
             while (photoAcceptance <= 5) { //randomness to make senator go back of the line
                 Write("Senator [", sizeof("Senator ["), ConsoleOutput);
                 Printint(senatorData);
-                Write("] has gone to PassportClerk [");
+                Write("] has gone to PassportClerk [", sizeof("] has gone to PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] too soon. They are going to the back of the line.\n");
+                Write("] too soon. They are going to the back of the line.\n", sizeof("] too soon. They are going to the back of the line.\n"), ConsoleOutput);
                 photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
             }
 
-            Write("PassportClerk[");
+            Write("PassportClerk[", sizeof("PassportClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Senator [", sizeof("] has recorded a completed application for Senator ["), ConsoleOutput);
             Printint(senatorData);
@@ -964,14 +964,14 @@ void PassportClerk(int myLine) {
         if (passportClerkState[myLine] != ONBREAK && !hasSenator) { //if there is no senator present and I am not on break, deal with the normal customers
             if (passportClerkBribeLineCount[myLine] > 0) { //bribe line first
                 Signal(passportClerkBribeLineWaitCV[myLine], ClerkLineLock);
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
                 passportClerkState[myLine] = BUSY;
                 inBribeLine = true;
             } else if (passportClerkLineCount[myLine] > 0) { //regular line next
                 Signal(passportClerkLineWaitCV[myLine], ClerkLineLock);
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
                 passportClerkState[myLine] = BUSY;
@@ -1000,14 +1000,14 @@ void PassportClerk(int myLine) {
             //Collect Bribe Money From Customer
             Acquire(passportMoneyLock);
             MoneyFromPassportClerk += 500;
-            Write("PassportClerk[");
+            Write("PassportClerk[", sizeof("PassportClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received $500 from Customer[", sizeof("] has received $500 from Customer["), ConsoleOutput);
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
             Release(passportMoneyLock);
 
-            Write("PassportClerk [");
+            Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
             Printint(id);
@@ -1018,11 +1018,11 @@ void PassportClerk(int myLine) {
             int passportClerkPunishment = Random(RAND_UPPER_LIMIT) % 100;//randomness to make customer go back of the line
             if (passportClerkPunishment > 5) { //customer has both their application and picture comleted
 
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] has determined that Customer[");
+                Write("] has determined that Customer[", sizeof("] has determined that Customer["), ConsoleOutput);
                 Printint(id);
-                Write("] has both their application and picture completed\n");
+                Write("] has both their application and picture completed\n", sizeof("] has both their application and picture completed\n"), ConsoleOutput);
 
                 int numCalls = Random(RAND_UPPER_LIMIT) % 80 + 20;
                 for (int i = 0; i < numCalls; i++) {
@@ -1030,20 +1030,20 @@ void PassportClerk(int myLine) {
                 }
 
                 customerApplicationStatus[id] += 3;
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] has recorded Customer[");
+                Write("] has recorded Customer[", sizeof("] has recorded Customer["), ConsoleOutput);
                 Printint(id);
-                Write("] passport documentation\n");
+                Write("] passport documentation\n", sizeof("] passport documentation\n"), ConsoleOutput);
                 Signal(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
 
             } else { //customer does not have both their applicaiton and picture completed
 
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] has determined that Customer[");
+                Write("] has determined that Customer[", sizeof("] has determined that Customer["), ConsoleOutput);
                 Printint(id);
-                Write("] does not have both their application and picture completed\n");
+                Write("] does not have both their application and picture completed\n", sizeof("] does not have both their application and picture completed\n"), ConsoleOutput);
                 Signal(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
 
             }
@@ -1053,7 +1053,7 @@ void PassportClerk(int myLine) {
             Wait(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
             id = passportClerkCustomerId[myLine];
 
-            Write("PassportClerk [");
+            Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
             Printint(id);
@@ -1063,11 +1063,11 @@ void PassportClerk(int myLine) {
 
             int passportClerkPunishment = Random(RAND_UPPER_LIMIT) % 100;
             if (passportClerkPunishment > 5) {
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] has determined that Customer[");
+                Write("] has determined that Customer[", sizeof("] has determined that Customer["), ConsoleOutput);
                 Printint(id);
-                Write("] has both their application and picture completed\n");
+                Write("] has both their application and picture completed\n", sizeof("] has both their application and picture completed\n"), ConsoleOutput);
 
                 int numCalls = Random(RAND_UPPER_LIMIT) % 80 + 20;
                 for (int i = 0; i < numCalls; i++) {
@@ -1075,20 +1075,20 @@ void PassportClerk(int myLine) {
                 }
 
                 customerApplicationStatus[id] += 3;
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] has recorded Customer[");
+                Write("] has recorded Customer[", sizeof("] has recorded Customer["), ConsoleOutput);
                 Printint(id);
-                Write("] passport documentation\n");
+                Write("] passport documentation\n", sizeof("] passport documentation\n"), ConsoleOutput);
                 Signal(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
 
             } else {
 
-                Write("PassportClerk [");
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] has determined that Customer[");
+                Write("] has determined that Customer[", sizeof("] has determined that Customer["), ConsoleOutput);
                 Printint(id);
-                Write("] does not have both their application and picture completed\n");
+                Write("] does not have both their application and picture completed\n", sizeof("] does not have both their application and picture completed\n"), ConsoleOutput);
                 Signal(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
 
             }
@@ -1108,7 +1108,7 @@ void Cashier(int myLine) {
     while (true) {
 
         if (CashierState[myLine] == ONBREAK && !printed) {
-            Write("Cashier [");
+            Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
             Write("] is going on break\n", sizeof("] is going on break\n"), ConsoleOutput);
             printed = true;
@@ -1120,10 +1120,10 @@ void Cashier(int myLine) {
 
             if (CashierState[myLine] == ONBREAK) {
                 CashierState[myLine] = BUSY;
-                Write("Cashier [");
+                Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] sees a senator\n", sizeof("] sees a senator\n"), ConsoleOutput);
-                Write("Cashier [");
+                Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
                 printed = false;
@@ -1134,11 +1134,11 @@ void Cashier(int myLine) {
 
             senatorServiceId = myLine;
             Signal(senatorCashierWaitCV, senatorWaitLock);
-            Write("Cashier [");
+            Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
             Wait(senatorCashierWaitCV, senatorWaitLock);
-            Write("Cashier[");
+            Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
             Printint(senatorData + 100);
@@ -1150,9 +1150,9 @@ void Cashier(int myLine) {
             while (photoAcceptance <= 5) {
                 Write("Senator [", sizeof("Senator ["), ConsoleOutput);
                 Printint(senatorData);
-                Write("] has gone to Cashier [");
+                Write("] has gone to Cashier [", sizeof("] has gone to Cashier ["), ConsoleOutput);
                 Printint(myLine);
-                Write("] too soon. They are going to the back of the line.\n");
+                Write("] too soon. They are going to the back of the line.\n", sizeof("] too soon. They are going to the back of the line.\n"), ConsoleOutput);
                 photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
             }
 
@@ -1164,11 +1164,11 @@ void Cashier(int myLine) {
 
             Write("Senator [", sizeof("Senator ["), ConsoleOutput);
             Printint(senatorData);
-            Write("] has given Cashier [");
+            Write("] has given Cashier [", sizeof("] has given Cashier ["), ConsoleOutput);
             Printint(myLine);
-            Write("] $100.\n");
+            Write("] $100.\n", sizeof("] $100.\n"), ConsoleOutput);
 
-            Write("Cashier[");
+            Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Senator [", sizeof("] has recorded a completed application for Senator ["), ConsoleOutput);
             Printint(senatorData);
@@ -1187,7 +1187,7 @@ void Cashier(int myLine) {
             //When CashierState != ONBREAK
             if (CashierLineCount[myLine] > 0) {
                 Signal(CashierLineWaitCV[myLine], ClerkLineLock);
-                Write("Cashier [");
+                Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
                 CashierState[myLine] = BUSY;
@@ -1212,7 +1212,7 @@ void Cashier(int myLine) {
 
         Wait(CashierLineCV[myLine], CashierLineLock[myLine]);
         id = CashierCustomerId[myLine];
-        Write("Cashier[");
+        Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
         Printint(myLine);
         Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
         Printint(id);
@@ -1222,11 +1222,11 @@ void Cashier(int myLine) {
 
         int cashierPunishment = Random(RAND_UPPER_LIMIT) % 100;
         if (cashierPunishment > 5) {  // Passed All the tests (Certified)
-            Write("Cashier[");
+            Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
-            Write("] has verified that Customer[");
+            Write("] has verified that Customer[", sizeof("] has verified that Customer["), ConsoleOutput);
             Printint(id);
-            Write("] has been certified by a PassportClerk\n");
+            Write("] has been certified by a PassportClerk\n", sizeof("] has been certified by a PassportClerk\n"), ConsoleOutput);
 
 
             //Collect Fee From Customer
@@ -1235,37 +1235,39 @@ void Cashier(int myLine) {
             Release(cashierMoneyLock);
 
 
-            Write("Cashier[");
+            Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
-            Write("] has received the $100 from Customer[");
+            Write("] has received the $100 from Customer[", sizeof("] has received the $100 from Customer["), ConsoleOutput);
             Printint(id);
-            Write("] after certification\n");
+            Write("] after certification\n", sizeof("] after certification\n"), ConsoleOutput);
 
             // Give out the passport to the customer
             // Notify the customer he is done
-            Write("Cashier[");
+            Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
-            Write("] has provided Customer[");
+            Write("] has provided Customer[", sizeof("] has provided Customer["), ConsoleOutput);
             Printint(id);
-            Write("] their completed passport\n");
-            Write("Cashier[");
+            Write("] their completed passport\n", sizeof("] their completed passport\n"), ConsoleOutput);
+            Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
-            Write("] has recorded that Customer[");
+            Write("] has recorded that Customer[", sizeof("] has recorded that Customer["), ConsoleOutput);
             Printint(id);
-            Write("] has been given their completed passport\n");
+            Write("] has been given their completed passport\n", sizeof("] has been given their completed passport\n"), ConsoleOutput);
 
             customerApplicationStatus[id] += 4;
             Signal(CashierLineCV[myLine], CashierLineLock[myLine]);
         } else { //Not yet Certified
-            Write("Cashier [");
+            Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
-            Write("] has received the $100 from Customer[");
+            Write("] has received the $100 from Customer[", sizeof("] has received the $100 from Customer["), ConsoleOutput);
             Printint(id);
-            Write("] before certification. They are to go to the back of my line.\n");
-            Write("customerApplicationStatus[");
+            Write("] before certification. They are to go to the back of my line.\n". sizeof("] before certification. They are to go to the back of my line.\n"), ConsoleOutput);
+            Write("customerApplicationStatus[", sizeof("customerApplicationStatus["), ConsoleOutput);
             Printint(id);
-            Write("] is: " << customerApplicationStatus[id] << "\n", sizeof("\n"), ConsoleOutput);
-                  Signal(CashierLineCV[myLine], CashierLineLock[myLine]);
+            Write("] is: ", sizeof("] is: "), ConsoleOutput); 
+            Printint(customerApplicationStatus[id]);
+            Write("\n", sizeof("\n"), ConsoleOutput);
+            Signal(CashierLineCV[myLine], CashierLineLock[myLine]);
 
         }
 
@@ -1299,13 +1301,24 @@ void Manager() {
         Acquire(passportMoneyLock);
         Acquire(cashierMoneyLock);
 
-        Write("Manager has counted a total of $" << MoneyFromApplicationClerk << " for ApplicationClerks\n");
-        Write("Manager has counted a total of $" << MoneyFromPictureClerk << " for PictureClerks\n");
-        Write("Manager has counted a total of $" << MoneyFromPassportClerk << " for PassportClerks\n");
-        Write("Manager has counted a total of $" << MoneyFromCashier << " for Cashiers\n");
+        Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+        Printint(MoneyFromApplicationClerk);
+        Write(" for ApplicationClerks\n", sizeof(" for ApplicationClerks\n"), ConsoleOutput);
+        
+        Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+        Printint(MoneyFromPictureClerk);
+        Write(" for PictureClerks\n", sizeof(" for PictureClerks\n"), ConsoleOutput);
+        
+        Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+        Printint(MoneyFromPassportClerk);
+        Write(" for PassportClerks\n", sizeof(" for PassportClerks\n"), ConsoleOutput);
+        
+        Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+        Printint(MoneyFromCashier);
+        Write(" for Cashiers\n", sizeof(" for Cashiers\n"), ConsoleOutput);
 
         MoneyTotal = MoneyFromApplicationClerk + MoneyFromPictureClerk + MoneyFromPassportClerk + MoneyFromCashier;
-        Write("Manager has counted a total of $" << MoneyTotal << " for The passport Office\n");
+        Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput << MoneyTotal << " for The passport Office\n");
 
         Release(applicationMoneyLock);
         Release(pictureMoneyLock);
@@ -1325,14 +1338,18 @@ void Manager() {
                     && ApplicationClerkState[i] == ONBREAK) {
 
                 ApplicationClerkState[i] = AVAILABLE;
-                Write("Manager has woken up an ApplicationClerk\n");
-                Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("Manager has woken up an ApplicationClerk\n", sizeof("Manager has woken up an ApplicationClerk\n"), ConsoleOutput);
+                Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] > 0) {
 
                 ApplicationClerkState[i] = AVAILABLE;
-                Write("Manager has woken up an ApplicationClerk\n");
-                Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("Manager has woken up an ApplicationClerk\n", sizeof("Manager has woken up an ApplicationClerk\n"), ConsoleOutput);
+                Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }
 
@@ -1345,13 +1362,17 @@ void Manager() {
 
                 pictureClerkState[i] = AVAILABLE;
                 Write("Manager has woken up a PictureClerk\n", sizeof("Manager has woken up a PictureClerk\n"), ConsoleOutput);
-                Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] > 0) {
 
                 pictureClerkState[i] = AVAILABLE;
                 Write("Manager has woken up a PictureClerk\n", sizeof("Manager has woken up a PictureClerk\n"), ConsoleOutput);
-                Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }
 
@@ -1364,13 +1385,17 @@ void Manager() {
 
                 passportClerkState[i] = AVAILABLE;
                 Write("Manager has woken up a PassportClerk\n", sizeof("Manager has woken up a PassportClerk\n"), ConsoleOutput);
-                Write("PassportClerk [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        passportClerkLineCount[i] + passportClerkBribeLineCount[i] > 0) {
 
                 passportClerkState[i] = AVAILABLE;
                 Write("Manager has woken up a PassportClerk\n", sizeof("Manager has woken up a PassportClerk\n"), ConsoleOutput);
-                Write("PassportClerk [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }
 
@@ -1383,13 +1408,17 @@ void Manager() {
 
                 CashierState[i] = AVAILABLE;
                 Write("Manager has woken up a Cashier\n", sizeof("Manager has woken up a Cashier\n"), ConsoleOutput);
-                Write("Cashier [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        CashierLineCount[i] > 0) {
 
                 CashierState[i] = AVAILABLE;
                 Write("Manager has woken up a Cashier\n", sizeof("Manager has woken up a Cashier\n"), ConsoleOutput);
-                Write("Cashier [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
+                Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
+                Printint(i);
+                Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }
 
@@ -1400,17 +1429,17 @@ void Manager() {
         count++;
 
         if (remainingCustomer == 0) {
-            Write("No customer. Manager is closing the office\n");
+            Write("No customer. Manager is closing the office\n", sizeof("No customer. Manager is closing the office\n"), ConsoleOutput);
             break;
         }
 
     }
 
     Write("\n", sizeof("\n"), ConsoleOutput);
-          Write("===================================\n");
-          Write("Passport Office Simulation Finshed.\n");
-          Write("===================================\n");
-          Write("\n", sizeof("\n"), ConsoleOutput);
+    Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
+    Write("Passport Office Simulation Finshed.\n", sizeof("Passport Office Simulation Finshed.\n"), ConsoleOutput);
+    Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
 }
 
@@ -1432,7 +1461,7 @@ void Senator() {
 
     hasSenator = TRUE;
     for (unsigned int i = 0; i < numCustomerWaiting.size(); i++) {
-        Write("Customer [");
+        Write("Customer [", sizeof("Customer ["), ConsoleOutput);
         Printint(numCustomerWaiting[i]);
         Write("] is going outside the Passport Office because their is a Senator present.\n", sizeof("] is going outside the Passport Office because their is a Senator present.\n"), ConsoleOutput);
     }
@@ -1602,31 +1631,31 @@ void PassportOffice() {
         strcat(lockName, integer);
 
         //application lock initialize
-        int applicationLock = new Lock(lockName);
+        int applicationLock = CreateLock(lockName);
         ApplicationClerkLineLock.push_back(applicationLock);
 
         //aplication CV initialize
         char applicationCVName[100] = "applicationCV";
         strcat(applicationCVName, integer);
-        int applicationCV = new Condition(applicationCVName);
+        int applicationCV = CreateCondition(applicationCVName);
         ApplicationClerkLineCV.push_back(applicationCV);
 
         //application bribe CV initialize
         char applicaitonBribeCVName[100] = "applicaitonBribeCV";
         strcat(applicaitonBribeCVName, integer);
-        int applicationBribeCV = new Condition(applicaitonBribeCVName);
+        int applicationBribeCV = CreateCondition(applicaitonBribeCVName);
         ApplicationClerkBribeLineCV.push_back(applicationBribeCV);
 
         //application Wait CV initialize
         char applicationWaitCVName[100] = "applicationWaitCV";
         strcat(applicationWaitCVName, integer);
-        int applicationWaitCV = new Condition(applicationWaitCVName);
+        int applicationWaitCV = CreateCondition(applicationWaitCVName);
         ApplicationClerkLineWaitCV.push_back(applicationWaitCV);
 
         //application Bribe Wait CV initialize
         char applicationBribeWaitCVName[100] = "applicationWaitCV";
         strcat(applicationBribeWaitCVName, integer);
-        int applicationBribeWaitCV = new Condition(applicationBribeWaitCVName);
+        int applicationBribeWaitCV = CreateCondition(applicationBribeWaitCVName);
         ApplicationClerkBribeLineWaitCV.push_back(applicationBribeWaitCV);
 
         //application line size intialize
@@ -1647,31 +1676,31 @@ void PassportOffice() {
         strcat(lockName, integer);
 
         //picture lock initialize
-        int pictureLock = new Lock(lockName);
+        int pictureLock = CreateLock(lockName);
         pictureClerkLineLock.push_back(pictureLock);
 
         //picture CV initialize
         char pictureCVName[100] = "pictureCV";
         strcat(pictureCVName, integer);
-        int pictureCV = new Condition(pictureCVName);
+        int pictureCV = CreateCondition(pictureCVName);
         pictureClerkLineCV.push_back(pictureCV);
 
         //picture bribe CV initialize
         char pictureBribeCVName[100] = "pictureBribeCV";
         strcat(pictureBribeCVName, integer);
-        int pictureBribeCV = new Condition(pictureBribeCVName);
+        int pictureBribeCV = CreateCondition(pictureBribeCVName);
         pictureClerkBribeLineCV.push_back(pictureBribeCV);
 
         //picture Wait CV initialize
         char pictureWaitCVName[100] = "pictureWaitCV";
         strcat(pictureWaitCVName, integer);
-        int pictureWaitCV = new Condition(pictureWaitCVName);
+        int pictureWaitCV = CreateCondition(pictureWaitCVName);
         pictureClerkLineWaitCV.push_back(pictureWaitCV);
 
         //picture Bribe Wait CV initialize
         char pictureBribeWaitCVName[100] = "pictureWaitCV";
         strcat(pictureBribeWaitCVName, integer);
-        int pictureBribeWaitCV = new Condition(pictureBribeWaitCVName);
+        int pictureBribeWaitCV = CreateCondition(pictureBribeWaitCVName);
         pictureClerkBribeLineWaitCV.push_back(pictureBribeWaitCV);
 
         //picture line size intialize
@@ -1692,31 +1721,31 @@ void PassportOffice() {
         strcat(lockName, integer);
 
         //passport lock initialize
-        int passportLock = new Lock(lockName);
+        int passportLock = CreateLock(lockName);
         passportClerkLineLock.push_back(passportLock);
 
         //passport CV initialize
         char passportCVName[100] = "passportCV";
         strcat(passportCVName, integer);
-        int passportCV = new Condition(passportCVName);
+        int passportCV = CreateCondition(passportCVName);
         passportClerkLineCV.push_back(passportCV);
 
         //passport bribe CV initialize
         char passportBribeCVName[100] = "passportBribeCV";
         strcat(passportBribeCVName, integer);
-        int passportBribeCV = new Condition(passportBribeCVName);
+        int passportBribeCV = CreateCondition(passportBribeCVName);
         passportClerkBribeLineCV.push_back(passportBribeCV);
 
         //passport Wait CV initialize
         char passportWaitCVName[100] = "passportWaitCV";
         strcat(passportWaitCVName, integer);
-        int passportWaitCV = new Condition(passportWaitCVName);
+        int passportWaitCV = CreateCondition(passportWaitCVName);
         passportClerkLineWaitCV.push_back(passportWaitCV);
 
         //passport Bribe Wait CV initialize
         char passportBribeWaitCVName[100] = "passportWaitCV";
         strcat(passportBribeWaitCVName, integer);
-        int passportBribeWaitCV = new Condition(passportBribeWaitCVName);
+        int passportBribeWaitCV = CreateCondition(passportBribeWaitCVName);
         passportClerkBribeLineWaitCV.push_back(passportBribeWaitCV);
 
         //passport line size intialize
@@ -1736,19 +1765,19 @@ void PassportOffice() {
         strcat(lockName, integer);
 
         //cashier lock initialize
-        int CashierLock = new Lock(lockName);
+        int CashierLock = CreateLock(lockName);
         CashierLineLock.push_back(CashierLock);
 
         //cashier CV initialize
         char CashierCVName[100] = "cashierCV";
         strcat(CashierCVName, integer);
-        int CashierCV = new Condition(CashierCVName);
+        int CashierCV = CreateCondition(CashierCVName);
         CashierLineCV.push_back(CashierCV);
 
         //cashier Wait CV initialize
         char CashierWaitCVName[100] = "cashierWaitCV";
         strcat(CashierWaitCVName, integer);
-        int CashierWaitCV = new Condition(CashierWaitCVName);
+        int CashierWaitCV = CreateCondition(CashierWaitCVName);
         CashierLineWaitCV.push_back(CashierWaitCV);
 
         //cashier line size intialize
@@ -1760,17 +1789,17 @@ void PassportOffice() {
         CashierCustomerId.push_back(0);
     }
 
-    senatorWaitLock = new Lock("senator");
-    senatorApplicationWaitLock = new Lock("senatorApplicationWaitLock");
-    senatorPictureWaitLock = new Lock("senatorPictureWaitLock");
-    senatorPassportWaitLock = new Lock("senatorPassportWaitLock");
-    senatorCashierWaitLock = new Lock("senatorCashierWaitLock");
-    senatorApplicationWaitCV = new Condition("senatorApplicationWaitCV");
-    senatorPictureWaitCV = new Condition("senatorPictureWaitCV");
-    senatorPassportWaitCV = new Condition("senatorPassportWaitCV");
-    senatorCashierWaitCV = new Condition("senatorCashierWaitCV");
-    customerWaitCV = new Condition("customerCV");
-    customerWaitLock = new Lock("customerLock");
+    senatorWaitLock = CreateLock("senator");
+    senatorApplicationWaitLock = CreateLock("senatorApplicationWaitLock");
+    senatorPictureWaitLock = CreateLock("senatorPictureWaitLock");
+    senatorPassportWaitLock = CreateLock("senatorPassportWaitLock");
+    senatorCashierWaitLock = CreateLock("senatorCashierWaitLock");
+    senatorApplicationWaitCV = CreateCondition("senatorApplicationWaitCV");
+    senatorPictureWaitCV = CreateCondition("senatorPictureWaitCV");
+    senatorPassportWaitCV = CreateCondition("senatorPassportWaitCV");
+    senatorCashierWaitCV = CreateCondition("senatorCashierWaitCV");
+    customerWaitCV = CreateCondition("customerCV");
+    customerWaitLock = CreateLock("customerLock");
 
     for (int i = 0 ; i < numCustomer; i++) {
         customerApplicationStatus.push_back(0);

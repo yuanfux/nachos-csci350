@@ -185,16 +185,29 @@ void exec_thread(int virtualAddress) {
 }
 
 
-int Exec_Syscall(int vaddr, int len) {
+int Exec_Syscall(unsigned int vaddr, int len) {
     executeLock->Acquire();
     printf ("In Exec_Syscall\n");
-    int virtualAddress = vaddr;
 
-    char* file = new char[len];
+    char *buf = new char[len + 1];  // Kernel buffer to put the name in
+    OpenFile *newFile;            // The new open file
+    int id;             // The openfile id
 
-    copyin(virtualAddress, len, file);
+    if (!buf) {
+        printf("%s", "Can't allocate kernel buffer in Open\n");
+        return -1;
+    }
 
-    OpenFile *newFile = fileSystem->Open(file);
+    if ( copyin(vaddr, len, buf) == -1 ) {
+        printf("%s", "Bad pointer passed to Open\n");
+        delete[] buf;
+        return -1;
+    }
+
+    buf[len] = '\0';
+
+    newFile = fileSystem->Open(buf);
+    delete[] buf;
 
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
@@ -209,7 +222,7 @@ int Exec_Syscall(int vaddr, int len) {
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
         // machine->WriteRegister(2, spaceId);
-        thread->Fork(exec_thread, virtualAddress);
+        thread->Fork(exec_thread, 0);
         executeLock->Release();
         return 0;
     }
