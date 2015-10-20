@@ -9,7 +9,7 @@ int main() {
 
   Printint(bytesread);
 
-  Write("who", 3, ConsoleOutput);
+  Write("who\n", 4, ConsoleOutput);
   Exit(0);
   return 0;
 }
