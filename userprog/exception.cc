@@ -341,14 +341,15 @@ void Close_Syscall(int fd) {
 
 void kernel_thread(int virtualAddress) {
     //increment the program counter
-    executeLock->Acquire();
+    // executeLock->Acquire();
     machine->WriteRegister(PCReg, virtualAddress);
     machine->WriteRegister(NextPCReg, virtualAddress + 4);
     //restore state
     currentThread->space->RestoreState();
-    machine->WriteRegister(StackReg, currentThread->space->GetMemorySize() - 16);// - divRoundUp(UserStackSize,PageSize));
+    int stackIndex = currentThread->GetStackIndex();
+    machine->WriteRegister(StackReg, stackIndex);// - divRoundUp(UserStackSize,PageSize));
    // printf("starkreg: %d\n", StackReg);
-    executeLock->Release();
+    // executeLock->Release();
     machine->Run();
 
 }
@@ -372,6 +373,7 @@ void Fork_Syscall(int vaddr) {
 
     thread->space = currentThread->space;
     thread->space->AllocateSpaceForNewThread();
+    thread->SetStackIndex(currentThread->space->GetMemorySize() - 16);
     thread->space->RestoreState();
     thread->Fork(kernel_thread, virtualAddr);
     executeLock->Release();

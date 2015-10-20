@@ -588,9 +588,6 @@ void ApplicationClerk(int myLine) {
         Yield();
         Acquire(ClerkLineLock);/* acquire the line lock in case of line size change */
 
-        Printint(CashierState[myLine]);
-        Printint(hasSenator);
-
         if (ApplicationClerkState[myLine] != ONBREAK && hasSenator == 0) { /* no senator, not on break, deal with normal customers */
             Write("Acquired ClerkLineLock\n", sizeof("Acquired ClerkLineLock\n"), ConsoleOutput);
             if (ApplicationClerkBribeLineCount[myLine] > 0) { /* bribe line customer first */
@@ -864,6 +861,7 @@ void PictureClerk(int myLine) {
                 }
 
                 customerApplicationStatus[id] += 2;
+
                 Signal(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
 
             } else { /* if customer does not like the picture */
@@ -909,8 +907,9 @@ void PictureClerk(int myLine) {
                 for (i = 0; i < numCalls; i++) {
                     Yield();
                 }
-
+                
                 customerApplicationStatus[id] += 2;
+                
                 Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
 
             } else { /* if customer does not like the picture */
@@ -1352,6 +1351,11 @@ void Manager() {
         Yield();
         Yield();
         Yield();
+        Yield();
+        Yield();
+        Yield();
+        Yield();
+        Yield();
         Write("Manager Awake\n", sizeof("Manager Awake\n"), ConsoleOutput);
         /* acquire all the lock to print out the incoming statement */
         Acquire(applicationMoneyLock);
@@ -1392,7 +1396,6 @@ void Manager() {
 
         Yield();
         Acquire(ClerkLineLock);
-        Write("Manager has tried\n", sizeof("Manager has tried\n"), ConsoleOutput);
 
         /* Application Clerks */
         for (i = 0; i < numApplicationClerk; i++) {

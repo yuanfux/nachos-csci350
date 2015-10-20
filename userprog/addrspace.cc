@@ -288,6 +288,7 @@ void AddrSpace::AllocateSpaceForNewThread() {
     pageTable = newPageTable;
 
     numThread++;
+    currentThread->space->RestoreState();
 
 }
 
