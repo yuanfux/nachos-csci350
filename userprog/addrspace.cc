@@ -302,9 +302,9 @@ void AddrSpace::AllocateSpaceForNewThread() {
     delete[] pageTable;
 
     pageTable = newPageTable;
+    numThread++;
 
     RestoreState();
-    numThread++;
 
 
 }

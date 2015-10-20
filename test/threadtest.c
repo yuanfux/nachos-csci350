@@ -1344,13 +1344,13 @@ void Manager() {
                     && pictureClerkState[i] == ONBREAK) {
 
                 pictureClerkState[i] = AVAILABLE;
-                Write("Manager has woken up a PictureClerk\n");
+                Write("Manager has woken up a PictureClerk\n", sizeof("Manager has woken up a PictureClerk\n"), ConsoleOutput);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] > 0) {
 
                 pictureClerkState[i] = AVAILABLE;
-                Write("Manager has woken up a PictureClerk\n");
+                Write("Manager has woken up a PictureClerk\n", sizeof("Manager has woken up a PictureClerk\n"), ConsoleOutput);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }
@@ -1363,13 +1363,13 @@ void Manager() {
                     && passportClerkState[i] == ONBREAK) {
 
                 passportClerkState[i] = AVAILABLE;
-                Write("Manager has woken up a PassportClerk\n");
+                Write("Manager has woken up a PassportClerk\n", sizeof("Manager has woken up a PassportClerk\n"), ConsoleOutput);
                 Write("PassportClerk [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        passportClerkLineCount[i] + passportClerkBribeLineCount[i] > 0) {
 
                 passportClerkState[i] = AVAILABLE;
-                Write("Manager has woken up a PassportClerk\n");
+                Write("Manager has woken up a PassportClerk\n", sizeof("Manager has woken up a PassportClerk\n"), ConsoleOutput);
                 Write("PassportClerk [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }
@@ -1382,13 +1382,13 @@ void Manager() {
                     && CashierState[i] == ONBREAK) {
 
                 CashierState[i] = AVAILABLE;
-                Write("Manager has woken up a Cashier\n");
+                Write("Manager has woken up a Cashier\n", sizeof("Manager has woken up a Cashier\n"), ConsoleOutput);
                 Write("Cashier [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
             } else if (remainingCustomer <= maxNumClerk * 3 &&
                        CashierLineCount[i] > 0) {
 
                 CashierState[i] = AVAILABLE;
-                Write("Manager has woken up a Cashier\n");
+                Write("Manager has woken up a Cashier\n", sizeof("Manager has woken up a Cashier\n"), ConsoleOutput);
                 Write("Cashier [" << i << "] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
 
             }

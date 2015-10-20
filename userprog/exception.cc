@@ -132,50 +132,38 @@ void Exit_Syscall(int status) {
     AddrSpace* addressSpace = currentThread->space;
 
     //has more than 1 thread in current process
-    if (strcmp(currentThread->getName(), "main")) {
-        if (addressSpace->GetNumThread() > 1) {
-            //addressSpace->DeallocateSpaceForThread();
-            printf("Process number: %d\n", processTable.GetNumElements());
-            printf("thread number: %d\n", addressSpace->GetNumThread());
-            addressSpace->UpdateThreadNum();
-            exitLock->Release();
-            currentThread->Finish();
+    if (addressSpace->GetNumThread() > 1) {
+        //addressSpace->DeallocateSpaceForThread();
+        printf("Process number: %d\n", processTable.GetNumElements());
+        printf("thread number: %d\n", addressSpace->GetNumThread());
+        addressSpace->UpdateThreadNum();
+        exitLock->Release();
+        currentThread->Finish();
 
-        }
-        //the main thread case
-        else if (addressSpace->GetNumThread() == 1) {
-            printf("Process number: %d\n", processTable.GetNumElements());
-            printf("thread number: %d\n", addressSpace->GetNumThread());
-            addressSpace->UpdateThreadNum();
-            processTable.Remove(addressSpace->GetSpaceID());
-            // addressSpace->DeallocateSpaceForThread();
+    }
+    //the main thread case
+    else if (addressSpace->GetNumThread() <= 1) {
+        printf("Process number: %d\n", processTable.GetNumElements());
+        printf("thread number: %d\n", addressSpace->GetNumThread());
+        addressSpace->UpdateThreadNum();
+        processTable.Remove(addressSpace->GetSpaceID());
+        // addressSpace->DeallocateSpaceForThread();
 
-            //if this is the last process
-            if (processTable.GetNumElements() == 0) {
-                printf("halt\n");
-                exitLock->Release();
-                interrupt->Halt();
-            }
-
-            exitLock->Release();
-            currentThread->Finish();
-
-        }
-        else if (addressSpace->GetNumThread() <= 0) {
-            printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
+        //if this is the last process
+        if (processTable.GetNumElements() == 0) {
+            printf("halt\n");
             exitLock->Release();
             interrupt->Halt();
         }
-    }
-    else {
-        printf("Main thread calls Exit_Syscall\n");
-        printf("ProcessTable size: %d\n", processTable.GetNumElements());
-        if (processTable.GetNumElements() >= 0) {
-            printf("ProcessTable size is less than zero\n");
-            exitLock->Release();
-            currentThread->Finish();
-        }
+
         exitLock->Release();
+        currentThread->Finish();
+
+    }
+    else if (addressSpace->GetNumThread() < 0) {
+        printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
+        exitLock->Release();
+        interrupt->Halt();
     }
 
 
@@ -197,14 +185,14 @@ void exec_thread(int virtualAddress) {
 }
 
 
-int Exec_Syscall(int vaddr) {
+int Exec_Syscall(int vaddr, int len) {
     executeLock->Acquire();
     printf ("In Exec_Syscall\n");
     int virtualAddress = vaddr;
 
-    char* file = new char[100];
+    char* file = new char[len];
 
-    copyin(virtualAddress, 100, file);
+    copyin(virtualAddress, len, file);
 
     OpenFile *newFile = fileSystem->Open(file);
 
@@ -220,7 +208,7 @@ int Exec_Syscall(int vaddr) {
         printf("processTable number after put: %d\n", processTable.GetNumElements());
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-        machine->WriteRegister(2, spaceId);
+        // machine->WriteRegister(2, spaceId);
         thread->Fork(exec_thread, virtualAddress);
         executeLock->Release();
         return 0;
@@ -637,7 +625,8 @@ void ExceptionHandler(ExceptionType which) {
             break;
         case SC_Exec:
             DEBUG('a', "Exec syscall.\n");
-            rv = Exec_Syscall(machine->ReadRegister(4));
+            rv = Exec_Syscall(machine->ReadRegister(4),
+                              machine->ReadRegister(5));
             printf("Exec_Syscall rv: %d\n", rv);
             break;
         case SC_Join:
@@ -727,7 +716,7 @@ void ExceptionHandler(ExceptionType which) {
             Printint_Syscall(machine->ReadRegister(4));
             break;
         }
-        
+
         // Put in the return value and increment the PC
         machine->WriteRegister(2, rv);
         machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
