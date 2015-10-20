@@ -40,9 +40,8 @@
 #define SC_CreateCondition 18
 #define SC_DestroyCondition 19
 
-#define SC_Print 20
-#define SC_Printint 21
-#define SC_Random 22
+#define SC_Printint 20
+#define SC_Random 21
 
 #define MAXFILENAME 256
 
@@ -157,9 +156,6 @@ int DestroyLock(int lockIndex);
 int CreateCondition();
 
 int DestroyCondition(int lockIndex);
-
-
-void Print(char *buffer, int size, int* arguments, int argLen);
 
 void Printint(int num);
 
