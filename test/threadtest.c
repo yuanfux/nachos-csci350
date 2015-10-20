@@ -106,11 +106,13 @@ void Customer() {
     unsigned int i;
     int money;
     int choseClerk;
+    int count;
 
     Acquire(incrementCount);
     id = customerNum + 1;
     customerNum++;
     Release(incrementCount);
+
 
     /* determine amount of money customer has */
     randomNum = Random(RAND_UPPER_LIMIT) % 4;
@@ -142,6 +144,7 @@ void Customer() {
             int myLine;
             int shortestPictureBribeLine;
             int shortestPictureBribeLineSize;
+            Yield();
             Acquire(ClerkLineLock);
             if (money > 500) { /* can bribe */
                 money -= 500; /*  give out money */
@@ -255,6 +258,7 @@ void Customer() {
             int myLine;
             int shortestApplicationBribeLine = -1;
             int shortestApplicationBribeLineSize = 10000;
+            Yield();
             Acquire(ClerkLineLock);
             if (money > 500) { /* has bribe money */
                 money -= 500;
@@ -353,6 +357,7 @@ void Customer() {
             int myLine;
             int shortestPassportBribeLine;
             int shortestPassportBribeLineSize;
+            Yield();
             Acquire(ClerkLineLock);
 
             if (money > 500) { /* has bribe money */
@@ -457,6 +462,7 @@ void Customer() {
             int myLine;
             int shortestCashierLine;
             int shortestCashierLineSize;
+            Yield();
             Acquire(ClerkLineLock);
 
             shortestCashierLine = -1;
@@ -536,7 +542,7 @@ void ApplicationClerk(int myLine) {
             printed = 0;
         }
 
-        if (hasSenator && (myLine == 0) && senatorStatus == 0) { /* if there is a senator present and i am the index 0 clerk */
+        if (hasSenator == 1 && myLine == 0 && senatorStatus == 0) { /* if there is a senator present and i am the index 0 clerk */
 
             if (ApplicationClerkState[myLine] == ONBREAK) {
                 ApplicationClerkState[myLine] = BUSY;
@@ -575,13 +581,18 @@ void ApplicationClerk(int myLine) {
 
             Release(senatorApplicationWaitLock);
             Release(senatorWaitLock);
-        } else if (hasSenator && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
+        } else if (hasSenator == 1 && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
             ApplicationClerkState[myLine] = ONBREAK;
         }
 
+        Yield();
         Acquire(ClerkLineLock);/* acquire the line lock in case of line size change */
 
-        if (ApplicationClerkState[myLine] != ONBREAK && !hasSenator) { /* no senator, not on break, deal with normal customers */
+        Printint(CashierState[myLine]);
+        Printint(hasSenator);
+
+        if (ApplicationClerkState[myLine] != ONBREAK && hasSenator == 0) { /* no senator, not on break, deal with normal customers */
+            Write("Acquired ClerkLineLock\n", sizeof("Acquired ClerkLineLock\n"), ConsoleOutput);
             if (ApplicationClerkBribeLineCount[myLine] > 0) { /* bribe line customer first */
                 Signal(ApplicationClerkBribeLineWaitCV[myLine], ClerkLineLock);
                 Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
@@ -637,9 +648,13 @@ void ApplicationClerk(int myLine) {
             Write("] from Customer[", sizeof("] from Customer["), ConsoleOutput);
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            for ( i = 0; i < 20; i++) {
-                Yield();
-            }
+            Yield();
+            Yield();
+            Yield();
+            Yield();
+            Yield();
+            Yield();
+            Yield();
             customerApplicationStatus[id]++;
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
@@ -661,9 +676,13 @@ void ApplicationClerk(int myLine) {
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            for ( i = 0; i < 20; i++) {
-                Yield();
-            }
+            Yield();
+            Yield();
+            Yield();
+            Yield();
+            Yield();
+            Yield();
+            Yield();
 
             customerApplicationStatus[ApplicationClerkData[myLine]]++;
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
@@ -703,7 +722,7 @@ void PictureClerk(int myLine) {
             printed = 0;
         }
 
-        if (hasSenator && (myLine == 0) && senatorStatus <= 1) { /* if there is a senator present and i am the index 0 clerk */
+        if (hasSenator == 1 && (myLine == 0) && senatorStatus <= 1) { /* if there is a senator present and i am the index 0 clerk */
 
             if (pictureClerkState[myLine] == ONBREAK) {
                 pictureClerkState[myLine] = BUSY;
@@ -763,12 +782,13 @@ void PictureClerk(int myLine) {
             Signal(senatorPictureWaitCV, senatorWaitLock);
             Release(senatorWaitLock);
             Release(senatorPictureWaitLock);
-        } else if (hasSenator && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
+        } else if (hasSenator == 1 && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
             pictureClerkState[myLine] = ONBREAK;
         }
 
+        Yield();
         Acquire(ClerkLineLock);/* acquire the line lock in case of line size change */
-        if (pictureClerkState[myLine] != ONBREAK && !hasSenator) { /* no senator, not on break, deal with normal customers */
+        if (pictureClerkState[myLine] != ONBREAK && hasSenator == 0) { /* no senator, not on break, deal with normal customers */
 
             if (pictureClerkBribeLineCount[myLine] > 0) { /* bribe line customer first */
                 Signal(pictureClerkBribeLineWaitCV[myLine], ClerkLineLock);
@@ -932,7 +952,7 @@ void PassportClerk(int myLine) {
             printed = 0;
         }
 
-        if (hasSenator && (myLine == 0) && senatorStatus <= 3) { /* if there is a senator present and I am the index 0 clerk */
+        if (hasSenator == 1 && (myLine == 0) && senatorStatus <= 3) { /* if there is a senator present and I am the index 0 clerk */
 
             if (passportClerkState[myLine] == ONBREAK) {
                 passportClerkState[myLine] = BUSY;
@@ -981,13 +1001,14 @@ void PassportClerk(int myLine) {
             Signal(senatorPassportWaitCV, senatorWaitLock);
             Release(senatorWaitLock);
             Release(senatorPassportWaitLock);
-        } else if (hasSenator && myLine != 0) { /* if there is no senator present and I am not the index 0 clerk. Put myself on break */
+        } else if (hasSenator == 1 && myLine != 0) { /* if there is no senator present and I am not the index 0 clerk. Put myself on break */
             passportClerkState[myLine] = ONBREAK;
         }
 
+        Yield();
         Acquire(ClerkLineLock);
 
-        if (passportClerkState[myLine] != ONBREAK && !hasSenator) { /* if there is no senator present and I am not on break, deal with the normal customers */
+        if (passportClerkState[myLine] != ONBREAK && hasSenator == 0) { /* if there is no senator present and I am not on break, deal with the normal customers */
             if (passportClerkBribeLineCount[myLine] > 0) { /* bribe line first */
                 Signal(passportClerkBribeLineWaitCV[myLine], ClerkLineLock);
                 Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
@@ -1146,7 +1167,7 @@ void Cashier(int myLine) {
             printed = 0;
         }
 
-        if (hasSenator && (myLine == 0) && senatorStatus <= 6) { /* if has senator and my index is 0 */
+        if (hasSenator == 1 && (myLine == 0) && senatorStatus <= 6) { /* if has senator and my index is 0 */
 
             if (CashierState[myLine] == ONBREAK) {
                 CashierState[myLine] = BUSY;
@@ -1207,13 +1228,13 @@ void Cashier(int myLine) {
             Signal(senatorCashierWaitCV, senatorWaitLock);
             Release(senatorWaitLock);
             Release(senatorCashierWaitLock);
-        } else if (hasSenator && myLine != 0) {
+        } else if (hasSenator == 1 && myLine != 0) {
             CashierState[myLine] = ONBREAK;
         }
 
+        Yield();
         Acquire(ClerkLineLock);
-
-        if (CashierState[myLine] != ONBREAK && !hasSenator) {
+        if (CashierState[myLine] != ONBREAK && hasSenator == 0) {
             /* When CashierState != ONBREAK */
             if (CashierLineCount[myLine] > 0) {
                 Signal(CashierLineWaitCV[myLine], ClerkLineLock);
@@ -1326,9 +1347,12 @@ void Manager() {
     if (maxNumClerk < numCashier) maxNumClerk = numCashier;
 
     while (1) {
-        for (i = 0; i < 100; ++i) {
-            Yield();
-        }
+        Yield();
+        Yield();
+        Yield();
+        Yield();
+        Yield();
+        Write("Manager Awake\n", sizeof("Manager Awake\n"), ConsoleOutput);
         /* acquire all the lock to print out the incoming statement */
         Acquire(applicationMoneyLock);
         Acquire(pictureMoneyLock);
@@ -1366,7 +1390,9 @@ void Manager() {
         /*  A vector of clerkState */
         /*  A vector of clerkCV */
 
+        Yield();
         Acquire(ClerkLineLock);
+        Write("Manager has tried\n", sizeof("Manager has tried\n"), ConsoleOutput);
 
         /* Application Clerks */
         for (i = 0; i < numApplicationClerk; i++) {
