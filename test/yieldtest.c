@@ -1,10 +1,8 @@
 #include "syscall.h"
 
-int
-main(){
-
-        int a[0];
-        Print("\nYIELD_SYSCALL TEST\n",sizeof("\nYIELD_SYSCALL TEST\n"),a,0);
+int main(){
+        Write("\nTesting Yield\n",sizeof("\nTesting Yield\n"),ConsoleOutput);
         Yield();
+        Write("\nTesting Yield successfully\n",sizeof("\nTesting Yield successfully\n"),ConsoleOutput);
 
 }

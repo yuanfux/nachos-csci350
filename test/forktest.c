@@ -1,17 +1,20 @@
 #include "syscall.h"
-int i = 1;
+int count = 0;
 
 void forkTest(){
-        int a[] = {i};
-        Print("\nForking function %d.\n\n",22,a,1);  
-        i= i+1; 
+        Write("\nforkTest: ", sizeof("\nforkTest: "), ConsoleOutput);
+        Printint(count);
+        Write("\n", sizeof("\n"), ConsoleOutput);
+        count= count+1;
         Exit(0);    
 }
 
-int
-main(){
-        int a[0];
-        Print("\nFORK_SYSCALL TEST\n",sizeof("\nFORK_SYSCALL TEST\n"),a,0);
+int main(){
+        Write("\nTesting Fork\n", sizeof("\nTesting Fork\n"), ConsoleOutput);
+        Write("\nTrying to Fork a Thread with address 0x00000\n", sizeof("\nTrying to Fork a Thread with address 0x00000\n"), ConsoleOutput);
+        Fork(0x00000);
+        Write("\nTrying to Fork a Thread with address 0xFFFFF\n", sizeof("\nTrying to Fork a Thread with address 0xFFFFF\n"), ConsoleOutput);
+        Fork(0xFFFFF);
         Fork(forkTest);
         Fork(forkTest);
         Fork(forkTest);

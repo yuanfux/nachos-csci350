@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles exectest forktest releasetest releasetest2 waittest yieldtest signaltest multithread randomtest
+all: halt matmult sort testfiles exectest forktest releaseacquiretest yieldtest signalwaittest randomtest broadcasttest destroyconditionlocktest printinttest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -68,17 +68,11 @@ forktest: forktest.o start.o
 	$(LD) $(LDFLAGS) start.o forktest.o -o forktest.coff
 	../bin/coff2noff forktest.coff forktest
 
-waittest.o: waittest.c
-	$(CC) $(CFLAGS) -c waittest.c
-waittest: waittest.o start.o
-	$(LD) $(LDFLAGS) start.o waittest.o -o waittest.coff
-	../bin/coff2noff waittest.coff waittest
-
-signaltest.o: signaltest.c
-	$(CC) $(CFLAGS) -c signaltest.c
-signaltest: signaltest.o start.o
-	$(LD) $(LDFLAGS) start.o signaltest.o -o signaltest.coff
-	../bin/coff2noff signaltest.coff signaltest
+signalwaittest.o: signalwaittest.c
+	$(CC) $(CFLAGS) -c signalwaittest.c
+signalwaittest: signalwaittest.o start.o
+	$(LD) $(LDFLAGS) start.o signalwaittest.o -o signalwaittest.coff
+	../bin/coff2noff signalwaittest.coff signalwaittest
 
 yieldtest.o: yieldtest.c
 	$(CC) $(CFLAGS) -c yieldtest.c
@@ -86,23 +80,11 @@ yieldtest: yieldtest.o start.o
 	$(LD) $(LDFLAGS) start.o yieldtest.o -o yieldtest.coff
 	../bin/coff2noff yieldtest.coff yieldtest
 
-releasetest.o: releasetest.c
-	$(CC) $(CFLAGS) -c releasetest.c
-releasetest: releasetest.o start.o
-	$(LD) $(LDFLAGS) start.o releasetest.o -o releasetest.coff
-	../bin/coff2noff releasetest.coff releasetest
-
-releasetest2.o: releasetest2.c
-	$(CC) $(CFLAGS) -c releasetest2.c
-releasetest2: releasetest2.o start.o
-	$(LD) $(LDFLAGS) start.o releasetest2.o -o releasetest2.coff
-	../bin/coff2noff releasetest2.coff releasetest2
-
-multithread.o: multithread.c
-	$(CC) $(CFLAGS) -c multithread.c
-multithread: multithread.o start.o
-	$(LD) $(LDFLAGS) start.o multithread.o -o multithread.coff
-	../bin/coff2noff multithread.coff multithread
+releaseacquiretest.o: releaseacquiretest.c
+	$(CC) $(CFLAGS) -c releaseacquiretest.c
+releaseacquiretest: releaseacquiretest.o start.o
+	$(LD) $(LDFLAGS) start.o releaseacquiretest.o -o releaseacquiretest.coff
+	../bin/coff2noff releaseacquiretest.coff releaseacquiretest
 
 testfiles.o: testfiles.c
 	$(CC) $(CFLAGS) -c testfiles.c
@@ -115,6 +97,33 @@ randomtest.o: randomtest.c
 randomtest: randomtest.o start.o
 	$(LD) $(LDFLAGS) start.o randomtest.o -o randomtest.coff
 	../bin/coff2noff randomtest.coff randomtest
+
+broadcasttest.o: broadcasttest.c
+	$(CC) $(CFLAGS) -c broadcasttest.c
+broadcasttest: broadcasttest.o start.o
+	$(LD) $(LDFLAGS) start.o broadcasttest.o -o broadcasttest.coff
+	../bin/coff2noff broadcasttest.coff broadcasttest
+
+destroyconditionlocktest.o: destroyconditionlocktest.c
+	$(CC) $(CFLAGS) -c destroyconditionlocktest.c
+destroyconditionlocktest: destroyconditionlocktest.o start.o
+	$(LD) $(LDFLAGS) start.o destroyconditionlocktest.o -o destroyconditionlocktest.coff
+	../bin/coff2noff destroyconditionlocktest.coff destroyconditionlocktest
+
+printinttest.c.o: printinttest.c
+	$(CC) $(CFLAGS) -c printinttest.c
+printinttest: printinttest.o start.o
+	$(LD) $(LDFLAGS) start.o printinttest.o -o printinttest.coff
+	../bin/coff2noff printinttest.coff printinttest
+
+
+threadtest.o: threadtest.c
+	$(CC) $(CFLAGS) -c threadtest.c
+threadtest: threadtest.o start.o
+	$(LD) $(LDFLAGS) start.o threadtest.o -o threadtest.coff
+	../bin/coff2noff threadtest.coff threadtest
+
+
 
 clean:
 	rm -f *.o *.coff
