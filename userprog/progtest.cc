@@ -36,15 +36,15 @@ StartProcess(char *filename)
     space = new AddrSpace(executable);
 
     currentThread->space = space;
+    int spaceId = processTable.Put(space);
+    currentThread->space->SetSpaceID(spaceId);
+    currentThread->space->AllocateSpaceForNewThread();
+
 
     delete executable;          // close file
 
     space->InitRegisters();     // set the initial register values
     space->RestoreState();      // load page table register
-    int spaceId = processTable.Put(space);
-    space->SetSpaceID(spaceId);
-    //space->AllocateSpaceForNewThread();
-    
     //
     machine->Run();         // jump to the user progam
     ASSERT(FALSE);          // machine->Run never returns;

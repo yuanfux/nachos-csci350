@@ -124,27 +124,27 @@ int copyout(unsigned int vaddr, int len, char *buf) {
 typedef int SpaceId;
 
 void Exit_Syscall(int status) {
-    exitLock->Acquire();
+    executeLock->Acquire();
     printf ("In Exit_Syscall\n");
 
     AddrSpace* addressSpace = currentThread->space;
     
     //has more than 1 thread in current process
-    if (addressSpace->GetNumThread() > 0) {
+    if (addressSpace->GetNumThread() > 1) {
         
         printf("\nThread:%s exits current thread number: %d, current process number: %d \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements() );
         //addressSpace->DeallocateSpaceForThread();
         addressSpace->UpdateThreadNum();
-        exitLock->Release();
+        executeLock->Release();
         currentThread->Finish();
 
     }
     //the main thread case
-    else if (addressSpace->GetNumThread() == 0) {
+    else if (addressSpace->GetNumThread() == 1) {
         //if this is the last process
         if (processTable.GetNumElements() == 1) {
             printf("\nlast Thread in last process:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
-            exitLock->Release();
+            executeLock->Release();
             interrupt->Halt();
         }
         else if(processTable.GetNumElements() > 1 ){
@@ -152,14 +152,14 @@ void Exit_Syscall(int status) {
             //addressSpace->UpdateThreadNum();
             processTable.Remove(addressSpace->GetSpaceID());
             // addressSpace->DeallocateSpaceForThread();
-            exitLock->Release();
+            executeLock->Release();
             currentThread->Finish();
         }
     }
     //(addressSpace->GetNumThread() <= 0)
     else {
         printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
-        exitLock->Release();
+        executeLock->Release();
         interrupt->Halt();
     }
 
@@ -193,7 +193,7 @@ SpaceId Exec_Syscall(int vaddr, int len) {
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
-        //addressSpace->AllocateSpaceForThread();
+        addressSpace->AllocateSpaceForNewThread();
         
         thread->space = addressSpace;
         printf("before put, the process number: %d \n", processTable.GetNumElements());
