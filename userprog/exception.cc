@@ -132,7 +132,6 @@ void Exit_Syscall(int status) {
     //has more than 1 thread in current process
     if (addressSpace->GetNumThread() > 1) {
         
-        printf("\nThread:%s exits current thread number: %d, current process number: %d \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements() );
         //addressSpace->DeallocateSpaceForThread();
         addressSpace->UpdateThreadNum();
         executeLock->Release();
@@ -143,12 +142,10 @@ void Exit_Syscall(int status) {
     else if (addressSpace->GetNumThread() == 1) {
         //if this is the last process
         if (processTable.GetNumElements() == 1) {
-            printf("\nlast Thread in last process:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
             executeLock->Release();
             interrupt->Halt();
         }
         else if(processTable.GetNumElements() > 1 ){
-             printf("\nlast Thread:%s exits current thread number: %d, current process number: %d  \n", currentThread->getName(), currentThread->space->GetNumThread(),processTable.GetNumElements());
             //addressSpace->UpdateThreadNum();
             processTable.Remove(addressSpace->GetSpaceID());
             // addressSpace->DeallocateSpaceForThread();
@@ -196,10 +193,8 @@ SpaceId Exec_Syscall(int vaddr, int len) {
         addressSpace->AllocateSpaceForNewThread();
         
         thread->space = addressSpace;
-        printf("before put, the process number: %d \n", processTable.GetNumElements());
         
         int spaceId = processTable.Put(addressSpace);
-        printf("after put, the process number: %d \n", processTable.GetNumElements());
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
       //  printf("1\n");
@@ -447,7 +442,6 @@ void Print_Syscall(unsigned int vaddr, int len, unsigned int args, int argsSize)
 }
 
 void Yield_Syscall() {
-    printf ("Thread yield successfully!\n");
     currentThread->Yield();
 }
 
@@ -492,7 +486,6 @@ int DestroyCondition_Syscall(int conditionIndex) {
 }
 
 int Acquire_Syscall(int lockIndex) {
-    printf ("In Acquire_Syscall\n");
     if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
         printf("Error in Acquire: lock index out of boundary\n");
         return -1;
@@ -504,20 +497,17 @@ int Acquire_Syscall(int lockIndex) {
             return -1;
         }
         lock->Acquire();
-        printf("Acquire Lock successfully!\n");
         return 0;
     }
 }
 
 int Release_Syscall(int lockIndex) {
-    printf ("In Release_Syscall\n");
     if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
         printf("Error in Release: lock index out of boundary\n");
         return -1;
     }
     else {
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
-        printf("current thread name: %s",currentThread->getName());
         if (lock == NULL) {
             printf("Error: lock doesn't exist\n");
             return -1;

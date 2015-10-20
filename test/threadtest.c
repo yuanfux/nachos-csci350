@@ -1632,23 +1632,23 @@ void PassportOffice() {
     int CashierCV;
     int CashierWaitCV;
 
-    char applicationCVName[100] = "applicationCV";
-    char applicaitonBribeCVName[100] = "applicaitonBribeCV";
-    char applicationWaitCVName[100] = "applicationWaitCV";
-    char applicationBribeWaitCVName[100] = "applicationWaitCV";
+    char *applicationCVName = "applicationCV";
+    char *applicaitonBribeCVName = "applicaitonBribeCV";
+    char *applicationWaitCVName = "applicationWaitCV";
+    char *applicationBribeWaitCVName = "applicationWaitCV";
 
-    char pictureCVName[100] = "pictureCV";
-    char pictureBribeCVName[100] = "pictureBribeCV";
-    char pictureWaitCVName[100] = "pictureWaitCV";
-    char pictureBribeWaitCVName[100] = "pictureWaitCV";
+    char *pictureCVName = "pictureCV";
+    char *pictureBribeCVName = "pictureBribeCV";
+    char *pictureWaitCVName = "pictureWaitCV";
+    char *pictureBribeWaitCVName = "pictureWaitCV";
 
-    char passportCVName[100] = "passportCV";
-    char passportBribeCVName[100] = "passportBribeCV";
-    char passportWaitCVName[100] = "passportWaitCV";
-    char passportBribeWaitCVName[100] = "passportWaitCV";
+    char *passportCVName = "passportCV";
+    char *passportBribeCVName = "passportBribeCV";
+    char *passportWaitCVName = "passportWaitCV";
+    char *passportBribeWaitCVName = "passportWaitCV";
 
-    char CashierCVName[100] = "cashierCV";
-    char CashierWaitCVName[100] = "cashierWaitCV";
+    char *CashierCVName = "cashierCV";
+    char *CashierWaitCVName = "cashierWaitCV";
 
     clerkState ct;
 
@@ -1668,33 +1668,33 @@ void PassportOffice() {
     Write("Number of Customers = ", sizeof("Number of Customers = "), ConsoleOutput);
     numCustomer = CUSTOMER_SIZE;
     Printint(numCustomer);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
     remainingCustomer = numCustomer;
 
     Write("Number of ApplicationClerks = ", sizeof("Number of ApplicationClerks = "), ConsoleOutput);
     numApplicationClerk = APPLICATIONCLERK_SIZE;
     Printint(numApplicationClerk);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of PictureClerks = ", sizeof("Number of PictureClerks = "), ConsoleOutput);
     numPictureClerk = PICTURECLERK_SIZE;
     Printint(numPictureClerk);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of PassportClerks = ", sizeof("Number of PassportClerks = "), ConsoleOutput);
     numPassportClerk = PASSPORTCLERK_SIZE;
     Printint(numPassportClerk);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of Cashiers = ", sizeof("Number of Cashiers = "), ConsoleOutput);
     numCashier = CASHIER_SIZE;
     Printint(numCashier);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of Senators = ", sizeof("Number of Senators = "), ConsoleOutput);
     numSenator = SENATOR_SIZE;
     Printint(numSenator);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     for (i = 0; i < CUSTOMER_SIZE; i++) {
         numCustomerWaiting[i] = -1;
@@ -1703,7 +1703,7 @@ void PassportOffice() {
 
     /* Initialize all variables for all clerks */
     for (i = 0; i < numApplicationClerk; i++) {
-        char lockName[100] = "ApplicationLock";
+        char *lockName = "ApplicationLock";
 
         /* application lock initialize */
         applicationLock = CreateLock(lockName);
@@ -1729,7 +1729,7 @@ void PassportOffice() {
         ApplicationClerkLineCount[i] = 0;
         /* application bribe line size initialize */
         ApplicationClerkBribeLineCount[i] = 0;
-         application clerk state initialize 
+        /* application clerk state initialize */
         ct = AVAILABLE;
         ApplicationClerkState[i] = ct;
         /* application data initialize */
@@ -1738,7 +1738,7 @@ void PassportOffice() {
     }
 
     for ( i = 0; i < numPictureClerk; i++) {
-        char lockName[100] = "PictureLock";
+        char *lockName = "PictureLock";
 
         /* picture lock initialize */
         pictureLock = CreateLock(lockName);
@@ -1773,7 +1773,7 @@ void PassportOffice() {
     }
 
     for ( i = 0; i < numPassportClerk; i++) {
-        char lockName[100] = "PassportLock";
+        char *lockName = "PassportLock";
 
         /* passport lock initialize */
         passportLock = CreateLock(lockName);
@@ -1807,7 +1807,7 @@ void PassportOffice() {
     }
 
     for ( i = 0; i < numCashier; i++) {
-        char lockName[100] = "CashierLock";
+        char *lockName = "CashierLock";
 
         /* cashier lock initialize */
         CashierLock = CreateLock(lockName);
