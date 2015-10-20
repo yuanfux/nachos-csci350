@@ -168,29 +168,25 @@ void Exit_Syscall(int status) {
 
 
 void exec_thread(int virtualAddress) {
-     printf("5\n");
     executeLock->Acquire();
-     printf("6\n");
     //initialize register
     currentThread->space->InitRegisters();
-     printf("7\n");
     //restore state
     currentThread->space->RestoreState();
-     printf("8\n");
     executeLock->Release();
     machine->Run();
     ASSERT(FALSE);
 }
 
 
-SpaceId Exec_Syscall(int vaddr) {
+SpaceId Exec_Syscall(int vaddr, int len) {
     printf ("In Exec_Syscall\n");
     executeLock->Acquire();
     int virtualAddress = vaddr;
 
-    char* file = new char[100];
+    char* file = new char[len+1];
 
-    copyin(virtualAddress, 100, file);
+    copyin(virtualAddress, len+1, file);
 
     OpenFile *newFile = fileSystem->Open(file);
 
@@ -206,13 +202,12 @@ SpaceId Exec_Syscall(int vaddr) {
         printf("after put, the process number: %d \n", processTable.GetNumElements());
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-        printf("1\n");
-        machine->WriteRegister(2, spaceId);
-        printf("2\n");
-        executeLock->Release();
-        printf("3\n");
+      //  printf("1\n");
+       // machine->WriteRegister(2, spaceId);
+       // printf("3\n");
         thread->Fork(exec_thread, 0);
-         printf("4\n");
+        executeLock->Release();
+       //  printf("4\n");
         return spaceId;
     }
     else {
@@ -380,12 +375,14 @@ void Close_Syscall(int fd) {
 
 void kernel_thread(int virtualAddress) {
     //increment the program counter
+    executeLock->Acquire();
     machine->WriteRegister(PCReg, virtualAddress);
     machine->WriteRegister(NextPCReg, virtualAddress + 4);
     //restore state
     currentThread->space->RestoreState();
     machine->WriteRegister(StackReg, currentThread->space->GetMemorySize() - 16);// - divRoundUp(UserStackSize,PageSize));
    // printf("starkreg: %d\n", StackReg);
+    executeLock->Release();
     machine->Run();
 
 }
@@ -394,7 +391,7 @@ void kernel_thread(int virtualAddress) {
 void Fork_Syscall(int vaddr) {
 
     printf ("In Fork_Syscall\n");
-    forkLock->Acquire();
+    executeLock->Acquire();
     if (currentThread->space->GetMemorySize() < vaddr) {
         printf("Error: Virtual Address larger than physical address size\n");
         return;
@@ -411,7 +408,7 @@ void Fork_Syscall(int vaddr) {
     thread->space->AllocateSpaceForNewThread();
     thread->space->RestoreState();
     thread->Fork(kernel_thread, virtualAddr);
-    forkLock->Release();
+    executeLock->Release();
 }
 
 void Print_Syscall(unsigned int vaddr, int len, unsigned int args, int argsSize) {
@@ -633,7 +630,7 @@ void ExceptionHandler(ExceptionType which) {
             break;
         case SC_Exec:
             DEBUG('a', "Exec syscall.\n");
-            rv = Exec_Syscall(machine->ReadRegister(4));
+            rv = Exec_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
             break;
         case SC_Join:
             DEBUG('a', "Join syscall.\n");

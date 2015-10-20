@@ -132,7 +132,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     // Don't allocate the input or output to disk files
     fileTable.Put(0);
     fileTable.Put(0);
-
+    lock=new Lock("lock");
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -176,13 +176,13 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
               noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+        executable->ReadAt(&(machine->mainMemory[pageTable[0].physicalPage*PageSize]),
                            noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
               noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
+        executable->ReadAt(&(machine->mainMemory[pageTable[0].physicalPage * PageSize + noffH.code.size]),
                            noffH.initData.size, noffH.initData.inFileAddr);
     }
 
@@ -274,7 +274,9 @@ void AddrSpace::AllocateSpaceForNewThread() {
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
         newPageTable[i].virtualPage = i;
+        lock->Acquire();
         newPageTable[i].physicalPage = memoryMap.Find();
+        lock->Release();
         newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
@@ -305,7 +307,9 @@ void AddrSpace::AllocateSpaceForProcess(int vaddr){
     
     for (unsigned int i = numPages - 8; i < numPages; i++) {
         newPageTable[i].virtualPage = i;
+        lock->Acquire();
         newPageTable[i].physicalPage = memoryMap.Find();
+        lock->Release();
         newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;

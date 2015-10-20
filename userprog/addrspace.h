@@ -49,6 +49,7 @@ private:
     unsigned int numPages;      // Number of pages in the virtual
     int numThread;
     int spaceID;
+    Lock* lock;
     // address space
 };
 
