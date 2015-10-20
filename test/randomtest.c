@@ -1,7 +1,7 @@
 #include "syscall.h"
 
 int main(){
-    Write("\nRANDOM_SYSCALL TEST: ",sizeof("\nRANDOM_SYSCALL TEST:"),ConsoleOutput);
+    Write("\nTesting Random(0 <= num <= 3): ",sizeof("\nTesting Random(0 <= num <= 3): "),ConsoleOutput);
     Printint(Random(4));
     Write("\n",sizeof("\n"),ConsoleOutput);
     
