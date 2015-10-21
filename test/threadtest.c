@@ -100,13 +100,53 @@ int remainingCustomer = 0; /*  number of customers still in the office */
 int senatorNum = -1;
 int randomNum;
 
+
+/* Variables for PassportOffice() */
+int applicationLock;
+int applicationCV;
+int applicationBribeCV;
+int applicationWaitCV;
+int applicationBribeWaitCV;
+
+int pictureLock;
+int pictureCV;
+int pictureBribeCV;
+int pictureWaitCV;
+int pictureBribeWaitCV;
+
+int passportLock;
+int passportCV;
+int passportBribeCV;
+int passportWaitCV;
+int passportBribeWaitCV;
+
+int CashierLock;
+int CashierCV;
+int CashierWaitCV;
+
+/* Variables for Customer */
+int shortestPictureLine;
+int shortestPictureBribeLine;
+int shortestPictureBribeLineSize;
+int shortestPictureLineSize;
+int shortestApplicationBribeLine;
+int shortestApplicationBribeLineSize;
+int shortestApplicationLine;
+int shortestApplicationLineSize;
+int shortestPassportBribeLine;
+int shortestPassportBribeLineSize;
+int shortestPassportLine;
+int shortestPassportLineSize;
+int shortestCashierLine;
+int shortestCashierLineSize;
+
 void Customer() {
     /* get ssn for each customer */
     int id;
     unsigned int i;
     int money;
     int choseClerk;
-    int count;
+    int myLine;
 
     Acquire(incrementCount);
     id = customerNum + 1;
@@ -141,9 +181,7 @@ void Customer() {
 
         /* Goes to Picture Clerk. */
         if ((customerApplicationStatus[id] == 1) || (customerApplicationStatus[id] == 0 && choseClerk == 0)) { /* has finished applicaiton clerk */
-            int myLine;
-            int shortestPictureBribeLine;
-            int shortestPictureBribeLineSize;
+
             Yield();
             Acquire(ClerkLineLock);
             if (money > 500) { /* can bribe */
@@ -197,9 +235,8 @@ void Customer() {
                 Release(pictureClerkLineLock[myLine]);
 
             } else {
-                int myLine;
-                int shortestPictureLine = -1;
-                int shortestPictureLineSize = 10000;
+                shortestPictureLine = -1;
+                shortestPictureLineSize = 10000;
 
                 for (i = 0; i < PICTURECLERK_SIZE; i++) {
                     if (pictureClerkLineCount[i] < shortestPictureLineSize) {
@@ -255,9 +292,8 @@ void Customer() {
         /* Goes to Application Clerk */
         else if ((customerApplicationStatus[id] == 2) || (customerApplicationStatus[id] == 0 && choseClerk == 1)) { /* has finished picture clerk */
 
-            int myLine;
-            int shortestApplicationBribeLine = -1;
-            int shortestApplicationBribeLineSize = 10000;
+            shortestApplicationBribeLine = -1;
+            shortestApplicationBribeLineSize = 10000;
             Yield();
             Acquire(ClerkLineLock);
             if (money > 500) { /* has bribe money */
@@ -304,9 +340,8 @@ void Customer() {
                 Release(ApplicationClerkLineLock[myLine]);
 
             } else { /* does not have bribe money */
-                int myLine;
-                int shortestApplicationLine = -1;
-                int shortestApplicationLineSize = 10000;
+                shortestApplicationLine = -1;
+                shortestApplicationLineSize = 10000;
 
                 /* find shortest line */
                 for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
@@ -354,9 +389,8 @@ void Customer() {
         /* Goes to Passport Clerk */
         else if (customerApplicationStatus[id] == 3) {
 
-            int myLine;
-            int shortestPassportBribeLine;
-            int shortestPassportBribeLineSize;
+            shortestPassportBribeLine;
+            shortestPassportBribeLineSize;
             Yield();
             Acquire(ClerkLineLock);
 
@@ -406,9 +440,8 @@ void Customer() {
                 Release(passportClerkLineLock[myLine]);
 
             } else { /* does not have bribe money */
-                int myLine;
-                int shortestPassportLine = -1;
-                int shortestPassportLineSize = 10000;
+                shortestPassportLine = -1;
+                shortestPassportLineSize = 10000;
 
                 for (i = 0; i < PASSPORTCLERK_SIZE; i++) {
                     if (passportClerkLineCount[i] < shortestPassportLineSize) {
@@ -459,9 +492,8 @@ void Customer() {
         /* Goes to Cashier counter */
         else if (customerApplicationStatus[id] == 6) {
 
-            int myLine;
-            int shortestCashierLine;
-            int shortestCashierLineSize;
+            shortestCashierLine;
+            shortestCashierLineSize;
             Yield();
             Acquire(ClerkLineLock);
 
@@ -529,10 +561,10 @@ void ApplicationClerk(int myLine) {
     int id = 0;
     int printed = 0;
     unsigned int i;
+    int InBribeLine = 0;
 
     while (1) {
-        int InBribeLine = 0;
-
+        InBribeLine = 0;
         if (ApplicationClerkState[myLine] == ONBREAK && !printed) {
             Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
             Printint(myLine);
@@ -706,10 +738,11 @@ void PictureClerk(int myLine) {
     unsigned int i;
     int photoAcceptance;
     int numCalls;
+    int inBribeLine = 0;
+
     while (1) {
 
-        int inBribeLine = 0;
-
+        inBribeLine = 0;
         if (pictureClerkState[myLine] == ONBREAK && !printed) {
             Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
             Printint(myLine);
@@ -907,9 +940,9 @@ void PictureClerk(int myLine) {
                 for (i = 0; i < numCalls; i++) {
                     Yield();
                 }
-                
+
                 customerApplicationStatus[id] += 2;
-                
+
                 Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
 
             } else { /* if customer does not like the picture */
@@ -938,9 +971,9 @@ void PassportClerk(int myLine) {
     int photoAcceptance;
     int numCalls;
     int passportClerkPunishment;
+    int inBribeLine = 0;
     while (1) {
-
-        int inBribeLine = 0;
+        inBribeLine = 0;
 
         if (passportClerkState[myLine] == ONBREAK && !printed) {
             Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
@@ -1333,17 +1366,13 @@ void Cashier(int myLine) {
 void Manager() {
     int count = 0;
     int maxNumClerk = 0;
-    int numApplicationClerk = APPLICATIONCLERK_SIZE;
-    int numPictureClerk = PICTURECLERK_SIZE;
-    int numPassportClerk = PASSPORTCLERK_SIZE;
-    int numCashier = CASHIER_SIZE;
     unsigned int i;
 
     /* check the max number of the clerks */
-    if (maxNumClerk < numApplicationClerk) maxNumClerk = numApplicationClerk;
-    if (maxNumClerk < numPictureClerk) maxNumClerk = numPictureClerk;
-    if (maxNumClerk < numPassportClerk) maxNumClerk = numPassportClerk;
-    if (maxNumClerk < numCashier) maxNumClerk = numCashier;
+    if (maxNumClerk < APPLICATIONCLERK_SIZE) maxNumClerk = APPLICATIONCLERK_SIZE;
+    if (maxNumClerk < PICTURECLERK_SIZE) maxNumClerk = PICTURECLERK_SIZE;
+    if (maxNumClerk < PASSPORTCLERK_SIZE) maxNumClerk = PASSPORTCLERK_SIZE;
+    if (maxNumClerk < CASHIER_SIZE) maxNumClerk = CASHIER_SIZE;
 
     while (1) {
         Yield();
@@ -1398,7 +1427,7 @@ void Manager() {
         Acquire(ClerkLineLock);
 
         /* Application Clerks */
-        for (i = 0; i < numApplicationClerk; i++) {
+        for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
             if (ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] >= 1
                     && ApplicationClerkState[i] == ONBREAK) {
 
@@ -1421,7 +1450,7 @@ void Manager() {
         }
 
         /* Picture Clerks */
-        for (i = 0; i < numPictureClerk; i++) {
+        for (i = 0; i < PICTURECLERK_SIZE; i++) {
             if (pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] >= 1
                     && pictureClerkState[i] == ONBREAK) {
 
@@ -1444,7 +1473,7 @@ void Manager() {
         }
 
         /* Passport Clerks */
-        for (i = 0; i < numPassportClerk; i++) {
+        for (i = 0; i < PASSPORTCLERK_SIZE; i++) {
             if (passportClerkLineCount[i] + passportClerkBribeLineCount[i] >= 1
                     && passportClerkState[i] == ONBREAK) {
 
@@ -1467,7 +1496,7 @@ void Manager() {
         }
 
         /* Cashiers */
-        for (i = 0; i < numCashier; i++) {
+        for (i = 0; i < CASHIER_SIZE; i++) {
             if (CashierLineCount[i] >= 1
                     && CashierState[i] == ONBREAK) {
 
@@ -1631,53 +1660,7 @@ void Senator() {
 
 void PassportOffice() {
 
-    int numApplicationClerk;
-    int numPictureClerk;
-    int numPassportClerk;
-    int numCashier;
-    int numCustomer;
-    int numSenator;
     unsigned int i;
-
-    int applicationLock;
-    int applicationCV;
-    int applicationBribeCV;
-    int applicationWaitCV;
-    int applicationBribeWaitCV;
-
-    int pictureLock;
-    int pictureCV;
-    int pictureBribeCV;
-    int pictureWaitCV;
-    int pictureBribeWaitCV;
-
-    int passportLock;
-    int passportCV;
-    int passportBribeCV;
-    int passportWaitCV;
-    int passportBribeWaitCV;
-
-    int CashierLock;
-    int CashierCV;
-    int CashierWaitCV;
-
-    char *applicationCVName = "applicationCV";
-    char *applicaitonBribeCVName = "applicaitonBribeCV";
-    char *applicationWaitCVName = "applicationWaitCV";
-    char *applicationBribeWaitCVName = "applicationWaitCV";
-
-    char *pictureCVName = "pictureCV";
-    char *pictureBribeCVName = "pictureBribeCV";
-    char *pictureWaitCVName = "pictureWaitCV";
-    char *pictureBribeWaitCVName = "pictureWaitCV";
-
-    char *passportCVName = "passportCV";
-    char *passportBribeCVName = "passportBribeCV";
-    char *passportWaitCVName = "passportWaitCV";
-    char *passportBribeWaitCVName = "passportWaitCV";
-
-    char *CashierCVName = "cashierCV";
-    char *CashierWaitCVName = "cashierWaitCV";
 
     clerkState ct;
 
@@ -1695,34 +1678,28 @@ void PassportOffice() {
     Write("]\n", sizeof("]\n"), ConsoleOutput);
 
     Write("Number of Customers = ", sizeof("Number of Customers = "), ConsoleOutput);
-    numCustomer = CUSTOMER_SIZE;
-    Printint(numCustomer);
+    Printint(CUSTOMER_SIZE);
     Write("\n", sizeof("\n"), ConsoleOutput);
-    remainingCustomer = numCustomer;
+    remainingCustomer = CUSTOMER_SIZE;
 
     Write("Number of ApplicationClerks = ", sizeof("Number of ApplicationClerks = "), ConsoleOutput);
-    numApplicationClerk = APPLICATIONCLERK_SIZE;
-    Printint(numApplicationClerk);
+    Printint(APPLICATIONCLERK_SIZE);
     Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of PictureClerks = ", sizeof("Number of PictureClerks = "), ConsoleOutput);
-    numPictureClerk = PICTURECLERK_SIZE;
-    Printint(numPictureClerk);
+    Printint(PICTURECLERK_SIZE);
     Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of PassportClerks = ", sizeof("Number of PassportClerks = "), ConsoleOutput);
-    numPassportClerk = PASSPORTCLERK_SIZE;
-    Printint(numPassportClerk);
+    Printint(PASSPORTCLERK_SIZE);
     Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of Cashiers = ", sizeof("Number of Cashiers = "), ConsoleOutput);
-    numCashier = CASHIER_SIZE;
-    Printint(numCashier);
+    Printint(CASHIER_SIZE);
     Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of Senators = ", sizeof("Number of Senators = "), ConsoleOutput);
-    numSenator = SENATOR_SIZE;
-    Printint(numSenator);
+    Printint(SENATOR_SIZE);
     Write("\n", sizeof("\n"), ConsoleOutput);
 
     for (i = 0; i < CUSTOMER_SIZE; i++) {
@@ -1731,27 +1708,26 @@ void PassportOffice() {
 
 
     /* Initialize all variables for all clerks */
-    for (i = 0; i < numApplicationClerk; i++) {
-        char *lockName = "ApplicationLock";
+    for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
 
         /* application lock initialize */
-        applicationLock = CreateLock(lockName);
+        applicationLock = CreateLock("ApplicationLock");
         ApplicationClerkLineLock[i] = applicationLock;
 
         /* aplication CV initialize */
-        applicationCV = CreateCondition(applicationCVName);
+        applicationCV = CreateCondition("applicationCV");
         ApplicationClerkLineCV[i] = applicationCV;
 
         /* application bribe CV initialize */
-        applicationBribeCV = CreateCondition(applicaitonBribeCVName);
+        applicationBribeCV = CreateCondition("applicaitonBribeCV");
         ApplicationClerkBribeLineCV[i] = applicationBribeCV;
 
         /* application Wait CV initialize */
-        applicationWaitCV = CreateCondition(applicationWaitCVName);
+        applicationWaitCV = CreateCondition("applicationWaitCV");
         ApplicationClerkLineWaitCV[i] = applicationWaitCV;
 
         /* application Bribe Wait CV initialize */
-        applicationBribeWaitCV = CreateCondition(applicationBribeWaitCVName);
+        applicationBribeWaitCV = CreateCondition("applicationBribeWaitCV");
         ApplicationClerkBribeLineWaitCV[i] = applicationBribeWaitCV;
 
         /* application line size intialize */
@@ -1766,27 +1742,26 @@ void PassportOffice() {
 
     }
 
-    for ( i = 0; i < numPictureClerk; i++) {
-        char *lockName = "PictureLock";
+    for ( i = 0; i < PICTURECLERK_SIZE; i++) {
 
         /* picture lock initialize */
-        pictureLock = CreateLock(lockName);
+        pictureLock = CreateLock("PictureLock");
         pictureClerkLineLock[i] = pictureLock;
 
         /* picture CV initialize */
-        pictureCV = CreateCondition(pictureCVName);
+        pictureCV = CreateCondition("pictureCV");
         pictureClerkLineCV[i] = pictureCV;
 
         /* picture bribe CV initialize */
-        pictureBribeCV = CreateCondition(pictureBribeCVName);
+        pictureBribeCV = CreateCondition("pictureBribeCV");
         pictureClerkBribeLineCV[i] = pictureBribeCV;
 
         /* picture Wait CV initialize */
-        pictureWaitCV = CreateCondition(pictureWaitCVName);
+        pictureWaitCV = CreateCondition("pictureWaitCV");
         pictureClerkLineWaitCV[i] = pictureWaitCV;
 
         /* picture Bribe Wait CV initialize */
-        pictureBribeWaitCV = CreateCondition(pictureBribeWaitCVName);
+        pictureBribeWaitCV = CreateCondition("pictureBribeWaitCV");
         pictureClerkBribeLineWaitCV[i] = pictureBribeWaitCV;
 
         /* picture line size intialize */
@@ -1801,27 +1776,26 @@ void PassportOffice() {
         pictureAcceptance[i] = 0;
     }
 
-    for ( i = 0; i < numPassportClerk; i++) {
-        char *lockName = "PassportLock";
+    for ( i = 0; i < PASSPORTCLERK_SIZE; i++) {
 
         /* passport lock initialize */
-        passportLock = CreateLock(lockName);
+        passportLock = CreateLock("PassportLock");
         passportClerkLineLock[i] = passportLock;
 
         /* passport CV initialize */
-        passportCV = CreateCondition(passportCVName);
+        passportCV = CreateCondition("passportCV");
         passportClerkLineCV[i] = passportCV;
 
         /* passport bribe CV initialize */
-        passportBribeCV = CreateCondition(passportBribeCVName);
+        passportBribeCV = CreateCondition("passportBribeCV");
         passportClerkBribeLineCV[i] = passportBribeCV;
 
         /* passport Wait CV initialize */
-        passportWaitCV = CreateCondition(passportWaitCVName);
+        passportWaitCV = CreateCondition("passportWaitCV");
         passportClerkLineWaitCV[i] = passportWaitCV;
 
         /* passport Bribe Wait CV initialize */
-        passportBribeWaitCV = CreateCondition(passportBribeWaitCVName);
+        passportBribeWaitCV = CreateCondition("passportBribeWaitCV");
         passportClerkBribeLineWaitCV[i] = passportBribeWaitCV;
 
         /* passport line size intialize */
@@ -1835,19 +1809,18 @@ void PassportOffice() {
         passportClerkCustomerId[i] = 0;
     }
 
-    for ( i = 0; i < numCashier; i++) {
-        char *lockName = "CashierLock";
+    for ( i = 0; i < CASHIER_SIZE; i++) {
 
         /* cashier lock initialize */
-        CashierLock = CreateLock(lockName);
+        CashierLock = CreateLock("CashierLock");
         CashierLineLock[i] = CashierLock;
 
         /* cashier CV initialize */
-        CashierCV = CreateCondition(CashierCVName);
+        CashierCV = CreateCondition("CashierCV");
         CashierLineCV[i] = CashierCV;
 
         /* cashier Wait CV initialize */
-        CashierWaitCV = CreateCondition(CashierWaitCVName);
+        CashierWaitCV = CreateCondition("CashierWaitCV");
         CashierLineWaitCV[i] = CashierWaitCV;
 
         /* cashier line size intialize */
@@ -1871,30 +1844,30 @@ void PassportOffice() {
     customerWaitCV = CreateCondition("customerCV");
     customerWaitLock = CreateLock("customerLock");
 
-    for (i = 0 ; i < numCustomer; i++) {
+    for (i = 0 ; i < CUSTOMER_SIZE; i++) {
         customerApplicationStatus[i] = 0;
 
     }
 
     /* Initialize all threads */
-    for (i = 0; i < numApplicationClerk; i++) {
+    for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
         Fork(ApplicationClerk);
 
     }
 
-    for (i = 0; i < numPictureClerk; i++) {
+    for (i = 0; i < PICTURECLERK_SIZE; i++) {
         Fork(PictureClerk);
     }
 
-    for (i = 0; i < numPassportClerk; i++) {
+    for (i = 0; i < PASSPORTCLERK_SIZE; i++) {
         Fork(PassportClerk);
     }
 
-    for (i = 0; i < numCashier; i++) {
+    for (i = 0; i < CASHIER_SIZE; i++) {
         Fork(Cashier);
     }
 
-    for (i = 0; i < numCustomer; i++) {
+    for (i = 0; i < CUSTOMER_SIZE; i++) {
         Fork(Customer);
     }
 
@@ -1902,7 +1875,7 @@ void PassportOffice() {
     Fork(Manager);
 
 
-    for (i = 0; i < numSenator; i++) {
+    for (i = 0; i < SENATOR_SIZE; i++) {
         Fork(Senator);
     }
 

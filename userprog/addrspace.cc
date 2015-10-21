@@ -166,6 +166,8 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
         // a separate page, we could set its
         // pages to be read-only
+        executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
+                           PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
     }
     printf("number of pages: %d, size: %d\n", numPages, size);
 // zero out the entire address space, to zero the unitialized data segment
@@ -173,18 +175,18 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     //bzero(machine->mainMemory, size);
 
 // then, copy in the code and data segments into memory
-    if (noffH.code.size > 0) {
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
-              noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[pageTable[0].physicalPage*PageSize]),
-                           noffH.code.size, noffH.code.inFileAddr);
-    }
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
-              noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[pageTable[0].physicalPage * PageSize + noffH.code.size]),
-                           noffH.initData.size, noffH.initData.inFileAddr);
-    }
+    // if (noffH.code.size > 0) {
+    //     DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
+    //           noffH.code.virtualAddr, noffH.code.size);
+    //     executable->ReadAt(&(machine->mainMemory[pageTable[0].physicalPage*PageSize]),
+    //                        noffH.code.size, noffH.code.inFileAddr);
+    // }
+    // if (noffH.initData.size > 0) {
+    //     DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
+    //           noffH.initData.virtualAddr, noffH.initData.size);
+    //     executable->ReadAt(&(machine->mainMemory[pageTable[0].physicalPage * PageSize + noffH.code.size]),
+    //                        noffH.initData.size, noffH.initData.inFileAddr);
+    // }
 
 }
 
