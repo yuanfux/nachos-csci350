@@ -319,10 +319,18 @@ Thread::RestoreUserState()
 }
 
 void Thread::SetStackIndex(int i) {
-    index = i;
+    stackIndex = i;
 }
 
 int Thread::GetStackIndex() {
+    return stackIndex;
+}
+
+void Thread::SetIndex(int i){
+    index = i;
+}
+
+int Thread::GetIndex(){
     return index;
 }
 #endif

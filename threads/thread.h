@@ -111,6 +111,7 @@ private:
     ThreadStatus status;        // ready, running or blocked
     char* name;
     int index;
+    int stackIndex;
 
     void StackAllocate(VoidFunctionPtr func, int arg);
     // Allocate a stack for thread.
@@ -127,6 +128,8 @@ public:
     void SaveUserState();       // save user-level register state
     void RestoreUserState();        // restore user-level register state
 
+    void SetIndex(int i);
+    int GetIndex();
     void SetStackIndex(int i);
     int GetStackIndex();
     AddrSpace *space;           // User code this thread is running.

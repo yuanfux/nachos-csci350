@@ -96,13 +96,12 @@ typedef int SpaceId;
 
 void Exit_Syscall(int status) {
     executeLock->Acquire();
-    printf ("In Exit_Syscall\n");
 
     AddrSpace* addressSpace = currentThread->space;
-    
+
     //has more than 1 thread in current process
     if (addressSpace->GetNumThread() > 1) {
-        
+
         //addressSpace->DeallocateSpaceForThread();
         addressSpace->UpdateThreadNum();
         executeLock->Release();
@@ -116,7 +115,7 @@ void Exit_Syscall(int status) {
             executeLock->Release();
             interrupt->Halt();
         }
-        else if(processTable.GetNumElements() > 1 ){
+        else if (processTable.GetNumElements() > 1 ) {
             //addressSpace->UpdateThreadNum();
             processTable.Remove(addressSpace->GetSpaceID());
             // addressSpace->DeallocateSpaceForThread();
@@ -148,13 +147,12 @@ void exec_thread(int virtualAddress) {
 
 
 SpaceId Exec_Syscall(int vaddr, int len) {
-    printf ("In Exec_Syscall\n");
     executeLock->Acquire();
     int virtualAddress = vaddr;
 
-    char* file = new char[len+1];
+    char* file = new char[len + 1];
 
-    copyin(virtualAddress, len+1, file);
+    copyin(virtualAddress, len + 1, file);
 
     OpenFile *newFile = fileSystem->Open(file);
 
@@ -162,18 +160,18 @@ SpaceId Exec_Syscall(int vaddr, int len) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
         addressSpace->AllocateSpaceForNewThread();
-        
+
         thread->space = addressSpace;
-        
+
         int spaceId = processTable.Put(addressSpace);
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-      //  printf("1\n");
-       // machine->WriteRegister(2, spaceId);
-       // printf("3\n");
+        //  printf("1\n");
+        // machine->WriteRegister(2, spaceId);
+        // printf("3\n");
         thread->Fork(exec_thread, 0);
         executeLock->Release();
-       //  printf("4\n");
+        //  printf("4\n");
         return spaceId;
     }
     else {
@@ -340,7 +338,7 @@ void Close_Syscall(int fd) {
 }
 
 void kernel_thread(int virtualAddress) {
-    
+
     //increment the program counter
     machine->WriteRegister(PCReg, virtualAddress);
     machine->WriteRegister(NextPCReg, virtualAddress + 4);
@@ -348,7 +346,7 @@ void kernel_thread(int virtualAddress) {
     //restore state
     currentThread->space->RestoreState();
     int stackIndex = currentThread->GetStackIndex();
-    machine->WriteRegister(StackReg, stackIndex);// - divRoundUp(UserStackSize,PageSize));
+    machine->WriteRegister(StackReg, stackIndex);
 
     machine->Run();
 
@@ -357,7 +355,6 @@ void kernel_thread(int virtualAddress) {
 
 void Fork_Syscall(int vaddr) {
 
-    printf ("In Fork_Syscall\n");
     executeLock->Acquire();
     if (currentThread->space->GetMemorySize() < vaddr) {
         printf("Error: Virtual Address larger than physical address size\n");
@@ -369,11 +366,12 @@ void Fork_Syscall(int vaddr) {
     }
     int virtualAddr = vaddr;
 
-    Thread *thread = new Thread("newThread");
+    Thread *thread = new Thread("kernel_thread");
 
     thread->space = currentThread->space;
     thread->space->AllocateSpaceForNewThread();
     thread->SetStackIndex(currentThread->space->GetMemorySize() - 16);
+    thread->SetIndex(thread->space->GetNumThread());
     thread->Fork(kernel_thread, virtualAddr);
     executeLock->Release();
 }
@@ -383,7 +381,6 @@ void Yield_Syscall() {
 }
 
 int CreateLock_Syscall() {
-    printf ("In CreateLock_Syscall\n");
     Lock *newLock = new Lock("name");
     lockTable.Put(newLock);
     int lockNumber = lockTable.GetNumElements() - 1;
@@ -391,24 +388,22 @@ int CreateLock_Syscall() {
 }
 
 int DestroyLock_Syscall(int lockIndex) {
-    printf ("In DestroyLock_Syscall\n");
     if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
         printf("Error in DestroyLock: lock index out of boundary\n");
         return -1;
     }
     else {
-        
-        if(lockTable.Remove(lockIndex) == 0 ){
-            
-          printf("Error in DestroyLock: lock does not exist\n");
-          return -1;
+
+        if (lockTable.Remove(lockIndex) == 0 ) {
+
+            printf("Error in DestroyLock: lock does not exist\n");
+            return -1;
         }
         return 0;
     }
 }
 
 int CreateCondition_Syscall() {
-    printf ("In CreateCondition_Syscall\n");
     Condition *newCV = new Condition("name");
     cvTable.Put(newCV);
     int cvNumber = cvTable.GetNumElements() - 1;
@@ -416,16 +411,15 @@ int CreateCondition_Syscall() {
 }
 
 int DestroyCondition_Syscall(int conditionIndex) {
-    printf ("In DestroyCondition_Syscall\n");
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0) {
         printf("Error in DestroyCondition: condition index out of boundary\n");
         return -1;
     }
     else {
-        if (cvTable.Remove(conditionIndex) == 0){
+        if (cvTable.Remove(conditionIndex) == 0) {
             printf("Error in DestroyCondition: condition does not exist\n");
             return -1;
-            
+
         }
         return 0;
     }
@@ -464,7 +458,6 @@ int Release_Syscall(int lockIndex) {
 }
 
 int Wait_Syscall(int conditionIndex, int lockIndex) {
-    printf ("In Wait_Syscall\n");
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
             lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
         printf("Error in Wait: condition or lock index out of boundary\n");
@@ -482,14 +475,12 @@ int Wait_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Wait(lock);
-        printf("Wait successfully!\n");
         return 0;
     }
 
 }
 
 int Signal_Syscall(int conditionIndex, int lockIndex) {
-    printf ("In Signal_Syscall\n");
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
             lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
         printf("Error in Signal: condition or lock index out of boundary\n");
@@ -507,13 +498,11 @@ int Signal_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Signal(lock);
-        printf("Signal successfully!\n");
         return 0;
     }
 }
 
 int Broadcast_Syscall(int conditionIndex, int lockIndex) {
-    printf ("In Broadcast_Syscall\n");
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
             lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
         printf("Error in Broadcast: condition or lock index out of boundary\n");
@@ -531,20 +520,18 @@ int Broadcast_Syscall(int conditionIndex, int lockIndex) {
             return -1;
         }
         condition->Broadcast(lock);
-        printf("Broadcast successfully");
         return 0;
     }
 }
 
-void Printint_Syscall(int num){
+void Printint_Syscall(int num) {
     printf("%d", num);
 }
 
-int Random_Syscall(int limit){
-    
+int Random_Syscall(int limit) {
+
     return rand() % limit;
-    
-    
+
 }
 
 
@@ -566,7 +553,7 @@ void ExceptionHandler(ExceptionType which) {
             break;
         case SC_Exec:
             DEBUG('a', "Exec syscall.\n");
-            rv = Exec_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
+            rv = Exec_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
             break;
         case SC_Join:
             DEBUG('a', "Join syscall.\n");
