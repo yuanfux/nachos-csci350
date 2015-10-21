@@ -169,7 +169,6 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
                            PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
     }
-    printf("number of pages: %d, size: %d\n", numPages, size);
 // zero out the entire address space, to zero the unitialized data segment
 // and the stack segment
     //bzero(machine->mainMemory, size);

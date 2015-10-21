@@ -13,6 +13,8 @@
 
 typedef enum {AVAILABLE, BUSY, ONBREAK} clerkState;
 
+int printLock;
+
 int ClerkLineLock;
 int incrementCount;
 int customerApplicationStatus[CUSTOMER_SIZE];
@@ -631,7 +633,6 @@ void ApplicationClerk() {
         Acquire(ClerkLineLock);/* acquire the line lock in case of line size change */
 
         if (ApplicationClerkState[myLine] != ONBREAK && hasSenator == 0) { /* no senator, not on break, deal with normal customers */
-            Write("Acquired ClerkLineLock\n", sizeof("Acquired ClerkLineLock\n"), ConsoleOutput);
             if (ApplicationClerkBribeLineCount[myLine] > 0) { /* bribe line customer first */
                 Signal(ApplicationClerkBribeLineWaitCV[myLine], ClerkLineLock);
                 Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
@@ -1556,6 +1557,8 @@ void Manager() {
 
     }
 
+
+    Acquire(printLock);
     Write("\n", sizeof("\n"), ConsoleOutput);
     Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
     Write("Passport Office Simulation Finshed.\n", sizeof("Passport Office Simulation Finshed.\n"), ConsoleOutput);
@@ -1584,7 +1587,8 @@ void Manager() {
     Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
     Printint(MoneyTotal);
     Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
-
+    Write("\n\n--------------------------------------------\n\n", sizeof("\n\n--------------------------------------------\n\n"), ConsoleOutput);
+    Release(printLock);
 
     Exit(0);
 }
@@ -1715,6 +1719,7 @@ void PassportOffice() {
 
     clerkState ct;
 
+    printLock = CreateLock("printLock");
 
     ClerkLineLock = CreateLock("ClerkLineLock");
     incrementCount = CreateLock("incrementCount");
@@ -1726,7 +1731,7 @@ void PassportOffice() {
     Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
     Write("Passport Office Simulation started.\n", sizeof("Passport Office Simulation started.\n"), ConsoleOutput);
     Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     Write("Number of Customers = ", sizeof("Number of Customers = "), ConsoleOutput);
     Printint(CUSTOMER_SIZE);

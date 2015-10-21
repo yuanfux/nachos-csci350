@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles exectest forktest releaseacquiretest yieldtest signalwaittest randomtest broadcasttest destroyconditionlocktest printinttest passportoffice multioffice
+all: halt matmult sort testfiles exec_exittest forktest release_acquiretest yieldtest signal_waittest randomtest broadcasttest destroy_condition_locktest printinttest passportoffice multioffice TestSuit
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -56,11 +56,11 @@ matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
 
-exectest.o: exectest.c
-	$(CC) $(CFLAGS) -c exectest.c
-exectest: exectest.o start.o
-	$(LD) $(LDFLAGS) start.o exectest.o -o exectest.coff
-	../bin/coff2noff exectest.coff exectest
+exec_exittest.o: exec_exittest.c
+	$(CC) $(CFLAGS) -c exec_exittest.c
+exec_exittest: exec_exittest.o start.o
+	$(LD) $(LDFLAGS) start.o exec_exittest.o -o exec_exittest.coff
+	../bin/coff2noff exec_exittest.coff exec_exittest
 
 forktest.o: forktest.c
 	$(CC) $(CFLAGS) -c forktest.c
@@ -68,11 +68,11 @@ forktest: forktest.o start.o
 	$(LD) $(LDFLAGS) start.o forktest.o -o forktest.coff
 	../bin/coff2noff forktest.coff forktest
 
-signalwaittest.o: signalwaittest.c
-	$(CC) $(CFLAGS) -c signalwaittest.c
-signalwaittest: signalwaittest.o start.o
-	$(LD) $(LDFLAGS) start.o signalwaittest.o -o signalwaittest.coff
-	../bin/coff2noff signalwaittest.coff signalwaittest
+signal_waittest.o: signal_waittest.c
+	$(CC) $(CFLAGS) -c signal_waittest.c
+signal_waittest: signal_waittest.o start.o
+	$(LD) $(LDFLAGS) start.o signal_waittest.o -o signal_waittest.coff
+	../bin/coff2noff signal_waittest.coff signal_waittest
 
 yieldtest.o: yieldtest.c
 	$(CC) $(CFLAGS) -c yieldtest.c
@@ -80,11 +80,11 @@ yieldtest: yieldtest.o start.o
 	$(LD) $(LDFLAGS) start.o yieldtest.o -o yieldtest.coff
 	../bin/coff2noff yieldtest.coff yieldtest
 
-releaseacquiretest.o: releaseacquiretest.c
-	$(CC) $(CFLAGS) -c releaseacquiretest.c
-releaseacquiretest: releaseacquiretest.o start.o
-	$(LD) $(LDFLAGS) start.o releaseacquiretest.o -o releaseacquiretest.coff
-	../bin/coff2noff releaseacquiretest.coff releaseacquiretest
+release_acquiretest.o: release_acquiretest.c
+	$(CC) $(CFLAGS) -c release_acquiretest.c
+release_acquiretest: release_acquiretest.o start.o
+	$(LD) $(LDFLAGS) start.o release_acquiretest.o -o release_acquiretest.coff
+	../bin/coff2noff release_acquiretest.coff release_acquiretest
 
 testfiles.o: testfiles.c
 	$(CC) $(CFLAGS) -c testfiles.c
@@ -104,11 +104,11 @@ broadcasttest: broadcasttest.o start.o
 	$(LD) $(LDFLAGS) start.o broadcasttest.o -o broadcasttest.coff
 	../bin/coff2noff broadcasttest.coff broadcasttest
 
-destroyconditionlocktest.o: destroyconditionlocktest.c
-	$(CC) $(CFLAGS) -c destroyconditionlocktest.c
-destroyconditionlocktest: destroyconditionlocktest.o start.o
-	$(LD) $(LDFLAGS) start.o destroyconditionlocktest.o -o destroyconditionlocktest.coff
-	../bin/coff2noff destroyconditionlocktest.coff destroyconditionlocktest
+destroy_condition_locktest.o: destroy_condition_locktest.c
+	$(CC) $(CFLAGS) -c destroy_condition_locktest.c
+destroy_condition_locktest: destroy_condition_locktest.o start.o
+	$(LD) $(LDFLAGS) start.o destroy_condition_locktest.o -o destroy_condition_locktest.coff
+	../bin/coff2noff destroy_condition_locktest.coff destroy_condition_locktest
 
 printinttest.c.o: printinttest.c
 	$(CC) $(CFLAGS) -c printinttest.c
@@ -128,7 +128,11 @@ multioffice: multioffice.o start.o
 	$(LD) $(LDFLAGS) start.o multioffice.o -o multioffice.coff
 	../bin/coff2noff multioffice.coff multioffice
 
-
+TestSuit.o: TestSuit.c
+	$(CC) $(CFLAGS) -c TestSuit.c
+TestSuit: TestSuit.o start.o
+	$(LD) $(LDFLAGS) start.o TestSuit.o -o TestSuit.coff
+	../bin/coff2noff TestSuit.coff TestSuit
 
 clean:
 	rm -f *.o *.coff
