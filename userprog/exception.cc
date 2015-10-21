@@ -31,8 +31,8 @@
 
 using namespace std;
 
-#define MAX_NUM_LOCK 100
-#define MAX_NUM_CONDITION 100
+#define MAX_NUM_LOCK 1000
+#define MAX_NUM_CONDITION 1000
 
 Table lockTable(MAX_NUM_LOCK);
 Table cvTable(MAX_NUM_CONDITION);

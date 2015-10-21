@@ -174,7 +174,7 @@ void Customer() {
     Printint(id);
     Write("] has $", sizeof("] has $"), ConsoleOutput);
     Printint(money);
-    Write("]\n", sizeof("]\n"), ConsoleOutput);
+    Write("\n", sizeof("\n"), ConsoleOutput);
 
     /* each customer needs to go through all the counters before leaving */
     numCustomerWaiting[id] = id;
