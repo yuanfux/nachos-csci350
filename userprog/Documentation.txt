@@ -129,7 +129,7 @@ Test
 	Cashier: 5
 	Senator: 10
 	Manager: 1
-- multioffice.c runs 3 Passport Offices concurrently.
+- multioffice.c runs 3 Passport Offices concurrently. It may take about a minute to run. Please be patient.
 
 
 + Functions added and in which file.
