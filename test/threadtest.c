@@ -1,11 +1,11 @@
 #include "syscall.h"
 
-#define APPLICATIONCLERK_SIZE 1
-#define PICTURECLERK_SIZE 1
-#define PASSPORTCLERK_SIZE 1
-#define CASHIER_SIZE 1
-#define CUSTOMER_SIZE 1
-#define SENATOR_SIZE 0
+#define APPLICATIONCLERK_SIZE 5
+#define PICTURECLERK_SIZE 5
+#define PASSPORTCLERK_SIZE 5
+#define CASHIER_SIZE 5
+#define CUSTOMER_SIZE 50
+#define SENATOR_SIZE 10
 #define MANAGER_SIZE 1
 
 #define RAND_UPPER_LIMIT 10000
@@ -91,8 +91,12 @@ int senatorServiceId;
 int hasSenator = 0;
 
 
-int isFirst = 1;
 int customerNum = -1; /*  number of customers came into the office. */
+int appClerkNum = -1;
+int picClerkNum = -1;
+int passClerkNum = -1;
+int cashierNum = -1;
+
 /*  it is also ssn of customers */
 int remainingCustomer = 0; /*  number of customers still in the office */
 
@@ -557,11 +561,17 @@ void Customer() {
 
 }
 
-void ApplicationClerk(int myLine) {
+void ApplicationClerk() {
     int id = 0;
     int printed = 0;
     unsigned int i;
     int InBribeLine = 0;
+    int myLine;
+
+    Acquire(incrementCount);
+    myLine = appClerkNum + 1;
+    appClerkNum++;
+    Release(incrementCount);
 
     while (1) {
         InBribeLine = 0;
@@ -732,13 +742,19 @@ void ApplicationClerk(int myLine) {
     Exit(0);
 }
 
-void PictureClerk(int myLine) {
+void PictureClerk() {
     int id = 0;
     int printed = 0;
     unsigned int i;
     int photoAcceptance;
     int numCalls;
     int inBribeLine = 0;
+    int myLine;
+
+    Acquire(incrementCount);
+    myLine = picClerkNum + 1;
+    picClerkNum++;
+    Release(incrementCount);
 
     while (1) {
 
@@ -964,7 +980,7 @@ void PictureClerk(int myLine) {
     Exit(0);
 }
 
-void PassportClerk(int myLine) {
+void PassportClerk() {
     int id = 0;
     int i;
     int printed = 0;
@@ -972,6 +988,12 @@ void PassportClerk(int myLine) {
     int numCalls;
     int passportClerkPunishment;
     int inBribeLine = 0;
+    int myLine;
+
+    Acquire(incrementCount);
+    myLine = passClerkNum + 1;
+    passClerkNum++;
+    Release(incrementCount);
     while (1) {
         inBribeLine = 0;
 
@@ -1182,11 +1204,17 @@ void PassportClerk(int myLine) {
     Exit(0);
 }
 
-void Cashier(int myLine) {
+void Cashier() {
     int id = 0;
     int printed = 0;
     int photoAcceptance;
     int cashierPunishment;
+    int myLine;
+
+    Acquire(incrementCount);
+    myLine = cashierNum + 1;
+    cashierNum++;
+    Release(incrementCount);
 
     while (1) {
 
@@ -1385,7 +1413,6 @@ void Manager() {
         Yield();
         Yield();
         Yield();
-        Write("Manager Awake\n", sizeof("Manager Awake\n"), ConsoleOutput);
         /* acquire all the lock to print out the incoming statement */
         Acquire(applicationMoneyLock);
         Acquire(pictureMoneyLock);
@@ -1534,6 +1561,30 @@ void Manager() {
     Write("Passport Office Simulation Finshed.\n", sizeof("Passport Office Simulation Finshed.\n"), ConsoleOutput);
     Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
     Write("\n", sizeof("\n"), ConsoleOutput);
+
+    Write("\n\n--------------Simulation Summary---------------\n\n", sizeof("\n\n--------------Simulation Summary---------------\n\n"), ConsoleOutput);
+
+    Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+    Printint(MoneyFromApplicationClerk);
+    Write(" for ApplicationClerks\n", sizeof(" for ApplicationClerks\n"), ConsoleOutput);
+
+    Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+    Printint(MoneyFromPictureClerk);
+    Write(" for PictureClerks\n", sizeof(" for PictureClerks\n"), ConsoleOutput);
+
+    Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+    Printint(MoneyFromPassportClerk);
+    Write(" for PassportClerks\n", sizeof(" for PassportClerks\n"), ConsoleOutput);
+
+    Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+    Printint(MoneyFromCashier);
+    Write(" for Cashiers\n", sizeof(" for Cashiers\n"), ConsoleOutput);
+
+    MoneyTotal = MoneyFromApplicationClerk + MoneyFromPictureClerk + MoneyFromPassportClerk + MoneyFromCashier;
+    Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
+    Printint(MoneyTotal);
+    Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
+
 
     Exit(0);
 }

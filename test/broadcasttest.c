@@ -39,7 +39,6 @@ int main(){
     Acquire(lock0);
     Write("\nThread1 Broadcasts Thread2 & Thread 3\n", sizeof("\nThread1 Broadcasts Thread2 & Thread 3\n"), ConsoleOutput);
     Broadcast(condition0, lock0);
-    Write("\nTesting Broadcast finished\n",sizeof("\nTesting Broadcast finished\n"),ConsoleOutput);
     Release(lock0);
 
 }

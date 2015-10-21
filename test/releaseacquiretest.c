@@ -5,7 +5,7 @@ int lock0;
 int main(){
         Write("\nTesting Release & Acquire\n",sizeof("\nTesting Release & Acquire\n"),ConsoleOutput);
         Write("\nTrying to release an non existing lock\n", sizeof("\nTrying to release an non existing lock\n"), ConsoleOutput);
-        lock0=Release(0);
+        Release(0);
         Write("\nCreate Lock0\n", sizeof("\nCreate Lock0\n"), ConsoleOutput);
         lock0=CreateLock("Lock0");
         Write("\nCreate Lock0 successfully\n", sizeof("\nCreate Lock0 successfully\n"), ConsoleOutput);
