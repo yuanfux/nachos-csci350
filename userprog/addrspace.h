@@ -43,6 +43,7 @@ public:
     int GetMemorySize();
     void UpdateThreadNum();
     void AllocateSpaceForProcess(int vaddr);
+    void PopulateTLB(int addressVPN, int addressPPN);
 private:
     TranslationEntry *pageTable;    // Assume linear page table translation
     // for now!
