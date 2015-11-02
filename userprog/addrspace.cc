@@ -156,7 +156,14 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
           numPages, size);
     numThread = 0;
 // first, set up the translation
-    pageTable = new TranslationEntry[numPages];
+    
+    //populate TLB
+//    for(int i = 0; i < 4 ;i++){
+//        PopulateTLB(-1, -1);
+//    }
+    
+    
+    pageTable = new IPT[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;   // for now, virtual page # = phys page #
         pageTable[i].physicalPage = memoryMap.Find();;
@@ -378,3 +385,23 @@ int AddrSpace::GetMemorySize() {
 void AddrSpace::UpdateThreadNum(){
     numThread--;
 }
+
+void AddrSpace::PopulateTLB(int addressVPN, int addressPPN){
+    for(int i = 0 ; i < 4 ;i++){
+        
+        if(machine->tlb[i].valid == FALSE){
+            machine->tlb[i].dirty = FALSE;
+            machine->tlb[i].valid = TRUE;
+            machine->tlb[i].virtualPage = addressVPN;
+            machine->tlb[i].physicalPage = addressPPN;
+            break;
+            
+        }
+        
+    }
+    
+    
+    
+    
+}
+
