@@ -300,6 +300,11 @@ Thread::SaveUserState()
 {
     for (int i = 0; i < NumTotalRegs; i++)
         userRegisters[i] = machine->ReadRegister(i);
+
+    for (int i = 0; i < TLBSize; i++)
+    {
+        machine->tlb[i].valid = FALSE;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -316,6 +321,11 @@ Thread::RestoreUserState()
 {
     for (int i = 0; i < NumTotalRegs; i++)
         machine->WriteRegister(i, userRegisters[i]);
+    
+    for (int i = 0; i < TLBSize; i++)
+    {
+        machine->tlb[i].valid = FALSE;
+    }
 }
 
 void Thread::SetStackIndex(int i) {

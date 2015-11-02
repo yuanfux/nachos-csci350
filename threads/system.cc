@@ -31,7 +31,7 @@ SynchDisk   *synchDisk;
 Machine *machine;	// user program memory and registers
 Table processTable(MAX_PROCESS_NUM);
 BitMap memoryMap(NumPhysPages);
-IPT* ipt = new IPT[NumPhysPages];
+IPT* ipt;
 #endif
 
 #ifdef NETWORK
@@ -152,6 +152,7 @@ Initialize(int argc, char **argv)
     
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg);	// this must come first
+    ipt = new IPT[NumPhysPages];
 #endif
 
 #ifdef FILESYS

@@ -127,7 +127,7 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     NoffHeader noffH;
-    unsigned int i, size;
+    unsigned int i, size, physicalPage;
     //initialize number of threads in a process
     // Don't allocate the input or output to disk files
     fileTable.Put(0);
@@ -155,18 +155,12 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
           numPages, size);
     numThread = 0;
-// first, set up the translation
     
-    //populate TLB
-//    for(int i = 0; i < 4 ;i++){
-//        PopulateTLB(-1, -1);
-//    }
+    pageTable = new TranslationEntry[numPages];
     
-    
-    pageTable = new IPT[numPages];
     for (i = 0; i < numPages; i++) {
-        pageTable[i].virtualPage = i;   // for now, virtual page # = phys page #
-        pageTable[i].physicalPage = memoryMap.Find();;
+        physicalPage = memoryMap.Find();
+        pageTable[i].physicalPage = physicalPage;
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
@@ -175,7 +169,13 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         // pages to be read-only
         executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
                            PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
+
+        ipt[physicalPage].virtualPage = i;
+        ipt[physicalPage].valid = TRUE;
+        ipt[physicalPage].space = this;
     }
+
+    DEBUG('a', "Finish address space initialization\n");
 // zero out the entire address space, to zero the unitialized data segment
 // and the stack segment
     //bzero(machine->mainMemory, size);
@@ -206,7 +206,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
 AddrSpace::~AddrSpace()
 {
     delete pageTable;
-    delete executable;
+    delete privateExecutable;
 }
 
 //----------------------------------------------------------------------
@@ -251,7 +251,12 @@ AddrSpace::InitRegisters()
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState()
-{}
+{
+    for (int i = 0; i < TLBSize; i++)
+    {
+        machine->tlb[i].valid = FALSE;
+    }
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState
@@ -265,6 +270,10 @@ void AddrSpace::RestoreState()
 {
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
+    for (int i = 0; i < TLBSize; i++)
+    {
+        machine->tlb[i].valid = FALSE;
+    }
 }
 
 void AddrSpace::AllocateSpaceForNewThread() {
@@ -314,16 +323,22 @@ void AddrSpace::AllocateSpaceForProcess(int vaddr){
         newPageTable[i].dirty = pageTable[i].dirty;
         newPageTable[i].readOnly = pageTable[i].readOnly;
     }
+    int physicalPage;
     
     for (unsigned int i = numPages - 8; i < numPages; i++) {
+        physicalPage = memoryMap.Find();
         newPageTable[i].virtualPage = i;
         lock->Acquire();
-        newPageTable[i].physicalPage = memoryMap.Find();
+        newPageTable[i].physicalPage = physicalPage;
         lock->Release();
         newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
         newPageTable[i].readOnly = FALSE;
+
+        ipt[physicalPage].virtualPage = i;
+        ipt[physicalPage].valid = TRUE;
+        ipt[physicalPage].space = this;
     }
     
     
@@ -386,22 +401,8 @@ void AddrSpace::UpdateThreadNum(){
     numThread--;
 }
 
-void AddrSpace::PopulateTLB(int addressVPN, int addressPPN){
-    for(int i = 0 ; i < 4 ;i++){
-        
-        if(machine->tlb[i].valid == FALSE){
-            machine->tlb[i].dirty = FALSE;
-            machine->tlb[i].valid = TRUE;
-            machine->tlb[i].virtualPage = addressVPN;
-            machine->tlb[i].physicalPage = addressPPN;
-            break;
-            
-        }
-        
-    }
-    
-    
-    
-    
+TranslationEntry* AddrSpace::GetPageTable(){
+    return pageTable;
 }
+
 

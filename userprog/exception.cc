@@ -40,6 +40,10 @@ Lock* forkLock = new Lock("forkLock");
 Lock* executeLock = new Lock("execLock");
 Lock* exitLock = new Lock("exitLock");
 
+int currentTLB = -1;
+int currentIPT = -1;
+int nextIPT = -1;
+
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
     // Return the number of bytes so read, or -1 if an error occors.
@@ -534,15 +538,57 @@ int Random_Syscall(int limit) {
 
 }
 
-int PageFaultHandler(int vpn){
+int IPTMissHandler(int ppn, int vpn) {
+    int count = 0;
+    nextIPT = currentIPT;
+    while (ipt[currentIPT].valid == FALSE && count <= NumPhysPages) {
+        nextIPT = (++nextIPT) % NumPhysPages;
+        count++;
+    }
 
+    ipt[nextIPT].valid = TRUE;
+    ipt[nextIPT].virtualPage = vpn;
+    ipt[nextIPT].space = currentThread->space;
+
+    currentIPT++;
+    
+    return nextIPT;
 }
 
-int TLBMissHandler(int vpn){
+int PopulateTLB(int ppn, int vpn) {
+    currentTLB = (++currentTLB) % TLBSize;
 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    machine->tlb[currentTLB].dirty = FALSE;
+    machine->tlb[currentTLB].valid = TRUE;
+    machine->tlb[currentTLB].virtualPage = vpn;
+    machine->tlb[currentTLB].physicalPage = ppn;
+
+    (void) interrupt->SetLevel(oldLevel);
+
+    return 0;
 }
 
-int IPTMissHandler(int vpn){
+int PageFaultHandler(int vaddr) {
+    int vpn = vaddr / PageSize;
+    TranslationEntry *pageTable = currentThread->space->GetPageTable();
+    int ppn = -1;
+    for (int i = 0; i < NumPhysPages; i++)
+    {
+        if (ipt[i].virtualPage == vpn && ipt[i].valid == TRUE && ipt[i].space == currentThread->space) {
+            ppn = i;
+            break;
+        }
+    }
+    if (ppn == -1) {
+        ppn = IPTMissHandler(vpn);
+
+    }
+
+    PopulateTLB(ppn, vpn);
+
+
 }
 
 
@@ -658,10 +704,10 @@ void ExceptionHandler(ExceptionType which) {
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(PCReg) + 4);
         return;
-    } else if(which == PageFaultException){
+    } else if (which == PageFaultException) {
         printf("PageFaultException triggered\n");
         interrupt->Halt();
-        PageFaultHandler(machine->ReadRegister(4));
+        PageFaultHandler(machine->ReadRegister(39));
     }
     else {
         cout << "Unexpected user mode exception - which:" << which << "  type:" << type << endl;

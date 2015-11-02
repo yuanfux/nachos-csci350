@@ -26,6 +26,7 @@
 #include "copyright.h"
 #include "utility.h"
 #include "translate.h"
+#include "ipt.h"
 #include "disk.h"
 using namespace std;
 // Definitions related to the size, and format of user memory

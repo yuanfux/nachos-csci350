@@ -43,7 +43,7 @@ public:
     int GetMemorySize();
     void UpdateThreadNum();
     void AllocateSpaceForProcess(int vaddr);
-    void PopulateTLB(int addressVPN, int addressPPN);
+    TranslationEntry* GetPageTable();
 private:
     TranslationEntry *pageTable;    // Assume linear page table translation
     // for now!
@@ -52,7 +52,7 @@ private:
     int spaceID;
     Lock* lock;
     // address space
-    OpenFile *executable;
+    OpenFile *privateExecutable;
 };
 
 #endif // ADDRSPACE_H
