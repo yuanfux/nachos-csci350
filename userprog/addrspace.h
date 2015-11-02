@@ -51,6 +51,7 @@ private:
     int spaceID;
     Lock* lock;
     // address space
+    OpenFile *executable;
 };
 
 #endif // ADDRSPACE_H

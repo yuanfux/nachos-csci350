@@ -534,6 +534,17 @@ int Random_Syscall(int limit) {
 
 }
 
+int PageFaultHandler(int vpn){
+
+}
+
+int TLBMissHandler(int vpn){
+
+}
+
+int IPTMissHandler(int vpn){
+}
+
 
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
@@ -647,7 +658,12 @@ void ExceptionHandler(ExceptionType which) {
         machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
         machine->WriteRegister(NextPCReg, machine->ReadRegister(PCReg) + 4);
         return;
-    } else {
+    } else if(which == PageFaultException){
+        printf("PageFaultException triggered\n");
+        interrupt->Halt();
+        PageFaultHandler(machine->ReadRegister(4));
+    }
+    else {
         cout << "Unexpected user mode exception - which:" << which << "  type:" << type << endl;
         interrupt->Halt();
     }
