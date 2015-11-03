@@ -41,8 +41,8 @@ Lock* executeLock = new Lock("execLock");
 Lock* exitLock = new Lock("exitLock");
 
 int currentTLB = -1;
-int currentIPT = -1;
-int nextIPT = -1;
+int currentIPT = 0;
+int nextIPT = 0;
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -538,7 +538,8 @@ int Random_Syscall(int limit) {
 
 }
 
-int IPTMissHandler(int ppn, int vpn) {
+int IPTMissHandler(int vpn) {
+    printf("In IPTMissHandler\n");
     int count = 0;
     nextIPT = currentIPT;
     while (ipt[currentIPT].valid == FALSE && count <= NumPhysPages) {
@@ -556,6 +557,7 @@ int IPTMissHandler(int ppn, int vpn) {
 }
 
 int PopulateTLB(int ppn, int vpn) {
+    printf("In PopulateTLB\n");
     currentTLB = (++currentTLB) % TLBSize;
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
@@ -571,6 +573,7 @@ int PopulateTLB(int ppn, int vpn) {
 }
 
 int PageFaultHandler(int vaddr) {
+    printf("In PageFaultHandler\n");
     int vpn = vaddr / PageSize;
     TranslationEntry *pageTable = currentThread->space->GetPageTable();
     int ppn = -1;
@@ -706,7 +709,7 @@ void ExceptionHandler(ExceptionType which) {
         return;
     } else if (which == PageFaultException) {
         printf("PageFaultException triggered\n");
-        interrupt->Halt();
+        // interrupt->Halt();
         PageFaultHandler(machine->ReadRegister(39));
     }
     else {

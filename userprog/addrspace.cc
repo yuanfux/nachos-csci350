@@ -132,7 +132,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     // Don't allocate the input or output to disk files
     fileTable.Put(0);
     fileTable.Put(0);
-    lock=new Lock("lock");
+    lock = new Lock("lock");
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -155,11 +155,12 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
           numPages, size);
     numThread = 0;
-    
+
     pageTable = new TranslationEntry[numPages];
-    
+
     for (i = 0; i < numPages; i++) {
         physicalPage = memoryMap.Find();
+        pageTable[i].virtualPage = i;
         pageTable[i].physicalPage = physicalPage;
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
@@ -239,7 +240,7 @@ AddrSpace::InitRegisters()
     // accidentally reference off the end!
     machine->WriteRegister(StackReg, numPages * PageSize - 16);
     DEBUG('a', "Initializing stack register to %x\n", numPages * PageSize - 16);
-    
+
 }
 
 //----------------------------------------------------------------------
@@ -252,10 +253,12 @@ AddrSpace::InitRegisters()
 
 void AddrSpace::SaveState()
 {
+#ifdef USE_TLB
     for (int i = 0; i < TLBSize; i++)
     {
         machine->tlb[i].valid = FALSE;
     }
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -270,10 +273,13 @@ void AddrSpace::RestoreState()
 {
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
+#ifdef USE_TLB
+    machine->pageTable = NULL;
     for (int i = 0; i < TLBSize; i++)
     {
         machine->tlb[i].valid = FALSE;
     }
+#endif
 }
 
 void AddrSpace::AllocateSpaceForNewThread() {
@@ -310,11 +316,11 @@ void AddrSpace::AllocateSpaceForNewThread() {
 
 }
 
-void AddrSpace::AllocateSpaceForProcess(int vaddr){
-    
+void AddrSpace::AllocateSpaceForProcess(int vaddr) {
+
     numPages += 8;
     TranslationEntry *newPageTable = new TranslationEntry[numPages];
-    
+
     for (unsigned int i = 0; i < numPages - 8; i++) {
         newPageTable[i].virtualPage = pageTable[i].virtualPage;
         newPageTable[i].physicalPage = pageTable[i].physicalPage;
@@ -324,7 +330,7 @@ void AddrSpace::AllocateSpaceForProcess(int vaddr){
         newPageTable[i].readOnly = pageTable[i].readOnly;
     }
     int physicalPage;
-    
+
     for (unsigned int i = numPages - 8; i < numPages; i++) {
         physicalPage = memoryMap.Find();
         newPageTable[i].virtualPage = i;
@@ -340,21 +346,21 @@ void AddrSpace::AllocateSpaceForProcess(int vaddr){
         ipt[physicalPage].valid = TRUE;
         ipt[physicalPage].space = this;
     }
-    
-    
+
+
     delete [] pageTable;
-    
+
     pageTable = newPageTable;
-    
+
     numThread++;
-    
+
     //increment the program counter
     machine->WriteRegister(PCReg, vaddr);
     machine->WriteRegister(NextPCReg, vaddr + 4);
     //restore state
     currentThread->space->RestoreState();
     machine->WriteRegister(StackReg, currentThread->space->GetMemorySize() - 16);
-    
+
 }
 
 void AddrSpace::DeallocateSpaceForThread() {
@@ -397,11 +403,11 @@ int AddrSpace::GetMemorySize() {
     return numPages * PageSize;
 }
 
-void AddrSpace::UpdateThreadNum(){
+void AddrSpace::UpdateThreadNum() {
     numThread--;
 }
 
-TranslationEntry* AddrSpace::GetPageTable(){
+TranslationEntry* AddrSpace::GetPageTable() {
     return pageTable;
 }
 
