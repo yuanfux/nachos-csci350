@@ -159,7 +159,9 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     pageTable = new TranslationEntry[numPages];
 
     for (i = 0; i < numPages; i++) {
+        lock->Acquire();
         physicalPage = memoryMap.Find();
+        lock->Release();
         pageTable[i].virtualPage = i;
         pageTable[i].physicalPage = physicalPage;
         pageTable[i].valid = TRUE;
@@ -286,6 +288,7 @@ void AddrSpace::AllocateSpaceForNewThread() {
 
     numPages += 8;
     TranslationEntry *newPageTable = new TranslationEntry[numPages];
+    int physicalPage;
 
     for (unsigned int i = 0; i < numPages - 8; i++) {
         newPageTable[i].virtualPage = pageTable[i].virtualPage;
@@ -294,15 +297,19 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].use = pageTable[i].use;
         newPageTable[i].dirty = pageTable[i].dirty;
         newPageTable[i].readOnly = pageTable[i].readOnly;
+
+        physicalPage = pageTable[i].physicalPage;
+        ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
+        ipt[physicalPage].valid = pageTable[i].valid;
+        ipt[physicalPage].space = this;
     }
-    int physicalPage;
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
-        physicalPage = memoryMap.Find();
-        newPageTable[i].virtualPage = i;
         lock->Acquire();
-        newPageTable[i].physicalPage = physicalPage;
+        physicalPage = memoryMap.Find();
         lock->Release();
+        newPageTable[i].virtualPage = i;
+        newPageTable[i].physicalPage = physicalPage;
         newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
@@ -326,6 +333,7 @@ void AddrSpace::AllocateSpaceForProcess(int vaddr) {
 
     numPages += 8;
     TranslationEntry *newPageTable = new TranslationEntry[numPages];
+    int physicalPage;
 
     for (unsigned int i = 0; i < numPages - 8; i++) {
         newPageTable[i].virtualPage = pageTable[i].virtualPage;
@@ -334,15 +342,19 @@ void AddrSpace::AllocateSpaceForProcess(int vaddr) {
         newPageTable[i].use = pageTable[i].use;
         newPageTable[i].dirty = pageTable[i].dirty;
         newPageTable[i].readOnly = pageTable[i].readOnly;
+
+        physicalPage = pageTable[i].physicalPage;
+        ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
+        ipt[physicalPage].valid = pageTable[i].valid;
+        ipt[physicalPage].space = this;
     }
-    int physicalPage;
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
-        physicalPage = memoryMap.Find();
-        newPageTable[i].virtualPage = i;
         lock->Acquire();
-        newPageTable[i].physicalPage = physicalPage;
+        physicalPage = memoryMap.Find();
         lock->Release();
+        newPageTable[i].virtualPage = i;
+        newPageTable[i].physicalPage = physicalPage;
         newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;

@@ -340,7 +340,6 @@ void Close_Syscall(int fd) {
 }
 
 void kernel_thread(int virtualAddress) {
-    printf("in kernel_thread\n");
 
     //increment the program counter
     machine->WriteRegister(PCReg, virtualAddress);
@@ -538,7 +537,7 @@ int Random_Syscall(int limit) {
 }
 
 int IPTMissHandler(int vpn) {
-    printf("In IPTMissHandler\n");
+    // printf("In IPTMissHandler\n");
     int count = 0;
     nextIPT = currentIPT;
     while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
@@ -556,7 +555,7 @@ int IPTMissHandler(int vpn) {
 }
 
 int PopulateTLB(int ppn, int vpn) {
-    printf("In PopulateTLB\n");
+    // printf("In PopulateTLB\n");
     currentTLB = (++currentTLB) % TLBSize;
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
@@ -572,7 +571,7 @@ int PopulateTLB(int ppn, int vpn) {
 }
 
 int PageFaultHandler(int vaddr) {
-    printf("In PageFaultHandler\n");
+    // printf("In PageFaultHandler\n");
     int vpn = vaddr / PageSize;
     TranslationEntry *pageTable = currentThread->space->GetPageTable();
     int ppn = -1;
@@ -707,7 +706,7 @@ void ExceptionHandler(ExceptionType which) {
         machine->WriteRegister(NextPCReg, machine->ReadRegister(PCReg) + 4);
         return;
     } else if (which == PageFaultException) {
-        printf("PageFaultException triggered\n");
+        DEBUG('a', "PageFaultException triggered\n");
         // interrupt->Halt();
         PageFaultHandler(machine->ReadRegister(39));
     }
