@@ -6,13 +6,8 @@
 
 #include "addrspace.h"
 
-class IPT {
+class IPT: public TranslationEntry{
 public:
-	int virtualPage;
-
-	bool valid;
-	bool use;
-	bool dirty;
 
 	AddrSpace *space;
 	int spaceID;

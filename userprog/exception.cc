@@ -44,6 +44,7 @@ Lock* exitLock = new Lock("exitLock");
 int currentTLB = -1;
 int currentIPT = 0;
 int nextIPT = 0;
+List *IPTQueue;
 
 struct MonitorVariable{
     int variable;
@@ -183,12 +184,9 @@ SpaceId Exec_Syscall(int vaddr, int len) {
         int spaceId = processTable.Put(addressSpace);
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-        //  printf("1\n");
         // machine->WriteRegister(2, spaceId);
-        // printf("3\n");
         thread->Fork(exec_thread, 0);
         executeLock->Release();
-        //  printf("4\n");
         return spaceId;
     }
     else {
@@ -586,10 +584,10 @@ void SetMV_Syscall(int monitorIndex, int data){
 }
 
 int IPTMissHandler(int vpn) {
-    printf("In IPTMissHandler\n");
+    // printf("In IPTMissHandler\n");
     int count = 0;
     nextIPT = currentIPT;
-    while (ipt[currentIPT].valid == FALSE && count <= NumPhysPages) {
+    while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
         nextIPT = (++nextIPT) % NumPhysPages;
         count++;
     }
@@ -604,7 +602,7 @@ int IPTMissHandler(int vpn) {
 }
 
 int PopulateTLB(int ppn, int vpn) {
-    printf("In PopulateTLB\n");
+    // printf("In PopulateTLB\n");
     currentTLB = (++currentTLB) % TLBSize;
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
@@ -620,7 +618,7 @@ int PopulateTLB(int ppn, int vpn) {
 }
 
 int PageFaultHandler(int vaddr) {
-    printf("In PageFaultHandler\n");
+    // printf("In PageFaultHandler\n");
     int vpn = vaddr / PageSize;
     TranslationEntry *pageTable = currentThread->space->GetPageTable();
     int ppn = -1;
@@ -637,7 +635,7 @@ int PageFaultHandler(int vaddr) {
     }
 
     PopulateTLB(ppn, vpn);
-
+    return 0;
 
 }
 
@@ -768,7 +766,7 @@ void ExceptionHandler(ExceptionType which) {
         machine->WriteRegister(NextPCReg, machine->ReadRegister(PCReg) + 4);
         return;
     } else if (which == PageFaultException) {
-        printf("PageFaultException triggered\n");
+        DEBUG('a', "PageFaultException triggered\n");
         // interrupt->Halt();
         PageFaultHandler(machine->ReadRegister(39));
     }
