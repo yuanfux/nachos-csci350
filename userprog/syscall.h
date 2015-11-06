@@ -42,6 +42,10 @@
 
 #define SC_Printint 20
 #define SC_Random 21
+#define SC_CreateMV 22
+#define SC_GetMV 23
+#define SC_SetMV 24
+
 
 #define MAXFILENAME 256
 
@@ -160,6 +164,12 @@ int DestroyCondition(int lockIndex);
 void Printint(int num);
 
 int Random(int limit);
+
+int CreateMV(int data);
+
+int GetMV(int monitorIndex);
+
+void SetMV(int monitorIndex, int data);
 
 
 #endif /* IN_ASM */

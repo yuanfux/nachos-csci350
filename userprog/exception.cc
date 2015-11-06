@@ -33,9 +33,10 @@ using namespace std;
 
 #define MAX_NUM_LOCK 1000
 #define MAX_NUM_CONDITION 1000
-
+#define MAX_NUM_MV 10000
 Table lockTable(MAX_NUM_LOCK);
 Table cvTable(MAX_NUM_CONDITION);
+Table mvTable(MAX_NUM_MV);
 Lock* forkLock = new Lock("forkLock");
 Lock* executeLock = new Lock("execLock");
 Lock* exitLock = new Lock("exitLock");
@@ -43,6 +44,18 @@ Lock* exitLock = new Lock("exitLock");
 int currentTLB = -1;
 int currentIPT = 0;
 int nextIPT = 0;
+
+struct MonitorVariable{
+    int variable;
+    int index;
+    
+    MonitorVariable(int data){
+        
+        variable = data;
+        
+    }
+    
+};
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -538,6 +551,40 @@ int Random_Syscall(int limit) {
 
 }
 
+int CreateMV_Syscall(int data){
+    MonitorVariable* mv = new MonitorVariable(data);
+    mvTable.Put(mv);
+    mv->index = mvTable.GetNumElements()-1;
+    return mv->index;
+    
+}
+
+int GetMV_Syscall(int monitorIndex){
+    if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
+        printf("Error in GetMV_Syscall: monitor index out of boundary\n");
+        return -1;
+    }
+    
+    MonitorVariable* mv = (MonitorVariable*) mvTable.Get(monitorIndex);
+    return mv->variable;
+    
+}
+
+void SetMV_Syscall(int monitorIndex, int data){
+    if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
+        printf("Error in GetMV_Syscall: monitor index out of boundary\n");
+        return;
+    }
+    
+    MonitorVariable* mv = (MonitorVariable*) mvTable.Get(monitorIndex);
+    printf("current value: %d", mv->variable);
+    printf("\n");
+    mv->variable = data;
+    printf("after change current value: %d", mv->variable);
+    printf("\n");
+    
+}
+
 int IPTMissHandler(int vpn) {
     printf("In IPTMissHandler\n");
     int count = 0;
@@ -698,6 +745,19 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG('a', "Random syscall.\n");
             rv = Random_Syscall(machine->ReadRegister(4));
             break;
+        case SC_CreateMV:
+            DEBUG('a', "CreateMV syscall.\n");
+            rv = CreateMV_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_GetMV:
+            DEBUG('a', "GetMV syscall.\n");
+            rv = GetMV_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_SetMV:
+            DEBUG('a', "SetMV syscall.\n");
+            SetMV_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
+            break;
+
         }
 
 

@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles exec_exittest forktest release_acquiretest yieldtest signal_waittest randomtest broadcasttest destroy_condition_locktest printinttest passportoffice multioffice TestSuit
+all: halt matmult sort testfiles exec_exittest forktest release_acquiretest yieldtest signal_waittest randomtest broadcasttest destroy_condition_locktest printinttest passportoffice multioffice TestSuit monitortest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -134,5 +134,10 @@ TestSuit: TestSuit.o start.o
 	$(LD) $(LDFLAGS) start.o TestSuit.o -o TestSuit.coff
 	../bin/coff2noff TestSuit.coff TestSuit
 
+monitortest.o: monitortest.c
+	$(CC) $(CFLAGS) -c monitortest.c
+monitortest: monitortest.o start.o
+	$(LD) $(LDFLAGS) start.o monitortest.o -o monitortest.coff
+	../bin/coff2noff monitortest.coff monitortest
 clean:
 	rm -f *.o *.coff
