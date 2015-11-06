@@ -16,6 +16,7 @@
 #include "copyright.h"
 #include "filesys.h"
 #include "table.h"
+#include "pagetable.h"
 
 #define UserStackSize       1024    // increase this as necessary!
 
@@ -42,10 +43,15 @@ public:
     void SetSpaceID(int spaceid);
     int GetMemorySize();
     void UpdateThreadNum();
-    void AllocateSpaceForProcess(int vaddr);
-    TranslationEntry* GetPageTable();
+    PageTable* GetPageTable();
+    Lock *GetLock();
+    OpenFile *GetExecutable();
+
+    int AllocatePhysicalPage();
+    void PopulateIPT(int vpn, int ppn);
+
 private:
-    TranslationEntry *pageTable;    // Assume linear page table translation
+    PageTable *pageTable;    // Assume linear page table translation
     // for now!
     unsigned int numPages;      // Number of pages in the virtual
     int numThread;

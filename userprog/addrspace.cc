@@ -133,7 +133,8 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     fileTable.Put(0);
     fileTable.Put(0);
     lock = new Lock("lock");
-    executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+    privateExecutable = executable;
+    privateExecutable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
@@ -156,27 +157,37 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
           numPages, size);
     numThread = 0;
 
-    pageTable = new TranslationEntry[numPages];
+    unsigned int inExec = divRoundUp(noffH.code.size + noffH.initData.size, PageSize);
+    pageTable = new PageTable[numPages];
 
     for (i = 0; i < numPages; i++) {
-        lock->Acquire();
-        physicalPage = memoryMap.Find();
-        lock->Release();
+        // lock->Acquire();
+        // physicalPage = memoryMap.Find();
+        // lock->Release();
         pageTable[i].virtualPage = i;
-        pageTable[i].physicalPage = physicalPage;
-        pageTable[i].valid = TRUE;
+        // pageTable[i].physicalPage = physicalPage;
+        pageTable[i].valid = FALSE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
         // a separate page, we could set its
         // pages to be read-only
-        executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
-                           PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
+        if (i < inExec) {
+            pageTable[i].byteOffset = noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize;
+            pageTable[i].location = EXECUTABLE; 
+        }
+        else {
+            pageTable[i].byteOffset = -1;
+            pageTable[i].location = DISK;
+        }
+        // executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
+        // PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
 
-        ipt[physicalPage].virtualPage = i;
-        ipt[physicalPage].valid = TRUE;
-        ipt[physicalPage].space = this;
+        // ipt[physicalPage].virtualPage = i;
+        // ipt[physicalPage].valid = TRUE;
+        // ipt[physicalPage].space = this;
     }
+    printf("addr constructor byteOffset: %d\n", pageTable[0].byteOffset);
 
     DEBUG('a', "Finish address space initialization\n");
 // zero out the entire address space, to zero the unitialized data segment
@@ -287,7 +298,7 @@ void AddrSpace::RestoreState()
 void AddrSpace::AllocateSpaceForNewThread() {
 
     numPages += 8;
-    TranslationEntry *newPageTable = new TranslationEntry[numPages];
+    PageTable *newPageTable = new PageTable[numPages];
     int physicalPage;
 
     for (unsigned int i = 0; i < numPages - 8; i++) {
@@ -297,27 +308,33 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].use = pageTable[i].use;
         newPageTable[i].dirty = pageTable[i].dirty;
         newPageTable[i].readOnly = pageTable[i].readOnly;
+        newPageTable[i].location = pageTable[i].location;
+        newPageTable[i].byteOffset = pageTable[i].byteOffset;
 
         physicalPage = pageTable[i].physicalPage;
-        ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
-        ipt[physicalPage].valid = pageTable[i].valid;
-        ipt[physicalPage].space = this;
+        if (physicalPage > -1) {
+            ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
+            ipt[physicalPage].valid = pageTable[i].valid;
+            ipt[physicalPage].dirty = pageTable[i].dirty;
+            ipt[physicalPage].space = this;
+        }
     }
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
-        lock->Acquire();
-        physicalPage = memoryMap.Find();
-        lock->Release();
+        // lock->Acquire();
+        // physicalPage = memoryMap.Find();
+        // lock->Release();
         newPageTable[i].virtualPage = i;
-        newPageTable[i].physicalPage = physicalPage;
-        newPageTable[i].valid = TRUE;
+        // newPageTable[i].physicalPage = physicalPage;
+        newPageTable[i].valid = FALSE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
         newPageTable[i].readOnly = FALSE;
+        newPageTable[i].location = DISK;
 
-        ipt[physicalPage].virtualPage = i;
-        ipt[physicalPage].valid = TRUE;
-        ipt[physicalPage].space = this;
+        // ipt[physicalPage].virtualPage = i;
+        // ipt[physicalPage].valid = TRUE;
+        // ipt[physicalPage].space = this;
     }
 
     delete [] pageTable;
@@ -326,58 +343,6 @@ void AddrSpace::AllocateSpaceForNewThread() {
 
     numThread++;
     currentThread->space->RestoreState();
-
-}
-
-void AddrSpace::AllocateSpaceForProcess(int vaddr) {
-
-    numPages += 8;
-    TranslationEntry *newPageTable = new TranslationEntry[numPages];
-    int physicalPage;
-
-    for (unsigned int i = 0; i < numPages - 8; i++) {
-        newPageTable[i].virtualPage = pageTable[i].virtualPage;
-        newPageTable[i].physicalPage = pageTable[i].physicalPage;
-        newPageTable[i].valid = pageTable[i].valid;
-        newPageTable[i].use = pageTable[i].use;
-        newPageTable[i].dirty = pageTable[i].dirty;
-        newPageTable[i].readOnly = pageTable[i].readOnly;
-
-        physicalPage = pageTable[i].physicalPage;
-        ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
-        ipt[physicalPage].valid = pageTable[i].valid;
-        ipt[physicalPage].space = this;
-    }
-
-    for (unsigned int i = numPages - 8; i < numPages; i++) {
-        lock->Acquire();
-        physicalPage = memoryMap.Find();
-        lock->Release();
-        newPageTable[i].virtualPage = i;
-        newPageTable[i].physicalPage = physicalPage;
-        newPageTable[i].valid = TRUE;
-        newPageTable[i].use = FALSE;
-        newPageTable[i].dirty = FALSE;
-        newPageTable[i].readOnly = FALSE;
-
-        ipt[physicalPage].virtualPage = i;
-        ipt[physicalPage].valid = TRUE;
-        ipt[physicalPage].space = this;
-    }
-
-
-    delete [] pageTable;
-
-    pageTable = newPageTable;
-
-    numThread++;
-
-    //increment the program counter
-    machine->WriteRegister(PCReg, vaddr);
-    machine->WriteRegister(NextPCReg, vaddr + 4);
-    //restore state
-    currentThread->space->RestoreState();
-    machine->WriteRegister(StackReg, currentThread->space->GetMemorySize() - 16);
 
 }
 
@@ -425,8 +390,44 @@ void AddrSpace::UpdateThreadNum() {
     numThread--;
 }
 
-TranslationEntry* AddrSpace::GetPageTable() {
+PageTable* AddrSpace::GetPageTable() {
     return pageTable;
 }
 
+Lock *AddrSpace::GetLock() {
+    return lock;
+}
 
+OpenFile *AddrSpace::GetExecutable() {
+    return privateExecutable;
+}
+
+int AddrSpace::AllocatePhysicalPage(){
+
+    int physicalPage;
+
+    lock->Acquire();
+    physicalPage = memoryMap.Find();
+    lock->Release();
+    return physicalPage;
+}
+
+void AddrSpace::PopulateIPT(int vpn, int physicalPage) {
+
+    if (pageTable[vpn].location == EXECUTABLE) {
+        printf("before readat\n");
+        printf("byteOffset: %d, vpn: %d\n", pageTable[vpn].byteOffset, vpn);
+        currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+                PageSize, pageTable[vpn].byteOffset);
+        printf("after readat\n");
+    }
+
+    pageTable[vpn].location = MEMORY;
+    pageTable[vpn].valid = TRUE;
+    pageTable[vpn].physicalPage = physicalPage;
+
+    ipt[physicalPage].valid = pageTable[vpn].valid;
+    ipt[physicalPage].dirty = pageTable[vpn].dirty;
+    ipt[physicalPage].virtualPage = vpn;
+    ipt[physicalPage].space = this;
+}

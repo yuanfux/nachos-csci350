@@ -46,16 +46,16 @@ int currentIPT = 0;
 int nextIPT = 0;
 List *IPTQueue;
 
-struct MonitorVariable{
+struct MonitorVariable {
     int variable;
     int index;
-    
-    MonitorVariable(int data){
-        
+
+    MonitorVariable(int data) {
+
         variable = data;
-        
+
     }
-    
+
 };
 
 int copyin(unsigned int vaddr, int len, char *buf) {
@@ -549,56 +549,79 @@ int Random_Syscall(int limit) {
 
 }
 
-int CreateMV_Syscall(int data){
+int CreateMV_Syscall(int data) {
     MonitorVariable* mv = new MonitorVariable(data);
     mvTable.Put(mv);
-    mv->index = mvTable.GetNumElements()-1;
+    mv->index = mvTable.GetNumElements() - 1;
     return mv->index;
-    
+
 }
 
-int GetMV_Syscall(int monitorIndex){
+int GetMV_Syscall(int monitorIndex) {
     if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
         printf("Error in GetMV_Syscall: monitor index out of boundary\n");
         return -1;
     }
-    
+
     MonitorVariable* mv = (MonitorVariable*) mvTable.Get(monitorIndex);
     return mv->variable;
-    
+
 }
 
-void SetMV_Syscall(int monitorIndex, int data){
+void SetMV_Syscall(int monitorIndex, int data) {
     if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
         printf("Error in GetMV_Syscall: monitor index out of boundary\n");
         return;
     }
-    
+
     MonitorVariable* mv = (MonitorVariable*) mvTable.Get(monitorIndex);
     printf("current value: %d", mv->variable);
     printf("\n");
     mv->variable = data;
     printf("after change current value: %d", mv->variable);
     printf("\n");
-    
+
 }
 
 int IPTMissHandler(int vpn) {
-    // printf("In IPTMissHandler\n");
-    int count = 0;
-    nextIPT = currentIPT;
-    while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
-        nextIPT = (++nextIPT) % NumPhysPages;
-        count++;
+    printf("In IPTMissHandler\n");
+
+    int physicalPage;
+    physicalPage = currentThread->space->AllocatePhysicalPage();
+
+    if (physicalPage == -1) {
+        printf("No empty space found in physical memory\n");
+        int count = 0;
+        nextIPT = currentIPT;
+        while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
+            nextIPT = (++nextIPT) % NumPhysPages;
+            count++;
+        }
+        physicalPage = nextIPT;
     }
 
-    ipt[nextIPT].valid = TRUE;
-    ipt[nextIPT].virtualPage = vpn;
-    ipt[nextIPT].space = currentThread->space;
+    // PageTable *pt = currentThread->space->GetPageTable();
+    // if (pt[vpn].location == EXECUTABLE) {
+    //     printf("before readat\n");
+    //     printf("byteOffset: %d, vpn: %d\n", pt[vpn].byteOffset, vpn);
+    //     currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+    //             PageSize, 40 + vpn * PageSize);
+    //     printf("after readat\n");
+    // }
 
+    // pt[vpn].location = MEMORY;
+    // pt[vpn].valid = TRUE;
+    // pt[vpn].physicalPage = physicalPage;
+
+    // ipt[physicalPage].valid = pt[vpn].valid;
+    // ipt[physicalPage].dirty = pt[vpn].dirty;
+    // ipt[physicalPage].virtualPage = vpn;
+    // ipt[physicalPage].space = currentThread->space;
+
+    currentThread->space->PopulateIPT(vpn, physicalPage);
     currentIPT++;
-    
-    return nextIPT;
+    printf("done ipt handler\n");
+    return physicalPage;
 }
 
 int PopulateTLB(int ppn, int vpn) {
@@ -753,7 +776,7 @@ void ExceptionHandler(ExceptionType which) {
             break;
         case SC_SetMV:
             DEBUG('a', "SetMV syscall.\n");
-            SetMV_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
+            SetMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
             break;
 
         }
