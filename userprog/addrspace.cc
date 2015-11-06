@@ -295,16 +295,22 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].dirty = pageTable[i].dirty;
         newPageTable[i].readOnly = pageTable[i].readOnly;
     }
+    int physicalPage;
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
+        physicalPage = memoryMap.Find();
         newPageTable[i].virtualPage = i;
         lock->Acquire();
-        newPageTable[i].physicalPage = memoryMap.Find();
+        newPageTable[i].physicalPage = physicalPage;
         lock->Release();
         newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
         newPageTable[i].readOnly = FALSE;
+
+        ipt[physicalPage].virtualPage = i;
+        ipt[physicalPage].valid = TRUE;
+        ipt[physicalPage].space = this;
     }
 
     delete [] pageTable;

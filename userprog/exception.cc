@@ -43,6 +43,7 @@ Lock* exitLock = new Lock("exitLock");
 int currentTLB = -1;
 int currentIPT = 0;
 int nextIPT = 0;
+List *IPTQueue;
 
 int copyin(unsigned int vaddr, int len, char *buf) {
     // Copy len bytes from the current thread's virtual address vaddr.
@@ -170,12 +171,9 @@ SpaceId Exec_Syscall(int vaddr, int len) {
         int spaceId = processTable.Put(addressSpace);
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
-        //  printf("1\n");
         // machine->WriteRegister(2, spaceId);
-        // printf("3\n");
         thread->Fork(exec_thread, 0);
         executeLock->Release();
-        //  printf("4\n");
         return spaceId;
     }
     else {
@@ -342,6 +340,7 @@ void Close_Syscall(int fd) {
 }
 
 void kernel_thread(int virtualAddress) {
+    printf("in kernel_thread\n");
 
     //increment the program counter
     machine->WriteRegister(PCReg, virtualAddress);
@@ -542,7 +541,7 @@ int IPTMissHandler(int vpn) {
     printf("In IPTMissHandler\n");
     int count = 0;
     nextIPT = currentIPT;
-    while (ipt[currentIPT].valid == FALSE && count <= NumPhysPages) {
+    while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
         nextIPT = (++nextIPT) % NumPhysPages;
         count++;
     }
@@ -590,7 +589,7 @@ int PageFaultHandler(int vaddr) {
     }
 
     PopulateTLB(ppn, vpn);
-
+    return 0;
 
 }
 
