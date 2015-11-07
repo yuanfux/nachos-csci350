@@ -32,6 +32,7 @@ Machine *machine;   // user program memory and registers
 Table processTable(MAX_PROCESS_NUM);
 BitMap memoryMap(NumPhysPages);
 IPT* ipt;
+Policy EvictPolicy;
 #endif
 
 #ifdef NETWORK

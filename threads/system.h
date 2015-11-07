@@ -38,6 +38,8 @@ extern Machine* machine;	// user program memory and registers
 extern Table processTable;
 extern BitMap memoryMap;
 extern IPT* ipt;
+enum Policy{RAND, FIFO};
+extern Policy EvictPolicy;
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

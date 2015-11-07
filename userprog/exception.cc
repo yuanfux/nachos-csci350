@@ -587,21 +587,21 @@ void SetMV_Syscall(int monitorIndex, int data) {
 }
 
 //network
-int AcquireServer_Syscall(int lockIndex){
+int AcquireServer_Syscall(int lockIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "25 %d", lockIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 25");
         return -1;
     }
@@ -609,24 +609,24 @@ int AcquireServer_Syscall(int lockIndex){
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
-    
+
 }
 
-int ReleaseServer_Syscall(int lockIndex){
+int ReleaseServer_Syscall(int lockIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "26 %d", lockIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 26");
         return -1;
     }
@@ -636,125 +636,125 @@ int ReleaseServer_Syscall(int lockIndex){
     return atoi(receive);
 }
 
-int WaitServer_Syscall(int conditionIndex, int lockIndex){
+int WaitServer_Syscall(int conditionIndex, int lockIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "27 %d %d", conditionIndex, lockIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 27");
         return -1;
     }
     char* receive = new char[100];
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
-    
+
     fflush(stdout);
     return atoi(receive);
 }
 
-int SignalServer_Syscall(int conditionIndex, int lockIndex){
+int SignalServer_Syscall(int conditionIndex, int lockIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "28 %d %d", conditionIndex, lockIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 28");
         return -1;
     }
     char* receive = new char[100];
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
-    
+
     fflush(stdout);
     return atoi(receive);
 }
 
-int BroadcastServer_Syscall(int conditionIndex, int lockIndex){
+int BroadcastServer_Syscall(int conditionIndex, int lockIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "29 %d %d", conditionIndex, lockIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 29");
         return -1;
     }
     char* receive = new char[100];
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
-    
+
     fflush(stdout);
     return atoi(receive);
 }
 
-int CreateLockServer_Syscall(int vaddr, int len){
+int CreateLockServer_Syscall(int vaddr, int len) {
     char* lockName = new char[len];
     copyin(vaddr, len, lockName);
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "30 %s", lockName);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 30");
         return -1;
     }
     char* receive = new char[100];
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
-    
+
     return atoi(receive);
-    
-    
+
+
 }
 
-int DestroyLockServer_Syscall(int lockIndex){
+int DestroyLockServer_Syscall(int lockIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "31 %d", lockIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 31");
         return -1;
     }
@@ -765,49 +765,49 @@ int DestroyLockServer_Syscall(int lockIndex){
 
 }
 
-int CreateConditionServer_Syscall(int vaddr, int len){
+int CreateConditionServer_Syscall(int vaddr, int len) {
     char* cvName = new char[len];
     copyin(vaddr, len, cvName);
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "32 %s", cvName);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 32");
         return -1;
     }
     char* receive = new char[100];
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
-    
+
     return atoi(receive);
-    
+
 }
 
-int DestroyConditionServer_Syscall(int conditionIndex){
+int DestroyConditionServer_Syscall(int conditionIndex) {
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "32 %d", conditionIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 32");
         return -1;
     }
@@ -817,51 +817,51 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     return atoi(receive);
 }
 
-int CreateMVServer_Syscall(int vaddr, int len){
+int CreateMVServer_Syscall(int vaddr, int len) {
     char* mvName = new char[len];
     copyin(vaddr, len, mvName);
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "34 %s", mvName);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 34");
         return -1;
     }
     char* receive = new char[100];
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
-    
+
     return atoi(receive);
 
-    
+
 }
 
-int GetMVServer_Syscall(int monitorIndex){
-    
+int GetMVServer_Syscall(int monitorIndex) {
+
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "35 %d", monitorIndex);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 31");
         return -1;
     }
@@ -870,25 +870,25 @@ int GetMVServer_Syscall(int monitorIndex){
     fflush(stdout);
     return atoi(receive);
 
-    
+
 }
 
-int SetMVServer_Syscall(int monitorIndex, int data){
-    
+int SetMVServer_Syscall(int monitorIndex, int data) {
+
     PacketHeader outPktHdr;
     PacketHeader inPktHdr;
     MailHeader outMailHdr;
     MailHeader inMailHdr;
-    
+
     char* send = new char[100];
     sprintf(send, "36 %d %d", monitorIndex, data);
-    
+
     outPktHdr.to = 0;
     outMailHdr.to = 0;
     outMailHdr.from = 0;
     outMailHdr.length = strlen(send) + 1;
-    
-    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+
+    if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
         printf("Send failed from syscall 31");
         return -1;
     }
@@ -896,7 +896,7 @@ int SetMVServer_Syscall(int monitorIndex, int data){
     postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
-    
+
 }
 
 
@@ -1096,62 +1096,62 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG('a', "SetMV syscall.\n");
             SetMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
             break;
-    //network
-            case SC_AcquireServer:
-                DEBUG('a', "Acquire syscall.\n");
-                rv = AcquireServer_Syscall(machine->ReadRegister(4));
-                break;
-            case SC_ReleaseServer:
-                DEBUG('a', "Release syscall.\n");
-                rv = ReleaseServer_Syscall(machine->ReadRegister(4));
-                break;
-            case SC_WaitServer:
-                DEBUG('a', "Wait syscall.\n");
-                rv = WaitServer_Syscall(machine->ReadRegister(4),
-                                  machine->ReadRegister(5));
-                break;
-            case SC_SignalServer:
-                DEBUG('a', "Signal syscall.\n");
-                rv = SignalServer_Syscall(machine->ReadRegister(4),
+        //network
+        case SC_AcquireServer:
+            DEBUG('a', "Acquire syscall.\n");
+            rv = AcquireServer_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_ReleaseServer:
+            DEBUG('a', "Release syscall.\n");
+            rv = ReleaseServer_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_WaitServer:
+            DEBUG('a', "Wait syscall.\n");
+            rv = WaitServer_Syscall(machine->ReadRegister(4),
                                     machine->ReadRegister(5));
-                break;
-            case SC_BroadcastServer:
-                DEBUG('a', "Broadcast syscall.\n");
-                rv = BroadcastServer_Syscall(machine->ReadRegister(4),
-                                       machine->ReadRegister(5));
-                break;
-            case SC_CreateLockServer:
-                DEBUG('a', "CreateLock syscall.\n");
-                rv = CreateLockServer_Syscall(machine->ReadRegister(4),
-                                              machine->ReadRegister(5));
-                break;
-            case SC_DestroyLockServer:
-                DEBUG('a', "DestroyLock syscall.\n");
-                rv = DestroyLockServer_Syscall(machine->ReadRegister(4));
-                break;
-            case SC_CreateConditionServer:
-                DEBUG('a', "CreateCondition syscall.\n");
-                rv = CreateConditionServer_Syscall(machine->ReadRegister(4),
-                                                   machine->ReadRegister(5));
-                break;
-            case SC_DestroyConditionServer:
-                DEBUG('a', "DestroyCondition syscall.\n");
-                rv = DestroyConditionServer_Syscall(machine->ReadRegister(4));
-                break;
-            case SC_CreateMVServer:
-                DEBUG('a', "CreateMVServer syscall.\n");
-                rv = CreateMVServer_Syscall(machine->ReadRegister(4),
-                                            machine->ReadRegister(5));
-                break;
-            case SC_GetMVServer:
-                DEBUG('a', "GetMVServer syscall.\n");
-                rv = GetMVServer_Syscall(machine->ReadRegister(4));
-                break;
-            case SC_SetMVServer:
-                DEBUG('a', "SetMVServer syscall.\n");
-                SetMVServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-                break;
-    
+            break;
+        case SC_SignalServer:
+            DEBUG('a', "Signal syscall.\n");
+            rv = SignalServer_Syscall(machine->ReadRegister(4),
+                                      machine->ReadRegister(5));
+            break;
+        case SC_BroadcastServer:
+            DEBUG('a', "Broadcast syscall.\n");
+            rv = BroadcastServer_Syscall(machine->ReadRegister(4),
+                                         machine->ReadRegister(5));
+            break;
+        case SC_CreateLockServer:
+            DEBUG('a', "CreateLock syscall.\n");
+            rv = CreateLockServer_Syscall(machine->ReadRegister(4),
+                                          machine->ReadRegister(5));
+            break;
+        case SC_DestroyLockServer:
+            DEBUG('a', "DestroyLock syscall.\n");
+            rv = DestroyLockServer_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_CreateConditionServer:
+            DEBUG('a', "CreateCondition syscall.\n");
+            rv = CreateConditionServer_Syscall(machine->ReadRegister(4),
+                                               machine->ReadRegister(5));
+            break;
+        case SC_DestroyConditionServer:
+            DEBUG('a', "DestroyCondition syscall.\n");
+            rv = DestroyConditionServer_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_CreateMVServer:
+            DEBUG('a', "CreateMVServer syscall.\n");
+            rv = CreateMVServer_Syscall(machine->ReadRegister(4),
+                                        machine->ReadRegister(5));
+            break;
+        case SC_GetMVServer:
+            DEBUG('a', "GetMVServer syscall.\n");
+            rv = GetMVServer_Syscall(machine->ReadRegister(4));
+            break;
+        case SC_SetMVServer:
+            DEBUG('a', "SetMVServer syscall.\n");
+            SetMVServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+            break;
+
 
         }
 
