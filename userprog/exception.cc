@@ -817,6 +817,87 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     return atoi(receive);
 }
 
+int CreateMVServer_Syscall(int vaddr, int len){
+    char* mvName = new char[len];
+    copyin(vaddr, len, mvName);
+    PacketHeader outPktHdr;
+    PacketHeader inPktHdr;
+    MailHeader outMailHdr;
+    MailHeader inMailHdr;
+    
+    char* send = new char[100];
+    sprintf(send, "34 %s", mvName);
+    
+    outPktHdr.to = 0;
+    outMailHdr.to = 0;
+    outMailHdr.from = 0;
+    outMailHdr.length = strlen(send) + 1;
+    
+    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+        printf("Send failed from syscall 34");
+        return -1;
+    }
+    char* receive = new char[100];
+    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    fflush(stdout);
+    
+    return atoi(receive);
+
+    
+}
+
+int GetMVServer_Syscall(int monitorIndex){
+    
+    PacketHeader outPktHdr;
+    PacketHeader inPktHdr;
+    MailHeader outMailHdr;
+    MailHeader inMailHdr;
+    
+    char* send = new char[100];
+    sprintf(send, "35 %d", monitorIndex);
+    
+    outPktHdr.to = 0;
+    outMailHdr.to = 0;
+    outMailHdr.from = 0;
+    outMailHdr.length = strlen(send) + 1;
+    
+    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+        printf("Send failed from syscall 31");
+        return -1;
+    }
+    char* receive = new char[100];
+    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    fflush(stdout);
+    return atoi(receive);
+
+    
+}
+
+int SetMVServer_Syscall(int monitorIndex, int data){
+    
+    PacketHeader outPktHdr;
+    PacketHeader inPktHdr;
+    MailHeader outMailHdr;
+    MailHeader inMailHdr;
+    
+    char* send = new char[100];
+    sprintf(send, "36 %d %d", monitorIndex, data);
+    
+    outPktHdr.to = 0;
+    outMailHdr.to = 0;
+    outMailHdr.from = 0;
+    outMailHdr.length = strlen(send) + 1;
+    
+    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+        printf("Send failed from syscall 31");
+        return -1;
+    }
+    char* receive = new char[100];
+    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    fflush(stdout);
+    return atoi(receive);
+    
+}
 
 
 int IPTMissHandler(int vpn) {
@@ -1057,7 +1138,19 @@ void ExceptionHandler(ExceptionType which) {
                 DEBUG('a', "DestroyCondition syscall.\n");
                 rv = DestroyConditionServer_Syscall(machine->ReadRegister(4));
                 break;
-
+            case SC_CreateMVServer:
+                DEBUG('a', "CreateMVServer syscall.\n");
+                rv = CreateMVServer_Syscall(machine->ReadRegister(4),
+                                            machine->ReadRegister(5));
+                break;
+            case SC_GetMVServer:
+                DEBUG('a', "GetMVServer syscall.\n");
+                rv = GetMVServer_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_SetMVServer:
+                DEBUG('a', "SetMVServer syscall.\n");
+                SetMVServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
     
 
         }
