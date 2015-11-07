@@ -315,6 +315,29 @@ DestroyConditionServer:
 	j	$31
 	.end DestroyConditionServer
 
+    .globl CreateMVServer
+	.ent	CreateMVServer
+CreateMVServer:
+	addiu $2,$0,SC_CreateMVServer
+	syscall
+	j	$31
+	.end CreateMVServer
+
+    .globl GetMVServer
+	.ent	GetMVServer
+GetMVServer:
+	addiu $2,$0,SC_GetMVServer
+	syscall
+	j	$31
+	.end GetMVServer
+
+    .globl SetMVServer
+	.ent	SetMVServer
+SetMVServer:
+	addiu $2,$0,SC_SetMVServer
+	syscall
+	j	$31
+	.end SetMVServer
 
 
 /* dummy function to keep gcc happy */

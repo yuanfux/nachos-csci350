@@ -55,6 +55,9 @@
 #define SC_DestroyLockServer 31
 #define SC_CreateConditionServer 32
 #define SC_DestroyConditionServer 33
+#define SC_CreateMVServer 34
+#define SC_GetMVServer 35
+#define SC_SetMVServer 36
 
 #define MAXFILENAME 256
 
@@ -199,6 +202,12 @@ int DestroyLockServer(int lockIndex);
 int CreateConditionServer(int vaddr, int len);
 
 int DestroyConditionServer(int lockIndex);
+
+int CreateMVServer(int vaddr, int len);
+
+int GetMVServer(int monitorIndex);
+
+int SetMVServer(int monitorIndex, int data);
 
 
 #endif /* IN_ASM */
