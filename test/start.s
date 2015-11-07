@@ -241,6 +241,81 @@ SetMV:
 	syscall
 	j	$31
 	.end SetMV
+/*note line*/
+
+	.globl AcquireServer
+	.ent	AcquireServer
+AcquireServer:
+	addiu $2,$0,SC_AcquireServer
+	syscall
+	j	$31
+	.end AcquireServer
+
+	.globl ReleaseServer
+	.ent	ReleaseServer
+Release:
+	addiu $2,$0,SC_ReleaseServer
+	syscall
+	j	$31
+	.end ReleaseServer
+
+	.globl WaitServer
+	.ent	WaitServer
+WaitServer:
+	addiu $2,$0,SC_WaitServer
+	syscall
+	j	$31
+	.end WaitServer
+
+	.globl SignalServer
+	.ent	SignalServer
+SignalServer:
+	addiu $2,$0,SC_SignalServer
+	syscall
+	j	$31
+	.end SignalServer
+
+	.globl BroadcastServer
+	.ent	BroadcastServer
+BroadcastServer:
+	addiu $2,$0,SC_BroadcastServer
+	syscall
+	j	$31
+	.end BroadcastServer
+
+	.globl CreateLockServer
+	.ent	CreateLockServer
+CreateLockServer:
+	addiu $2,$0,SC_CreateLockServer
+	syscall
+	j	$31
+	.end CreateLockServer
+
+	.globl DestroyLockServer
+	.ent	DestroyLockServer
+DestroyLockServer:
+	addiu $2,$0,SC_DestroyLockServer
+	syscall
+	j	$31
+	.end DestroyLockServer
+
+	.globl CreateConditionServer
+	.ent	CreateConditionServer
+CreateConditionServer:
+	addiu $2,$0,SC_CreateConditionServer
+	syscall
+	j	$31
+	.end CreateConditionServer
+
+	.globl DestroyConditionServer
+	.ent	DestroyConditionServer
+DestroyConditionServer:
+	addiu $2,$0,SC_DestroyConditionServer
+	syscall
+	j	$31
+	.end DestroyConditionServer
+
+
 
 /* dummy function to keep gcc happy */
         .globl  __main
