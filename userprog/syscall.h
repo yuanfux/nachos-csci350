@@ -46,6 +46,15 @@
 #define SC_GetMV 23
 #define SC_SetMV 24
 
+#define SC_AcquireServer  25
+#define SC_ReleaseServer  26
+#define SC_WaitServer     27
+#define SC_SignalServer   28
+#define SC_BroadcastServer 29
+#define SC_CreateLockServer 30
+#define SC_DestroyLockServer 31
+#define SC_CreateConditionServer 32
+#define SC_DestroyConditionServer 33
 
 #define MAXFILENAME 256
 
@@ -170,6 +179,26 @@ int CreateMV(int data);
 int GetMV(int monitorIndex);
 
 void SetMV(int monitorIndex, int data);
+
+
+
+int AcquireServer(int lockIndex);
+
+int ReleaseServer(int lockIndex);
+
+int WaitServer(int conditionIndex, int lockIndex);
+
+int SignalServer(int conditionIndex, int lockIndex);
+
+int BroadcastServer(int conditionIndex, int lockIndex);
+
+int CreateLockServer(int vaddr, int len);
+
+int DestroyLockServer(int lockIndex);
+
+int CreateConditionServer(int vaddr, int len);
+
+int DestroyConditionServer(int lockIndex);
 
 
 #endif /* IN_ASM */
