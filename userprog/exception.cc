@@ -353,7 +353,7 @@ void Close_Syscall(int fd) {
 }
 
 void kernel_thread(int virtualAddress) {
-
+    // printf("in kernel_thread\n");
     //increment the program counter
     machine->WriteRegister(PCReg, virtualAddress);
     machine->WriteRegister(NextPCReg, virtualAddress + 4);
@@ -389,6 +389,7 @@ void Fork_Syscall(int vaddr) {
     thread->SetIndex(thread->space->GetNumThread());
     thread->Fork(kernel_thread, virtualAddr);
     executeLock->Release();
+    // printf("fork syscall done\n");
 }
 
 void Yield_Syscall() {
@@ -584,7 +585,7 @@ void SetMV_Syscall(int monitorIndex, int data) {
 }
 
 int IPTMissHandler(int vpn) {
-    printf("In IPTMissHandler\n");
+    // printf("In IPTMissHandler\n");
 
     int physicalPage;
     physicalPage = currentThread->space->AllocatePhysicalPage();
@@ -620,7 +621,6 @@ int IPTMissHandler(int vpn) {
 
     currentThread->space->PopulateIPT(vpn, physicalPage);
     currentIPT++;
-    printf("done ipt handler\n");
     return physicalPage;
 }
 

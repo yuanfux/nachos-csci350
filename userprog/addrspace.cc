@@ -133,13 +133,13 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     fileTable.Put(0);
     fileTable.Put(0);
     lock = new Lock("lock");
-    privateExecutable = executable;
-    privateExecutable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+    executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
 
     ASSERT(noffH.noffMagic == NOFFMAGIC);
+    privateExecutable = executable;
 
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size ;
     numPages = divRoundUp(size, PageSize) + divRoundUp(UserStackSize, PageSize);
@@ -311,13 +311,15 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].location = pageTable[i].location;
         newPageTable[i].byteOffset = pageTable[i].byteOffset;
 
-        physicalPage = pageTable[i].physicalPage;
-        if (physicalPage > -1) {
-            ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
-            ipt[physicalPage].valid = pageTable[i].valid;
-            ipt[physicalPage].dirty = pageTable[i].dirty;
-            ipt[physicalPage].space = this;
-        }
+        // physicalPage = pageTable[i].physicalPage;
+        // if (physicalPage > -1) {
+        //     printf("populate ipt in AllocateSpaceForNewThread\n");
+        //     ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
+        //     ipt[physicalPage].valid = pageTable[i].valid;
+        //     ipt[physicalPage].dirty = pageTable[i].dirty;
+        //     ipt[physicalPage].use = pageTable[i].use;
+        //     ipt[physicalPage].space = this;
+        // }
     }
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
@@ -413,13 +415,13 @@ int AddrSpace::AllocatePhysicalPage(){
 }
 
 void AddrSpace::PopulateIPT(int vpn, int physicalPage) {
-
+    // printf("in PopulateIPT\n");
     if (pageTable[vpn].location == EXECUTABLE) {
-        printf("before readat\n");
-        printf("byteOffset: %d, vpn: %d\n", pageTable[vpn].byteOffset, vpn);
-        currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+        // printf("before readat\n");
+        // printf("byteOffset: %d, vpn: %d\n", pageTable[vpn].byteOffset, vpn);
+        privateExecutable->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
                 PageSize, pageTable[vpn].byteOffset);
-        printf("after readat\n");
+        // printf("after readat\n");
     }
 
     pageTable[vpn].location = MEMORY;
