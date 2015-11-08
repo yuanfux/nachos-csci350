@@ -36,6 +36,7 @@ IPT* ipt;
 
 #ifdef NETWORK
 PostOffice *postOffice;
+bool isServer = false ;
 #endif
 
 
@@ -128,7 +129,7 @@ Initialize(int argc, char **argv)
             ASSERT(argc > 1);
             netname = atoi(*(argv + 1));
             if(netname == 0){
-                Server();
+                isServer = true;
             }
             argCount = 2;
         }
@@ -204,5 +205,9 @@ Cleanup()
     delete interrupt;
 
     Exit(0);
+}
+
+bool CheckServer(){
+    return isServer;
 }
 

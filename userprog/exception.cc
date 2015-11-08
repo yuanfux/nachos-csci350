@@ -43,7 +43,7 @@ Lock* forkLock = new Lock("forkLock");
 Lock* executeLock = new Lock("execLock");
 Lock* exitLock = new Lock("exitLock");
 
-int currentTLB = -1;
+int currentTLB = 0;
 int currentIPT = 0;
 int nextIPT = 0;
 List *IPTQueue;
@@ -559,6 +559,7 @@ int CreateMV_Syscall(int data) {
 
 }
 
+#ifdef NETWORK
 int GetMV_Syscall(int monitorIndex) {
     if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
         printf("Error in GetMV_Syscall: monitor index out of boundary\n");
@@ -897,10 +898,10 @@ int SetMVServer_Syscall(int monitorIndex, int data){
     return atoi(receive);
     
 }
-
+#endif
 
 int IPTMissHandler(int vpn) {
-    printf("In IPTMissHandler\n");
+   // printf("In IPTMissHandler\n");
 
     int physicalPage;
     physicalPage = currentThread->space->AllocatePhysicalPage();
@@ -936,28 +937,28 @@ int IPTMissHandler(int vpn) {
 
     currentThread->space->PopulateIPT(vpn, physicalPage);
     currentIPT++;
-    printf("done ipt handler\n");
+   // printf("done ipt handler\n");
     return physicalPage;
 }
 
 int PopulateTLB(int ppn, int vpn) {
-    // printf("In PopulateTLB\n");
-    currentTLB = (++currentTLB) % TLBSize;
+    //printf("In PopulateTLB\n");
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-
+    
     machine->tlb[currentTLB].dirty = FALSE;
     machine->tlb[currentTLB].valid = TRUE;
     machine->tlb[currentTLB].virtualPage = vpn;
     machine->tlb[currentTLB].physicalPage = ppn;
-
+    
+    currentTLB = (++currentTLB) % TLBSize;
     (void) interrupt->SetLevel(oldLevel);
-
+    // printf("end PopulateTLB\n");
     return 0;
 }
 
 int PageFaultHandler(int vaddr) {
-    // printf("In PageFaultHandler\n");
+   // printf("In PageFaultHandler\n");
     int vpn = vaddr / PageSize;
     TranslationEntry *pageTable = currentThread->space->GetPageTable();
     int ppn = -1;
@@ -1084,6 +1085,7 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG('a', "Random syscall.\n");
             rv = Random_Syscall(machine->ReadRegister(4));
             break;
+#ifdef NETWORK
         case SC_CreateMV:
             DEBUG('a', "CreateMV syscall.\n");
             rv = CreateMV_Syscall(machine->ReadRegister(4));
@@ -1098,61 +1100,61 @@ void ExceptionHandler(ExceptionType which) {
             break;
     //network
             case SC_AcquireServer:
-                DEBUG('a', "Acquire syscall.\n");
+                DEBUG('a', "AcquireServer syscall.\n");
                 rv = AcquireServer_Syscall(machine->ReadRegister(4));
                 break;
             case SC_ReleaseServer:
-                DEBUG('a', "Release syscall.\n");
+                DEBUG('a', "ReleaseServer syscall.\n");
                 rv = ReleaseServer_Syscall(machine->ReadRegister(4));
                 break;
             case SC_WaitServer:
-                DEBUG('a', "Wait syscall.\n");
+                DEBUG('a', "WaitServer syscall.\n");
                 rv = WaitServer_Syscall(machine->ReadRegister(4),
                                   machine->ReadRegister(5));
                 break;
             case SC_SignalServer:
-                DEBUG('a', "Signal syscall.\n");
+                DEBUG('a', "SignalServer syscall.\n");
                 rv = SignalServer_Syscall(machine->ReadRegister(4),
                                     machine->ReadRegister(5));
                 break;
             case SC_BroadcastServer:
-                DEBUG('a', "Broadcast syscall.\n");
+                DEBUG('a', "BroadcastServer syscall.\n");
                 rv = BroadcastServer_Syscall(machine->ReadRegister(4),
                                        machine->ReadRegister(5));
                 break;
             case SC_CreateLockServer:
-                DEBUG('a', "CreateLock syscall.\n");
+                DEBUG('a', "CreateLockServer syscall.\n");
                 rv = CreateLockServer_Syscall(machine->ReadRegister(4),
                                               machine->ReadRegister(5));
                 break;
             case SC_DestroyLockServer:
-                DEBUG('a', "DestroyLock syscall.\n");
+                DEBUG('a', "DestroyLockServer syscall.\n");
                 rv = DestroyLockServer_Syscall(machine->ReadRegister(4));
                 break;
             case SC_CreateConditionServer:
-                DEBUG('a', "CreateCondition syscall.\n");
+                DEBUG('a', "CreateConditionServer syscall.\n");
                 rv = CreateConditionServer_Syscall(machine->ReadRegister(4),
                                                    machine->ReadRegister(5));
                 break;
             case SC_DestroyConditionServer:
-                DEBUG('a', "DestroyCondition syscall.\n");
+                DEBUG('a', "DestroyConditionServer syscall.\n");
                 rv = DestroyConditionServer_Syscall(machine->ReadRegister(4));
                 break;
             case SC_CreateMVServer:
-                DEBUG('a', "CreateMVServer syscall.\n");
+                DEBUG('a', "CreateMVServerServer syscall.\n");
                 rv = CreateMVServer_Syscall(machine->ReadRegister(4),
                                             machine->ReadRegister(5));
                 break;
             case SC_GetMVServer:
-                DEBUG('a', "GetMVServer syscall.\n");
+                DEBUG('a', "GetMVServerServer syscall.\n");
                 rv = GetMVServer_Syscall(machine->ReadRegister(4));
                 break;
             case SC_SetMVServer:
-                DEBUG('a', "SetMVServer syscall.\n");
+                DEBUG('a', "SetMVServerServer syscall.\n");
                 SetMVServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
                 break;
     
-
+#endif
         }
 
 

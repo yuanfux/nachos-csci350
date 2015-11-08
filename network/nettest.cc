@@ -23,6 +23,7 @@
 #include "post.h"
 #include "interrupt.h"
 #include "list.h"
+#include "syscall.h"
 #include <sstream>
 // Test out message delivery, by doing the following:
 //	1. send a message to the machine with ID "farAddr", at mail box #0
@@ -223,10 +224,17 @@ void Release(int lockIndex, int replyTo){
     }
     else{
         sendInt(replyTo, lockIndex);
-        int nextReply = (int)serverLock[lockIndex].queue->Remove();
-        serverLock[lockIndex].lockHolder = nextReply;
-        sendInt(nextReply, lockIndex);
-        return;
+        if(serverLock[lockIndex].queue->IsEmpty()){
+            serverLock[lockIndex].lockHolder = -1;
+            return;
+        }
+        else{
+            
+            int nextReply = (int)serverLock[lockIndex].queue->Remove();
+            serverLock[lockIndex].lockHolder = nextReply;
+            sendInt(nextReply, lockIndex);
+            return;
+        }
     }
     
 }
@@ -463,7 +471,8 @@ void Server(){
     MailHeader serverInMailHdr;
     
     while(true){
-        char receive[100];
+        printf("inside Server while loop\n");
+        char receive[MaxMailSize];
         postOffice->Receive(0, &serverInPktHdr, &serverInMailHdr, receive);
         //need delete
         printf("Server: Got \"%s\" from %d, box %d\n", receive, serverInPktHdr.from, serverInMailHdr.from);

@@ -133,12 +133,12 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     fileTable.Put(0);
     fileTable.Put(0);
     lock = new Lock("lock");
-    privateExecutable = executable;
-    privateExecutable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+    executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
-
+    
+    privateExecutable = executable;
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size ;
@@ -187,7 +187,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         // ipt[physicalPage].valid = TRUE;
         // ipt[physicalPage].space = this;
     }
-    printf("addr constructor byteOffset: %d\n", pageTable[0].byteOffset);
+   // printf("addr constructor byteOffset: %d\n", pageTable[0].byteOffset);
 
     DEBUG('a', "Finish address space initialization\n");
 // zero out the entire address space, to zero the unitialized data segment
@@ -311,13 +311,13 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].location = pageTable[i].location;
         newPageTable[i].byteOffset = pageTable[i].byteOffset;
 
-        physicalPage = pageTable[i].physicalPage;
-        if (physicalPage > -1) {
-            ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
-            ipt[physicalPage].valid = pageTable[i].valid;
-            ipt[physicalPage].dirty = pageTable[i].dirty;
-            ipt[physicalPage].space = this;
-        }
+//        physicalPage = pageTable[i].physicalPage;
+//        if (physicalPage > -1) {
+//            ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
+//            ipt[physicalPage].valid = pageTable[i].valid;
+//            ipt[physicalPage].dirty = pageTable[i].dirty;
+//            ipt[physicalPage].space = this;
+//        }
     }
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
@@ -415,11 +415,11 @@ int AddrSpace::AllocatePhysicalPage(){
 void AddrSpace::PopulateIPT(int vpn, int physicalPage) {
 
     if (pageTable[vpn].location == EXECUTABLE) {
-        printf("before readat\n");
-        printf("byteOffset: %d, vpn: %d\n", pageTable[vpn].byteOffset, vpn);
-        currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+       // printf("before readat\n");
+        //printf("byteOffset: %d, vpn: %d\n", pageTable[vpn].byteOffset, vpn);
+        privateExecutable->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
                 PageSize, pageTable[vpn].byteOffset);
-        printf("after readat\n");
+       // printf("after readat\n");
     }
 
     pageTable[vpn].location = MEMORY;
