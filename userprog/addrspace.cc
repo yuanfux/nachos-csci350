@@ -148,7 +148,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     DEBUG('a', "pageSize: %d, numPages: %d, NumPhysPages: %d, size: %d\n", PageSize, numPages, NumPhysPages, size);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);       // check we're not trying
+    // ASSERT(numPages <= NumPhysPages);       // check we're not trying
     // to run anything too big --
     // at least until we have
     // virtual memory
@@ -157,7 +157,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
           numPages, size);
     numThread = 0;
 
-    unsigned int inExec = divRoundUp(noffH.code.size + noffH.initData.size, PageSize);
+    inExecutable = divRoundUp(noffH.code.size + noffH.initData.size, PageSize);
     pageTable = new PageTable[numPages];
 
     for (i = 0; i < numPages; i++) {
@@ -170,16 +170,17 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
+        pageTable[i].swapFileLocation = -1;
         // a separate page, we could set its
         // pages to be read-only
-        if (i < inExec) {
+        // if (i < inExecutable) {
             pageTable[i].byteOffset = noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize;
-            pageTable[i].location = EXECUTABLE; 
-        }
-        else {
-            pageTable[i].byteOffset = -1;
-            pageTable[i].location = DISK;
-        }
+            pageTable[i].location = EXECUTABLE;
+        // }
+        // else {
+            // pageTable[i].byteOffset = -1;
+            // pageTable[i].location = DISK;
+        // }
         // executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
         // PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
 
@@ -310,6 +311,7 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].readOnly = pageTable[i].readOnly;
         newPageTable[i].location = pageTable[i].location;
         newPageTable[i].byteOffset = pageTable[i].byteOffset;
+        newPageTable[i].swapFileLocation = pageTable[i].swapFileLocation;
 
         // physicalPage = pageTable[i].physicalPage;
         // if (physicalPage > -1) {
@@ -333,6 +335,7 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].dirty = FALSE;
         newPageTable[i].readOnly = FALSE;
         newPageTable[i].location = DISK;
+        newPageTable[i].swapFileLocation = -1;
 
         // ipt[physicalPage].virtualPage = i;
         // ipt[physicalPage].valid = TRUE;
@@ -404,32 +407,43 @@ OpenFile *AddrSpace::GetExecutable() {
     return privateExecutable;
 }
 
-int AddrSpace::AllocatePhysicalPage(){
 
-    int physicalPage;
-
-    lock->Acquire();
-    physicalPage = memoryMap.Find();
-    lock->Release();
-    return physicalPage;
-}
-
-void AddrSpace::PopulateIPT(int vpn, int physicalPage) {
-    // printf("in PopulateIPT\n");
-    if (pageTable[vpn].location == EXECUTABLE) {
-        // printf("before readat\n");
-        // printf("byteOffset: %d, vpn: %d\n", pageTable[vpn].byteOffset, vpn);
+void AddrSpace::PopulateIPT(int virtualPage, int physicalPage) {
+    printf("in PopulateIPT\n");
+    if (pageTable[virtualPage].location == EXECUTABLE) {
+        printf("before executable readat\n");
+        // printf("byteOffset: %d, virtualPage: %d\n", pageTable[virtualPage].byteOffset, virtualPage);
+        ASSERT(pageTable[virtualPage].byteOffset != -1);
         privateExecutable->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
-                PageSize, pageTable[vpn].byteOffset);
-        // printf("after readat\n");
+                                  PageSize, pageTable[virtualPage].byteOffset);
+        printf("after executable readat\n");
+    }
+    else if (pageTable[virtualPage].location == SWAPFILE) {
+        ASSERT(pageTable[virtualPage].swapFileLocation != -1);
+        printf("Read from swapFile\n");
+        swapFile->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+                         PageSize, pageTable[virtualPage].swapFileLocation);
+    }
+    else if (pageTable[virtualPage].location == MEMORY) {
+        printf("page location before read: %d\n", pageTable[virtualPage].location);
+        for (int i = 0; i < NumPhysPages; i++)
+        {
+            if (ipt[i].virtualPage == virtualPage) {
+                printf("ipt valide: %d\n", ipt[i].valid);
+            }
+        }
     }
 
-    pageTable[vpn].location = MEMORY;
-    pageTable[vpn].valid = TRUE;
-    pageTable[vpn].physicalPage = physicalPage;
+    pageTable[virtualPage].location = MEMORY;
+    pageTable[virtualPage].valid = TRUE;
+    pageTable[virtualPage].physicalPage = physicalPage;
 
-    ipt[physicalPage].valid = pageTable[vpn].valid;
-    ipt[physicalPage].dirty = pageTable[vpn].dirty;
-    ipt[physicalPage].virtualPage = vpn;
+    ipt[physicalPage].valid = TRUE;
+    ipt[physicalPage].dirty = pageTable[virtualPage].dirty;
+    ipt[physicalPage].virtualPage = virtualPage;
     ipt[physicalPage].space = this;
+}
+
+bool AddrSpace::InExecutable(int virtualPage){
+    return virtualPage > inExecutable ? FALSE : TRUE;
 }

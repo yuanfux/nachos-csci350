@@ -11,6 +11,7 @@ public:
 
 	int byteOffset;
 	Location location;
+	int swapFileLocation;
 };
 
 #endif

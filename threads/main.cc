@@ -94,10 +94,10 @@ main(int argc, char **argv)
         if (!strcmp(*argv, "-P")) {
             ASSERT(argc > 1);
             if(!strcmp(*(argv + 1), "RAND")){
-                EvictPolicy = RAND;
+                evictPolicy = RAND;
             }
             else if(!strcmp(*(argv + 1), "FIFO")){
-                EvictPolicy = FIFO;
+                evictPolicy = FIFO;
             }
         }
 

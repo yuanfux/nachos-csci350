@@ -46,7 +46,10 @@ Lock* exitLock = new Lock("exitLock");
 int currentTLB = -1;
 int currentIPT = 0;
 int nextIPT = 0;
-List *IPTQueue;
+int swapFileLocation = 0;
+
+Lock* memoryLock = new Lock("memoryLock");
+Lock* swapFileLock = new Lock("swapFileLock");
 
 struct MonitorVariable {
     int variable;
@@ -552,6 +555,7 @@ int Random_Syscall(int limit) {
 
 }
 
+#ifdef NETWORK
 int CreateMV_Syscall(int data) {
     MonitorVariable* mv = new MonitorVariable(data);
     mvTable.Put(mv);
@@ -898,58 +902,112 @@ int SetMVServer_Syscall(int monitorIndex, int data) {
     return atoi(receive);
 
 }
+#endif
 
+void UpdatePageTable(bool inSwapFile, int virtualPage, int physicalPage) {
+    PageTable *pageTable = ipt[physicalPage].space->GetPageTable();
 
-int IPTMissHandler(int vpn) {
-    // printf("In IPTMissHandler\n");
+    if (inSwapFile) {
+        swapFileLock->Acquire();
 
+        pageTable[virtualPage].swapFileLocation = swapFileLocation * PageSize;
+        pageTable[virtualPage].location = SWAPFILE;
+        swapFileLocation++;
+
+        swapFileLock->Release();
+    }
+    else {
+        // if (currentThread->space->InExecutable(virtualPage)) {
+            pageTable[virtualPage].location = EXECUTABLE;
+        // }
+        // else {
+            // pageTable[virtualPage].location = DISK;
+        // }
+    }
+}
+
+void WriteToSwapFile(int virtualPage, int physicalPage) {
+    printf("WriteToSwapFile\n");
+    swapFileLock->Acquire();
+
+    swapFile->WriteAt(&(machine->mainMemory[physicalPage * PageSize]), PageSize, swapFileLocation * PageSize);
+    swapFileLock->Release();
+
+}
+
+int EvictIPT() {
     int physicalPage;
-    physicalPage = currentThread->space->AllocatePhysicalPage();
-
-    if (physicalPage == -1) {
-        printf("No empty space found in physical memory\n");
-        int count = 0;
-        nextIPT = currentIPT;
-        while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
-            nextIPT = (++nextIPT) % NumPhysPages;
-            count++;
-        }
-        physicalPage = nextIPT;
+    if (evictPolicy == FIFO) {
+        // int count = 0;
+        // nextIPT = currentIPT;
+        // while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
+        //     nextIPT = (++nextIPT) % NumPhysPages;
+        //     count++;
+        // }
+        physicalPage = (int)evictQueue->Remove();
+    }
+    else if (evictPolicy == RAND) {
+        physicalPage = rand() % NumPhysPages;
+    }
+    else {
+        //default FIFO
+        physicalPage = (int)evictQueue->Remove();
     }
 
-    // PageTable *pt = currentThread->space->GetPageTable();
-    // if (pt[vpn].location == EXECUTABLE) {
-    //     printf("before readat\n");
-    //     printf("byteOffset: %d, vpn: %d\n", pt[vpn].byteOffset, vpn);
-    //     currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
-    //             PageSize, 40 + vpn * PageSize);
-    //     printf("after readat\n");
-    // }
+    printf("physicalPage evict from IPT: %d\n", physicalPage);
+    if (ipt[physicalPage].dirty == TRUE) {
+        WriteToSwapFile(ipt[physicalPage].virtualPage, physicalPage);
+        UpdatePageTable(TRUE, ipt[physicalPage].virtualPage, physicalPage);
+    }
+    else {
+        UpdatePageTable(FALSE, ipt[physicalPage].virtualPage, physicalPage);
 
-    // pt[vpn].location = MEMORY;
-    // pt[vpn].valid = TRUE;
-    // pt[vpn].physicalPage = physicalPage;
+    }
 
-    // ipt[physicalPage].valid = pt[vpn].valid;
-    // ipt[physicalPage].dirty = pt[vpn].dirty;
-    // ipt[physicalPage].virtualPage = vpn;
-    // ipt[physicalPage].space = currentThread->space;
+    ipt[physicalPage].valid = FALSE;
+    return physicalPage;
 
-    currentThread->space->PopulateIPT(vpn, physicalPage);
-    currentIPT++;
+}
+
+
+int AllocatePhysicalPage() {
+
+    int physicalPage;
+
+    memoryLock->Acquire();
+    physicalPage = memoryMap.Find();
+    memoryLock->Release();
     return physicalPage;
 }
 
-int PopulateTLB(int ppn, int vpn) {
+int IPTMissHandler(int virtualPage) {
+    // printf("In IPTMissHandler\n");
+
+    int physicalPage;
+    physicalPage = AllocatePhysicalPage();
+
+    if (physicalPage == -1) {
+        printf("No empty space found in physical memory\n");
+        physicalPage = EvictIPT();
+        // physicalPage = nextIPT;
+    }
+
+    currentThread->space->PopulateIPT(virtualPage, physicalPage);
+    // currentIPT++;
+    evictQueue->Append((void *)physicalPage);
+    return physicalPage;
+}
+
+int PopulateTLB(int physicalPage, int virtualPage) {
     // printf("In PopulateTLB\n");
-    currentTLB = (++currentTLB) % TLBSize;
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    currentTLB = (++currentTLB) % TLBSize;
 
     machine->tlb[currentTLB].dirty = FALSE;
     machine->tlb[currentTLB].valid = TRUE;
-    machine->tlb[currentTLB].virtualPage = vpn;
-    machine->tlb[currentTLB].physicalPage = ppn;
+    machine->tlb[currentTLB].virtualPage = virtualPage;
+    machine->tlb[currentTLB].physicalPage = physicalPage;
 
     (void) interrupt->SetLevel(oldLevel);
 
@@ -958,22 +1016,21 @@ int PopulateTLB(int ppn, int vpn) {
 
 int PageFaultHandler(int vaddr) {
     // printf("In PageFaultHandler\n");
-    int vpn = vaddr / PageSize;
-    TranslationEntry *pageTable = currentThread->space->GetPageTable();
-    int ppn = -1;
+    int virtualPage = vaddr / PageSize;
+    int physicalPage = -1;
     for (int i = 0; i < NumPhysPages; i++)
     {
-        if (ipt[i].virtualPage == vpn && ipt[i].valid == TRUE && ipt[i].space == currentThread->space) {
-            ppn = i;
+        if (ipt[i].virtualPage == virtualPage && ipt[i].valid == TRUE && ipt[i].space == currentThread->space) {
+            physicalPage = i;
             break;
         }
     }
-    if (ppn == -1) {
-        ppn = IPTMissHandler(vpn);
+    if (physicalPage == -1) {
+        physicalPage = IPTMissHandler(virtualPage);
 
     }
 
-    PopulateTLB(ppn, vpn);
+    PopulateTLB(physicalPage, virtualPage);
     return 0;
 
 }
@@ -1084,6 +1141,7 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG('a', "Random syscall.\n");
             rv = Random_Syscall(machine->ReadRegister(4));
             break;
+#ifdef NETWORK
         case SC_CreateMV:
             DEBUG('a', "CreateMV syscall.\n");
             rv = CreateMV_Syscall(machine->ReadRegister(4));
@@ -1151,7 +1209,7 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG('a', "SetMVServer syscall.\n");
             SetMVServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
             break;
-
+#endif
 
         }
 

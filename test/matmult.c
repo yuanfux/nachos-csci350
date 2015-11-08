@@ -34,5 +34,10 @@ main()
             for (k = 0; k < Dim; k++)
 		 C[i][j] += A[i][k] * B[k][j];
 
+
+    Write("Result of matrix mult test: ", sizeof("Result of matrix mult test: "), ConsoleOutput);
+    Printint(C[Dim-1][Dim-1]);
+    Write("\n", sizeof("\n"), ConsoleOutput);
+
     Exit(C[Dim-1][Dim-1]);		/* and then we're done */
 }

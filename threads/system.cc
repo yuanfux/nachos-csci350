@@ -32,7 +32,9 @@ Machine *machine;   // user program memory and registers
 Table processTable(MAX_PROCESS_NUM);
 BitMap memoryMap(NumPhysPages);
 IPT* ipt;
-Policy EvictPolicy;
+Policy evictPolicy;
+List *evictQueue;
+OpenFile *swapFile;
 #endif
 
 #ifdef NETWORK
@@ -158,6 +160,8 @@ Initialize(int argc, char **argv)
     {
         ipt[i].valid = FALSE;
     }
+    evictQueue = new List;
+    swapFile = fileSystem->Open("swapFile");
 #endif
 
 #ifdef FILESYS

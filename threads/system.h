@@ -39,7 +39,9 @@ extern Table processTable;
 extern BitMap memoryMap;
 extern IPT* ipt;
 enum Policy{RAND, FIFO};
-extern Policy EvictPolicy;
+extern Policy evictPolicy;
+extern List *evictQueue;
+extern OpenFile *swapFile;
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 
