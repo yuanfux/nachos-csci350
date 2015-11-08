@@ -43,13 +43,15 @@ Lock* forkLock = new Lock("forkLock");
 Lock* executeLock = new Lock("execLock");
 Lock* exitLock = new Lock("exitLock");
 
-int currentTLB = -1;
+int currentTLB = 0;
 int currentIPT = 0;
 int nextIPT = 0;
 int swapFileLocation = 0;
 
 Lock* memoryLock = new Lock("memoryLock");
 Lock* swapFileLock = new Lock("swapFileLock");
+Lock* iptLock = new Lock("iptLock");
+Lock* tlbLock = new Lock("tlbLock");
 
 struct MonitorVariable {
     int variable;
@@ -918,10 +920,10 @@ void UpdatePageTable(bool inSwapFile, int virtualPage, int physicalPage) {
     }
     else {
         // if (currentThread->space->InExecutable(virtualPage)) {
-            pageTable[virtualPage].location = EXECUTABLE;
+        pageTable[virtualPage].location = EXECUTABLE;
         // }
         // else {
-            // pageTable[virtualPage].location = DISK;
+        // pageTable[virtualPage].location = DISK;
         // }
     }
 }
@@ -936,7 +938,7 @@ void WriteToSwapFile(int virtualPage, int physicalPage) {
 }
 
 int EvictIPT() {
-    int physicalPage;
+    int physicalPage, virtualPage;
     if (evictPolicy == FIFO) {
         // int count = 0;
         // nextIPT = currentIPT;
@@ -954,13 +956,30 @@ int EvictIPT() {
         physicalPage = (int)evictQueue->Remove();
     }
 
+    ipt[physicalPage].valid = FALSE;
+    virtualPage = ipt[physicalPage].virtualPage;
+    // if (ipt[physicalPage].space == currentThread->space) {
+        for (int i = 0; i < TLBSize; i++)
+        {
+            if (machine->tlb[i].virtualPage == virtualPage && machine->tlb[i].valid == TRUE) {
+
+                IntStatus oldLevel = interrupt->SetLevel(IntOff);
+                machine->tlb[i].valid = FALSE;
+                (void) interrupt->SetLevel(oldLevel);
+
+                ipt[physicalPage].dirty = machine->tlb[i].dirty;
+                break;
+            }
+        }
+    // }
+
     printf("physicalPage evict from IPT: %d\n", physicalPage);
     if (ipt[physicalPage].dirty == TRUE) {
-        WriteToSwapFile(ipt[physicalPage].virtualPage, physicalPage);
-        UpdatePageTable(TRUE, ipt[physicalPage].virtualPage, physicalPage);
+        WriteToSwapFile(virtualPage, physicalPage);
+        UpdatePageTable(TRUE, virtualPage, physicalPage);
     }
     else {
-        UpdatePageTable(FALSE, ipt[physicalPage].virtualPage, physicalPage);
+        UpdatePageTable(FALSE, virtualPage, physicalPage);
 
     }
 
@@ -1000,22 +1019,38 @@ int IPTMissHandler(int virtualPage) {
 
 int PopulateTLB(int physicalPage, int virtualPage) {
     // printf("In PopulateTLB\n");
-
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-    currentTLB = (++currentTLB) % TLBSize;
+
+    //find the invalid entry to evict
+    for (int i = 0; i < TLBSize; i++)
+    {
+        if (machine->tlb[i].valid == FALSE) {
+            currentTLB = i;
+            break;
+        }
+    }
 
     machine->tlb[currentTLB].dirty = FALSE;
     machine->tlb[currentTLB].valid = TRUE;
     machine->tlb[currentTLB].virtualPage = virtualPage;
     machine->tlb[currentTLB].physicalPage = physicalPage;
 
+    currentTLB = (++currentTLB) % TLBSize;
+
     (void) interrupt->SetLevel(oldLevel);
 
     return 0;
 }
 
+void EvictTLB() {
+    tlbLock->Acquire();
+    currentTLB = (++currentTLB) % TLBSize;
+    tlbLock->Release();
+}
+
 int PageFaultHandler(int vaddr) {
     // printf("In PageFaultHandler\n");
+    // EvictTLB();
     int virtualPage = vaddr / PageSize;
     int physicalPage = -1;
     for (int i = 0; i < NumPhysPages; i++)

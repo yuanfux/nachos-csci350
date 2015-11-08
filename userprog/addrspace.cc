@@ -424,14 +424,9 @@ void AddrSpace::PopulateIPT(int virtualPage, int physicalPage) {
         swapFile->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
                          PageSize, pageTable[virtualPage].swapFileLocation);
     }
-    else if (pageTable[virtualPage].location == MEMORY) {
-        printf("page location before read: %d\n", pageTable[virtualPage].location);
-        for (int i = 0; i < NumPhysPages; i++)
-        {
-            if (ipt[i].virtualPage == virtualPage) {
-                printf("ipt valide: %d\n", ipt[i].valid);
-            }
-        }
+    else if (pageTable[virtualPage].location == MEMORY){
+        printf("Error: Page to be populated to IPT is in Memory: %d\n", pageTable[virtualPage].location);
+        interrupt->Halt();
     }
 
     pageTable[virtualPage].location = MEMORY;
@@ -439,7 +434,7 @@ void AddrSpace::PopulateIPT(int virtualPage, int physicalPage) {
     pageTable[virtualPage].physicalPage = physicalPage;
 
     ipt[physicalPage].valid = TRUE;
-    ipt[physicalPage].dirty = pageTable[virtualPage].dirty;
+    // ipt[physicalPage].dirty = pageTable[virtualPage].dirty;
     ipt[physicalPage].virtualPage = virtualPage;
     ipt[physicalPage].space = this;
 }
