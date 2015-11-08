@@ -23,6 +23,7 @@
 #include "post.h"
 #include "interrupt.h"
 #include "list.h"
+#include <sstream>
 // Test out message delivery, by doing the following:
 //	1. send a message to the machine with ID "farAddr", at mail box #0
 //	2. wait for the other machine's message to arrive (in our mailbox #0)
@@ -452,6 +453,123 @@ void SetMV(int monitorIndex, int value, int replyTo){
     serverMonitorVariable[monitorIndex].data = value;
     
     sendInt(replyTo, monitorIndex);
+    
+}
+
+void Server(){
+    PacketHeader serverOutPktHdr;
+    PacketHeader serverInPktHdr;
+    MailHeader serverOutMailHdr;
+    MailHeader serverInMailHdr;
+    
+    while(true){
+        char receive[100];
+        postOffice->Receive(0, &serverInPktHdr, &serverInMailHdr, receive);
+        //need delete
+        printf("Server: Got \"%s\" from %d, box %d\n", receive, serverInPktHdr.from, serverInMailHdr.from);
+        fflush(stdout);
+        
+        
+        int replyTo = serverInPktHdr.from;
+        std::stringstream ss;
+        ss << receive;
+        int syscall;
+        ss >> syscall;
+        if(syscall == 25){
+            int lockIndex;
+            ss >> lockIndex;
+            
+            Acquire(lockIndex, replyTo);
+            printf("Server: Acquire syscall\n");
+            
+        }
+        else if(syscall == 26){
+            int lockIndex;
+            ss >> lockIndex;
+            
+            Release(lockIndex, replyTo);
+            printf("Server: Release syscall\n");
+        }
+        else if(syscall == 27){
+            int conditionIndex;
+            ss >> conditionIndex;
+            int lockIndex;
+            ss >> lockIndex;
+            Wait(conditionIndex, lockIndex, replyTo);
+            printf("Server: Wait syscall\n");
+        }
+        else if(syscall == 28){
+            int conditionIndex;
+            ss >> conditionIndex;
+            int lockIndex;
+            ss >> lockIndex;
+            Signal(conditionIndex, lockIndex, replyTo);
+            printf("Server: Signal syscall\n");
+            
+        }
+        else if(syscall == 29){
+            int conditionIndex;
+            ss >> conditionIndex;
+            int lockIndex;
+            ss >> lockIndex;
+            Broadcast(conditionIndex, lockIndex, replyTo);
+            printf("Server: Broadcast syscall\n");
+        }
+        else if(syscall == 30){
+            char lockName[100];
+            ss >> lockName;
+            
+            CreateLock(lockName, replyTo);
+            printf("Server: CreateLock syscall\n");
+        }
+        else if(syscall == 31){
+            int lockIndex;
+            ss >> lockIndex;
+            
+            DestroyLock(lockIndex, replyTo);
+            printf("Server: DestroyLock syscall\n");
+            
+        }
+        else if(syscall == 32){
+            char conditionName[100];
+            ss >> conditionName;
+            
+            CreateCondition(conditionName, replyTo);
+            printf("Server: CreateCondition syscall\n");
+        }
+        else if(syscall == 33){
+            int conditionIndex;
+            ss >> conditionIndex;
+            
+            DestroyCondition(conditionIndex, replyTo);
+            printf("Server: DestroyCondition syscall\n");
+        }
+        else if(syscall == 34){
+            char monitorName[100];
+            ss >> monitorName;
+            
+            CreateCondition(monitorName, replyTo);
+            printf("Server: CreateMonitor syscall\n");
+        }
+        else if(syscall == 35){
+            int monitorIndex;
+            ss >> monitorIndex;
+            
+            GetMV(monitorIndex, replyTo);
+            printf("Server: GetMV syscall\n");
+        }
+        else if(syscall == 36){
+            int monitorIndex;
+            int data;
+            ss >> monitorIndex;
+            ss >> data;
+            
+            SetMV(monitorIndex, data, replyTo);
+            printf("Server: SetMV syscall\n");
+        }
+        
+        
+    }
     
 }
 

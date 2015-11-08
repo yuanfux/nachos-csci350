@@ -799,7 +799,7 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     MailHeader inMailHdr;
     
     char* send = new char[100];
-    sprintf(send, "32 %d", conditionIndex);
+    sprintf(send, "33 %d", conditionIndex);
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
@@ -807,7 +807,7 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
-        printf("Send failed from syscall 32");
+        printf("Send failed from syscall 33");
         return -1;
     }
     char* receive = new char[100];
