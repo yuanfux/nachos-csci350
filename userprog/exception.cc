@@ -919,20 +919,21 @@ void UpdatePageTable(bool inSwapFile, int virtualPage, int physicalPage) {
         swapFileLock->Release();
     }
     else {
-        // if (currentThread->space->InExecutable(virtualPage)) {
-        pageTable[virtualPage].location = EXECUTABLE;
-        // }
-        // else {
-        // pageTable[virtualPage].location = DISK;
-        // }
+        if (pageTable[virtualPage].byteOffset != -1) {
+            pageTable[virtualPage].location = EXECUTABLE;
+        }
+        else {
+            pageTable[virtualPage].location = DISK;
+        }
     }
 }
 
 void WriteToSwapFile(int virtualPage, int physicalPage) {
-    printf("WriteToSwapFile\n");
     swapFileLock->Acquire();
+    // printf("before WriteToSwapFile\n");
 
     swapFile->WriteAt(&(machine->mainMemory[physicalPage * PageSize]), PageSize, swapFileLocation * PageSize);
+    // printf("after WriteToSwapFile\n");
     swapFileLock->Release();
 
 }
@@ -940,12 +941,6 @@ void WriteToSwapFile(int virtualPage, int physicalPage) {
 int EvictIPT() {
     int physicalPage, virtualPage;
     if (evictPolicy == FIFO) {
-        // int count = 0;
-        // nextIPT = currentIPT;
-        // while (ipt[nextIPT].valid == FALSE && count <= NumPhysPages) {
-        //     nextIPT = (++nextIPT) % NumPhysPages;
-        //     count++;
-        // }
         physicalPage = (int)evictQueue->Remove();
     }
     else if (evictPolicy == RAND) {
@@ -958,7 +953,8 @@ int EvictIPT() {
 
     ipt[physicalPage].valid = FALSE;
     virtualPage = ipt[physicalPage].virtualPage;
-    // if (ipt[physicalPage].space == currentThread->space) {
+
+    if (ipt[physicalPage].space == currentThread->space) {
         for (int i = 0; i < TLBSize; i++)
         {
             if (machine->tlb[i].virtualPage == virtualPage && machine->tlb[i].valid == TRUE) {
@@ -971,9 +967,9 @@ int EvictIPT() {
                 break;
             }
         }
-    // }
+    }
 
-    printf("physicalPage evict from IPT: %d\n", physicalPage);
+    // printf("physicalPage evict from IPT: %d\n", physicalPage);
     if (ipt[physicalPage].dirty == TRUE) {
         WriteToSwapFile(virtualPage, physicalPage);
         UpdatePageTable(TRUE, virtualPage, physicalPage);
@@ -999,6 +995,38 @@ int AllocatePhysicalPage() {
     return physicalPage;
 }
 
+void PopulateIPT(int virtualPage, int physicalPage) {
+    // printf("in PopulateIPT\n");
+    PageTable *pageTable = currentThread->space->GetPageTable();
+    if (pageTable[virtualPage].location == EXECUTABLE) {
+        // printf("before executable readat\n");
+        // printf("byteOffset: %d, virtualPage: %d\n", pageTable[virtualPage].byteOffset, virtualPage);
+        ASSERT(pageTable[virtualPage].byteOffset != -1);
+        currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+                                  PageSize, pageTable[virtualPage].byteOffset);
+        // printf("after executable readat\n");
+    }
+    else if (pageTable[virtualPage].location == SWAPFILE) {
+        ASSERT(pageTable[virtualPage].swapFileLocation != -1);
+        // printf("Read from swapFile\n");
+        swapFile->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+                         PageSize, pageTable[virtualPage].swapFileLocation);
+    }
+    else if (pageTable[virtualPage].location == MEMORY){
+        printf("Error: Page to be populated to IPT is in Memory: %d\n", pageTable[virtualPage].location);
+        interrupt->Halt();
+    }
+
+    pageTable[virtualPage].location = MEMORY;
+    pageTable[virtualPage].valid = TRUE;
+    pageTable[virtualPage].physicalPage = physicalPage;
+
+    ipt[physicalPage].valid = TRUE;
+    // ipt[physicalPage].dirty = pageTable[virtualPage].dirty;
+    ipt[physicalPage].virtualPage = virtualPage;
+    ipt[physicalPage].space = currentThread->space;
+}
+
 int IPTMissHandler(int virtualPage) {
     // printf("In IPTMissHandler\n");
 
@@ -1006,12 +1034,12 @@ int IPTMissHandler(int virtualPage) {
     physicalPage = AllocatePhysicalPage();
 
     if (physicalPage == -1) {
-        printf("No empty space found in physical memory\n");
+        // printf("No empty space found in physical memory\n");
         physicalPage = EvictIPT();
         // physicalPage = nextIPT;
     }
 
-    currentThread->space->PopulateIPT(virtualPage, physicalPage);
+    PopulateIPT(virtualPage, physicalPage);
     // currentIPT++;
     evictQueue->Append((void *)physicalPage);
     return physicalPage;
@@ -1029,6 +1057,8 @@ int PopulateTLB(int physicalPage, int virtualPage) {
             break;
         }
     }
+
+    ipt[machine->tlb[currentTLB].physicalPage].dirty = machine->tlb[currentTLB].dirty;
 
     machine->tlb[currentTLB].dirty = FALSE;
     machine->tlb[currentTLB].valid = TRUE;

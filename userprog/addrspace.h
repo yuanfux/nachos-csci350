@@ -47,10 +47,6 @@ public:
     Lock *GetLock();
     OpenFile *GetExecutable();
 
-    int AllocatePhysicalPage();
-    void PopulateIPT(int vpn, int ppn);
-
-    bool InExecutable(int vpn);
 private:
     PageTable *pageTable;    // Assume linear page table translation
     // for now!

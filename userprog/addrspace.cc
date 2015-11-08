@@ -173,14 +173,14 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         pageTable[i].swapFileLocation = -1;
         // a separate page, we could set its
         // pages to be read-only
-        // if (i < inExecutable) {
+        if (i < inExecutable) {
             pageTable[i].byteOffset = noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize;
             pageTable[i].location = EXECUTABLE;
-        // }
-        // else {
-            // pageTable[i].byteOffset = -1;
-            // pageTable[i].location = DISK;
-        // }
+        }
+        else {
+            pageTable[i].byteOffset = -1;
+            pageTable[i].location = DISK;
+        }
         // executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
         // PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
 
@@ -188,7 +188,6 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         // ipt[physicalPage].valid = TRUE;
         // ipt[physicalPage].space = this;
     }
-    printf("addr constructor byteOffset: %d\n", pageTable[0].byteOffset);
 
     DEBUG('a', "Finish address space initialization\n");
 // zero out the entire address space, to zero the unitialized data segment
@@ -405,40 +404,4 @@ Lock *AddrSpace::GetLock() {
 
 OpenFile *AddrSpace::GetExecutable() {
     return privateExecutable;
-}
-
-
-void AddrSpace::PopulateIPT(int virtualPage, int physicalPage) {
-    printf("in PopulateIPT\n");
-    if (pageTable[virtualPage].location == EXECUTABLE) {
-        printf("before executable readat\n");
-        // printf("byteOffset: %d, virtualPage: %d\n", pageTable[virtualPage].byteOffset, virtualPage);
-        ASSERT(pageTable[virtualPage].byteOffset != -1);
-        privateExecutable->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
-                                  PageSize, pageTable[virtualPage].byteOffset);
-        printf("after executable readat\n");
-    }
-    else if (pageTable[virtualPage].location == SWAPFILE) {
-        ASSERT(pageTable[virtualPage].swapFileLocation != -1);
-        printf("Read from swapFile\n");
-        swapFile->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
-                         PageSize, pageTable[virtualPage].swapFileLocation);
-    }
-    else if (pageTable[virtualPage].location == MEMORY){
-        printf("Error: Page to be populated to IPT is in Memory: %d\n", pageTable[virtualPage].location);
-        interrupt->Halt();
-    }
-
-    pageTable[virtualPage].location = MEMORY;
-    pageTable[virtualPage].valid = TRUE;
-    pageTable[virtualPage].physicalPage = physicalPage;
-
-    ipt[physicalPage].valid = TRUE;
-    // ipt[physicalPage].dirty = pageTable[virtualPage].dirty;
-    ipt[physicalPage].virtualPage = virtualPage;
-    ipt[physicalPage].space = this;
-}
-
-bool AddrSpace::InExecutable(int virtualPage){
-    return virtualPage > inExecutable ? FALSE : TRUE;
 }
