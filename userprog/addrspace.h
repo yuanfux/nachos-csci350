@@ -36,7 +36,7 @@ public:
     void SaveState();           // Save/restore address space-specific
     void RestoreState();        // info on a context switch
     Table fileTable;            // Table of openfiles
-    void AllocateSpaceForNewThread();
+    int AllocateSpaceForNewThread();
     void DeallocateSpaceForThread();
     int GetNumThread();
     int GetSpaceID();
@@ -44,7 +44,6 @@ public:
     int GetMemorySize();
     void UpdateThreadNum();
     PageTable* GetPageTable();
-    Lock *GetLock();
     OpenFile *GetExecutable();
 
 private:
@@ -54,7 +53,6 @@ private:
     unsigned int inExecutable;
     int numThread;
     int spaceID;
-    Lock* lock;
     // address space
     OpenFile *privateExecutable;
 };

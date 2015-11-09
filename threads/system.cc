@@ -35,6 +35,9 @@ IPT* ipt;
 Policy evictPolicy;
 List *evictQueue;
 OpenFile *swapFile;
+BitMap swapFileBitMap(NumSwapPages);
+
+BitMap threadBitMap(NumThreads);
 #endif
 
 #ifdef NETWORK

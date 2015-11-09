@@ -132,7 +132,6 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     // Don't allocate the input or output to disk files
     fileTable.Put(0);
     fileTable.Put(0);
-    lock = new Lock("lock");
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
             (WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -295,7 +294,7 @@ void AddrSpace::RestoreState()
 #endif
 }
 
-void AddrSpace::AllocateSpaceForNewThread() {
+int AddrSpace::AllocateSpaceForNewThread() {
 
     numPages += 8;
     PageTable *newPageTable = new PageTable[numPages];
@@ -311,42 +310,30 @@ void AddrSpace::AllocateSpaceForNewThread() {
         newPageTable[i].location = pageTable[i].location;
         newPageTable[i].byteOffset = pageTable[i].byteOffset;
         newPageTable[i].swapFileLocation = pageTable[i].swapFileLocation;
-
-        // physicalPage = pageTable[i].physicalPage;
-        // if (physicalPage > -1) {
-        //     printf("populate ipt in AllocateSpaceForNewThread\n");
-        //     ipt[physicalPage].virtualPage = pageTable[i].virtualPage;
-        //     ipt[physicalPage].valid = pageTable[i].valid;
-        //     ipt[physicalPage].dirty = pageTable[i].dirty;
-        //     ipt[physicalPage].use = pageTable[i].use;
-        //     ipt[physicalPage].space = this;
-        // }
     }
 
     for (unsigned int i = numPages - 8; i < numPages; i++) {
-        // lock->Acquire();
-        // physicalPage = memoryMap.Find();
-        // lock->Release();
         newPageTable[i].virtualPage = i;
         // newPageTable[i].physicalPage = physicalPage;
         newPageTable[i].valid = FALSE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
         newPageTable[i].readOnly = FALSE;
+        newPageTable[i].byteOffset = -1;
         newPageTable[i].location = DISK;
         newPageTable[i].swapFileLocation = -1;
 
-        // ipt[physicalPage].virtualPage = i;
-        // ipt[physicalPage].valid = TRUE;
-        // ipt[physicalPage].space = this;
     }
 
     delete [] pageTable;
 
     pageTable = newPageTable;
 
+    int index;
+    index = threadBitMap.Find();
     numThread++;
     currentThread->space->RestoreState();
+    return index;
 
 }
 
@@ -396,10 +383,6 @@ void AddrSpace::UpdateThreadNum() {
 
 PageTable* AddrSpace::GetPageTable() {
     return pageTable;
-}
-
-Lock *AddrSpace::GetLock() {
-    return lock;
 }
 
 OpenFile *AddrSpace::GetExecutable() {
