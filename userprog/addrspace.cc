@@ -156,22 +156,25 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
           numPages, size);
     numThread = 0;
 
+    int inCode = divRoundUp(noffH.code.size, PageSize) - 1;
     inExecutable = divRoundUp(noffH.code.size + noffH.initData.size, PageSize);
     pageTable = new PageTable[numPages];
 
     for (i = 0; i < numPages; i++) {
-        // lock->Acquire();
-        // physicalPage = memoryMap.Find();
-        // lock->Release();
         pageTable[i].virtualPage = i;
-        // pageTable[i].physicalPage = physicalPage;
         pageTable[i].valid = FALSE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
-        pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
         pageTable[i].swapFileLocation = -1;
-        // a separate page, we could set its
-        // pages to be read-only
+        if (i < inCode) {
+            pageTable[i].readOnly = TRUE;  // if the code segment was entirely on
+            // a separate page, we could set its
+            // pages to be read-only
+        }
+        else {
+            pageTable[i].readOnly = FALSE;
+        }
+
         if (i < inExecutable) {
             pageTable[i].byteOffset = noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize;
             pageTable[i].location = EXECUTABLE;
@@ -183,9 +186,6 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
         // executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
         // PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
 
-        // ipt[physicalPage].virtualPage = i;
-        // ipt[physicalPage].valid = TRUE;
-        // ipt[physicalPage].space = this;
     }
 
     DEBUG('a', "Finish address space initialization\n");
@@ -265,12 +265,16 @@ AddrSpace::InitRegisters()
 
 void AddrSpace::SaveState()
 {
-#ifdef USE_TLB
-    for (int i = 0; i < TLBSize; i++)
-    {
-        machine->tlb[i].valid = FALSE;
-    }
-#endif
+// #ifdef USE_TLB
+//     IntStatus oldLevel = interrupt->SetLevel(IntOff);
+//     for (int i = 0; i < TLBSize; i++)
+//     {
+//         if (machine->tlb[i].valid == TRUE)
+//             ipt[machine->tlb[i].physicalPage].dirty = machine->tlb[i].dirty;
+//         machine->tlb[i].valid = FALSE;
+//     }
+//     (void) interrupt->SetLevel(oldLevel);
+// #endif
 }
 
 //----------------------------------------------------------------------
@@ -286,11 +290,15 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 #ifdef USE_TLB
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
     machine->pageTable = NULL;
     for (int i = 0; i < TLBSize; i++)
     {
+        if (machine->tlb[i].valid == TRUE)
+            ipt[machine->tlb[i].physicalPage].dirty = machine->tlb[i].dirty;
         machine->tlb[i].valid = FALSE;
     }
+    (void) interrupt->SetLevel(oldLevel);
 #endif
 }
 
@@ -315,7 +323,7 @@ int AddrSpace::AllocateSpaceForNewThread() {
     for (unsigned int i = numPages - 8; i < numPages; i++) {
         newPageTable[i].virtualPage = i;
         // newPageTable[i].physicalPage = physicalPage;
-        newPageTable[i].valid = FALSE;
+        newPageTable[i].valid = TRUE;
         newPageTable[i].use = FALSE;
         newPageTable[i].dirty = FALSE;
         newPageTable[i].readOnly = FALSE;
@@ -332,7 +340,7 @@ int AddrSpace::AllocateSpaceForNewThread() {
     int index;
     index = threadBitMap.Find();
     numThread++;
-    currentThread->space->RestoreState();
+    RestoreState();
     return index;
 
 }

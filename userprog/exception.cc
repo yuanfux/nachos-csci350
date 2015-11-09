@@ -31,6 +31,7 @@
 #include "network.h"
 #include "../network/post.h"
 
+extern "C" { int bzero(char *, int); };
 using namespace std;
 
 #define MAX_NUM_LOCK 1000
@@ -120,7 +121,7 @@ int copyout(unsigned int vaddr, int len, char *buf) {
 typedef int SpaceId;
 
 void Exit_Syscall(int status) {
-    printf("In Exit_Syscall\n");
+    // printf("In Exit_Syscall\n");
     executeLock->Acquire();
 
     AddrSpace* addressSpace = currentThread->space;
@@ -151,7 +152,7 @@ void Exit_Syscall(int status) {
     }
     //(addressSpace->GetNumThread() <= 0)
     else {
-        printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
+        // printf("Error: number of threads is %d\n", addressSpace->GetNumThread());
         executeLock->Release();
         interrupt->Halt();
     }
@@ -198,7 +199,7 @@ SpaceId Exec_Syscall(int vaddr, int len) {
         return spaceId;
     }
     else {
-        printf("%s", "Cannot open file");
+        // printf("%s", "Cannot open file");
         executeLock->Release();
         return -1;
     }
@@ -219,7 +220,7 @@ void Create_Syscall(unsigned int vaddr, int len) {
     if (!buf) return;
 
     if ( copyin(vaddr, len, buf) == -1 ) {
-        printf("%s", "Bad pointer passed to Create\n");
+        // printf("%s", "Bad pointer passed to Create\n");
         delete buf;
         return;
     }
@@ -242,12 +243,12 @@ int Open_Syscall(unsigned int vaddr, int len) {
     int id;             // The openfile id
 
     if (!buf) {
-        printf("%s", "Can't allocate kernel buffer in Open\n");
+        // printf("%s", "Can't allocate kernel buffer in Open\n");
         return -1;
     }
 
     if ( copyin(vaddr, len, buf) == -1 ) {
-        printf("%s", "Bad pointer passed to Open\n");
+        // printf("%s", "Bad pointer passed to Open\n");
         delete[] buf;
         return -1;
     }
@@ -280,11 +281,11 @@ void Write_Syscall(unsigned int vaddr, int len, int id) {
     if ( id == ConsoleInput) return;
 
     if ( !(buf = new char[len]) ) {
-        printf("%s", "Error allocating kernel buffer for write!\n");
+        // printf("%s", "Error allocating kernel buffer for write!\n");
         return;
     } else {
         if ( copyin(vaddr, len, buf) == -1 ) {
-            printf("%s", "Bad pointer passed to to write: data not written\n");
+            // printf("%s", "Bad pointer passed to to write: data not written\n");
             delete[] buf;
             return;
         }
@@ -299,7 +300,7 @@ void Write_Syscall(unsigned int vaddr, int len, int id) {
         if ( (f = (OpenFile *) currentThread->space->fileTable.Get(id)) ) {
             f->Write(buf, len);
         } else {
-            printf("%s", "Bad OpenFileId passed to Write\n");
+            // printf("%s", "Bad OpenFileId passed to Write\n");
             len = -1;
         }
     }
@@ -319,7 +320,7 @@ int Read_Syscall(unsigned int vaddr, int len, int id) {
     if ( id == ConsoleOutput) return -1;
 
     if ( !(buf = new char[len]) ) {
-        printf("%s", "Error allocating kernel buffer in Read\n");
+        // printf("%s", "Error allocating kernel buffer in Read\n");
         return -1;
     }
 
@@ -328,7 +329,7 @@ int Read_Syscall(unsigned int vaddr, int len, int id) {
         scanf("%s", buf);
 
         if ( copyout(vaddr, len, buf) == -1 ) {
-            printf("%s", "Bad pointer passed to Read: data not copied\n");
+            // printf("%s", "Bad pointer passed to Read: data not copied\n");
         }
     } else {
         if ( (f = (OpenFile *) currentThread->space->fileTable.Get(id)) ) {
@@ -336,11 +337,11 @@ int Read_Syscall(unsigned int vaddr, int len, int id) {
             if ( len > 0 ) {
                 //Read something from the file. Put into user's address space
                 if ( copyout(vaddr, len, buf) == -1 ) {
-                    printf("%s", "Bad pointer passed to Read: data not copied\n");
+                    // printf("%s", "Bad pointer passed to Read: data not copied\n");
                 }
             }
         } else {
-            printf("%s", "Bad OpenFileId passed to Read\n");
+            // printf("%s", "Bad OpenFileId passed to Read\n");
             len = -1;
         }
     }
@@ -356,7 +357,7 @@ void Close_Syscall(int fd) {
     if ( f ) {
         delete f;
     } else {
-        printf("%s", "Tried to close an unopen file\n");
+        // printf("%s", "Tried to close an unopen file\n");
     }
 }
 
@@ -380,11 +381,11 @@ void Fork_Syscall(int vaddr) {
 
     executeLock->Acquire();
     if (currentThread->space->GetMemorySize() < vaddr) {
-        printf("Error: Virtual Address larger than physical address size\n");
+        // printf("Error: Virtual Address larger than physical address size\n");
         return;
     }
     else if (vaddr == 0) {
-        printf("Error: Virtual Address is zero\n");
+        // printf("Error: Virtual Address is zero\n");
         return;
     }
     int virtualAddr = vaddr;
@@ -414,14 +415,14 @@ int CreateLock_Syscall() {
 
 int DestroyLock_Syscall(int lockIndex) {
     if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
-        printf("Error in DestroyLock: lock index out of boundary\n");
+        // printf("Error in DestroyLock: lock index out of boundary\n");
         return -1;
     }
     else {
 
         if (lockTable.Remove(lockIndex) == 0 ) {
 
-            printf("Error in DestroyLock: lock does not exist\n");
+            // printf("Error in DestroyLock: lock does not exist\n");
             return -1;
         }
         return 0;
@@ -437,12 +438,12 @@ int CreateCondition_Syscall() {
 
 int DestroyCondition_Syscall(int conditionIndex) {
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0) {
-        printf("Error in DestroyCondition: condition index out of boundary\n");
+        // printf("Error in DestroyCondition: condition index out of boundary\n");
         return -1;
     }
     else {
         if (cvTable.Remove(conditionIndex) == 0) {
-            printf("Error in DestroyCondition: condition does not exist\n");
+            // printf("Error in DestroyCondition: condition does not exist\n");
             return -1;
 
         }
@@ -452,13 +453,13 @@ int DestroyCondition_Syscall(int conditionIndex) {
 
 int Acquire_Syscall(int lockIndex) {
     if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
-        printf("Error in Acquire: lock index out of boundary\n");
+        // printf("Error in Acquire: lock index out of boundary\n");
         return -1;
     }
     else {
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
         if (lock == NULL) {
-            printf("Error: lock doesn't exist\n");
+            // printf("Error: lock doesn't exist\n");
             return -1;
         }
         lock->Acquire();
@@ -468,13 +469,13 @@ int Acquire_Syscall(int lockIndex) {
 
 int Release_Syscall(int lockIndex) {
     if (lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
-        printf("Error in Release: lock index out of boundary\n");
+        // printf("Error in Release: lock index out of boundary\n");
         return -1;
     }
     else {
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
         if (lock == NULL) {
-            printf("Error: lock doesn't exist\n");
+            // printf("Error: lock doesn't exist\n");
             return -1;
         }
         lock->Release();
@@ -485,18 +486,18 @@ int Release_Syscall(int lockIndex) {
 int Wait_Syscall(int conditionIndex, int lockIndex) {
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
             lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
-        printf("Error in Wait: condition or lock index out of boundary\n");
+        // printf("Error in Wait: condition or lock index out of boundary\n");
         return -1;
     }
     else {
         Condition *condition = (Condition*)cvTable.Get(conditionIndex);
         if (condition == NULL) {
-            printf("Error: condition doesn't exist\n");
+            // printf("Error: condition doesn't exist\n");
             return -1;
         }
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
         if (lock == NULL) {
-            printf("Error: lock doesn't exist\n");
+            // printf("Error: lock doesn't exist\n");
             return -1;
         }
         condition->Wait(lock);
@@ -508,18 +509,18 @@ int Wait_Syscall(int conditionIndex, int lockIndex) {
 int Signal_Syscall(int conditionIndex, int lockIndex) {
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
             lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
-        printf("Error in Signal: condition or lock index out of boundary\n");
+        // printf("Error in Signal: condition or lock index out of boundary\n");
         return -1;
     }
     else {
         Condition *condition = (Condition*)cvTable.Get(conditionIndex);
         if (condition == NULL) {
-            printf("Error: condition doesn't exist\n");
+            // printf("Error: condition doesn't exist\n");
             return -1;
         }
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
         if (lock == NULL) {
-            printf("Error: lock doesn't exist\n");
+            // printf("Error: lock doesn't exist\n");
             return -1;
         }
         condition->Signal(lock);
@@ -530,18 +531,18 @@ int Signal_Syscall(int conditionIndex, int lockIndex) {
 int Broadcast_Syscall(int conditionIndex, int lockIndex) {
     if (conditionIndex >= MAX_NUM_CONDITION || conditionIndex < 0 ||
             lockIndex >= MAX_NUM_LOCK || lockIndex < 0) {
-        printf("Error in Broadcast: condition or lock index out of boundary\n");
+        // printf("Error in Broadcast: condition or lock index out of boundary\n");
         return -1;
     }
     else {
         Condition *condition = (Condition*)cvTable.Get(conditionIndex);
         if (condition == NULL) {
-            printf("Error: condition doesn't exist\n");
+            // printf("Error: condition doesn't exist\n");
             return -1;
         }
         Lock *lock = (Lock*)lockTable.Get(lockIndex);
         if (lock == NULL) {
-            printf("Error: lock doesn't exist\n");
+            // printf("Error: lock doesn't exist\n");
             return -1;
         }
         condition->Broadcast(lock);
@@ -570,7 +571,7 @@ int CreateMV_Syscall(int data) {
 
 int GetMV_Syscall(int monitorIndex) {
     if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
-        printf("Error in GetMV_Syscall: monitor index out of boundary\n");
+        // printf("Error in GetMV_Syscall: monitor index out of boundary\n");
         return -1;
     }
 
@@ -581,16 +582,16 @@ int GetMV_Syscall(int monitorIndex) {
 
 void SetMV_Syscall(int monitorIndex, int data) {
     if (monitorIndex >= mvTable.GetNumElements() || monitorIndex < 0 ) {
-        printf("Error in GetMV_Syscall: monitor index out of boundary\n");
+        // printf("Error in GetMV_Syscall: monitor index out of boundary\n");
         return;
     }
 
     MonitorVariable* mv = (MonitorVariable*) mvTable.Get(monitorIndex);
-    printf("current value: %d", mv->variable);
-    printf("\n");
+    // printf("current value: %d", mv->variable);
+    // printf("\n");
     mv->variable = data;
-    printf("after change current value: %d", mv->variable);
-    printf("\n");
+    // printf("after change current value: %d", mv->variable);
+    // printf("\n");
 
 }
 
@@ -610,7 +611,7 @@ int AcquireServer_Syscall(int lockIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 25");
+        // printf("Send failed from syscall 25");
         return -1;
     }
     char* receive = new char[100];
@@ -635,7 +636,7 @@ int ReleaseServer_Syscall(int lockIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 26");
+        // printf("Send failed from syscall 26");
         return -1;
     }
     char* receive = new char[100];
@@ -659,7 +660,7 @@ int WaitServer_Syscall(int conditionIndex, int lockIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 27");
+        // printf("Send failed from syscall 27");
         return -1;
     }
     char* receive = new char[100];
@@ -684,7 +685,7 @@ int SignalServer_Syscall(int conditionIndex, int lockIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 28");
+        // printf("Send failed from syscall 28");
         return -1;
     }
     char* receive = new char[100];
@@ -709,7 +710,7 @@ int BroadcastServer_Syscall(int conditionIndex, int lockIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 29");
+        // printf("Send failed from syscall 29");
         return -1;
     }
     char* receive = new char[100];
@@ -736,7 +737,7 @@ int CreateLockServer_Syscall(int vaddr, int len) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 30");
+        // printf("Send failed from syscall 30");
         return -1;
     }
     char* receive = new char[100];
@@ -763,7 +764,7 @@ int DestroyLockServer_Syscall(int lockIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 31");
+        // printf("Send failed from syscall 31");
         return -1;
     }
     char* receive = new char[100];
@@ -790,7 +791,7 @@ int CreateConditionServer_Syscall(int vaddr, int len) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 32");
+        // printf("Send failed from syscall 32");
         return -1;
     }
     char* receive = new char[100];
@@ -816,7 +817,7 @@ int DestroyConditionServer_Syscall(int conditionIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 32");
+        // printf("Send failed from syscall 32");
         return -1;
     }
     char* receive = new char[100];
@@ -842,7 +843,7 @@ int CreateMVServer_Syscall(int vaddr, int len) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 34");
+        // printf("Send failed from syscall 34");
         return -1;
     }
     char* receive = new char[100];
@@ -870,7 +871,7 @@ int GetMVServer_Syscall(int monitorIndex) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 31");
+        // printf("Send failed from syscall 31");
         return -1;
     }
     char* receive = new char[100];
@@ -897,7 +898,7 @@ int SetMVServer_Syscall(int monitorIndex, int data) {
     outMailHdr.length = strlen(send) + 1;
 
     if (!postOffice->Send(outPktHdr, outMailHdr, send)) {
-        printf("Send failed from syscall 31");
+        // printf("Send failed from syscall 31");
         return -1;
     }
     char* receive = new char[100];
@@ -909,12 +910,14 @@ int SetMVServer_Syscall(int monitorIndex, int data) {
 #endif
 
 void UpdatePageTable(int swapFileLocation, int virtualPage, int physicalPage) {
+    // printf("Update evicted PageTable\n");
     PageTable *pageTable = ipt[physicalPage].space->GetPageTable();
 
     if (swapFileLocation != -1) {
 
         pageTable[virtualPage].swapFileLocation = swapFileLocation;
         pageTable[virtualPage].location = SWAPFILE;
+        pageTable[virtualPage].valid = FALSE;
 
     }
     else {
@@ -929,6 +932,7 @@ void UpdatePageTable(int swapFileLocation, int virtualPage, int physicalPage) {
 
 
 int EvictIPT() {
+    // printf("EvictIPT\n");
     int physicalPage, virtualPage;
 
     evictQueueLock->Acquire();
@@ -937,6 +941,9 @@ int EvictIPT() {
     }
     else if (evictPolicy == RAND) {
         physicalPage = rand() % NumPhysPages;
+        if (ipt[physicalPage].use == FALSE){
+            ipt[physicalPage].use = TRUE;
+        }
     }
     else {
         //default FIFO
@@ -952,11 +959,10 @@ int EvictIPT() {
     if (ipt[physicalPage].space == currentThread->space) {
         for (int i = 0; i < TLBSize; i++)
         {
-            if (machine->tlb[i].virtualPage == virtualPage && machine->tlb[i].valid == TRUE) {
+            if (machine->tlb[i].virtualPage == virtualPage && machine->tlb[i].valid == TRUE && machine->tlb[i].physicalPage == physicalPage) {
+                // printf("Found matching tlb. invalidate entry\n");
 
-                IntStatus oldLevel = interrupt->SetLevel(IntOff);
                 machine->tlb[i].valid = FALSE;
-                (void) interrupt->SetLevel(oldLevel);
 
                 ipt[physicalPage].dirty = machine->tlb[i].dirty;
                 break;
@@ -969,6 +975,7 @@ int EvictIPT() {
     int swapFileLocation = -1;
 
     if (ipt[physicalPage].dirty == TRUE) {
+        // printf("Write to swapFile\n");
 
         swapFileLock->Acquire();
         swapFileLocation = swapFileBitMap.Find() * PageSize;
@@ -978,10 +985,12 @@ int EvictIPT() {
         UpdatePageTable(swapFileLocation, virtualPage, physicalPage);
     }
     else {
+        // printf("Not write to swapFile\n");
         UpdatePageTable(swapFileLocation, virtualPage, physicalPage);
 
     }
 
+    // bzero(&(machine->mainMemory[physicalPage * PageSize]), PageSize);
     ipt[physicalPage].valid = FALSE;
 
     iptLock->Release();
@@ -1002,10 +1011,9 @@ int AllocatePhysicalPage() {
 }
 
 void PopulateIPT(int virtualPage, int physicalPage) {
-    // printf("in PopulateIPT\n");
     PageTable *pageTable = currentThread->space->GetPageTable();
     if (pageTable[virtualPage].location == EXECUTABLE) {
-        // printf("before executable readat\n");
+        // printf("Read from executable\n");
         // printf("byteOffset: %d, virtualPage: %d\n", pageTable[virtualPage].byteOffset, virtualPage);
         ASSERT(pageTable[virtualPage].byteOffset != -1);
         currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
@@ -1026,16 +1034,27 @@ void PopulateIPT(int virtualPage, int physicalPage) {
         printf("Error: Page to be populated to IPT is in Memory: %d\n", pageTable[virtualPage].location);
         interrupt->Halt();
     }
+    else {
+        // printf("Read from DISK\n");
+        // currentThread->space->GetExecutable()->ReadAt(&(machine->mainMemory[physicalPage * PageSize]),
+                // PageSize, virtualPage * PageSize);
+    }
 
     iptLock->Acquire();
 
     pageTable[virtualPage].location = MEMORY;
     pageTable[virtualPage].valid = TRUE;
+    pageTable[virtualPage].dirty = FALSE;
+    pageTable[virtualPage].use = FALSE;
     pageTable[virtualPage].physicalPage = physicalPage;
 
+    // printf("Update IPT\n");
     ipt[physicalPage].valid = TRUE;
-    // ipt[physicalPage].dirty = pageTable[virtualPage].dirty;
+    ipt[physicalPage].dirty = FALSE;
+    ipt[physicalPage].use = FALSE;
+    ipt[physicalPage].readOnly = pageTable[virtualPage].readOnly;
     ipt[physicalPage].virtualPage = virtualPage;
+    ipt[physicalPage].physicalPage = physicalPage;
     ipt[physicalPage].space = currentThread->space;
     iptLock->Release();
 }
@@ -1061,43 +1080,29 @@ int IPTMissHandler(int virtualPage) {
 }
 
 int PopulateTLB(int physicalPage, int virtualPage) {
-    // printf("In PopulateTLB\n");
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);
-
-    //find the invalid entry to evict
-    for (int i = 0; i < TLBSize; i++)
-    {
-        if (machine->tlb[i].valid == FALSE) {
-            currentTLB = i;
-            break;
-        }
-    }
+    // printf("Update TLB\n");
 
     if (machine->tlb[currentTLB].valid == TRUE) {
         ipt[machine->tlb[currentTLB].physicalPage].dirty = machine->tlb[currentTLB].dirty;
     }
 
-    machine->tlb[currentTLB].dirty = FALSE;
-    machine->tlb[currentTLB].valid = TRUE;
-    machine->tlb[currentTLB].virtualPage = virtualPage;
-    machine->tlb[currentTLB].physicalPage = physicalPage;
+    machine->tlb[currentTLB].dirty = ipt[physicalPage].dirty;
+    machine->tlb[currentTLB].valid = ipt[physicalPage].valid;
+    machine->tlb[currentTLB].virtualPage = ipt[physicalPage].virtualPage;
+    machine->tlb[currentTLB].physicalPage = ipt[physicalPage].physicalPage;
+    machine->tlb[currentTLB].use = ipt[physicalPage].use;
+    machine->tlb[currentTLB].readOnly = ipt[physicalPage].readOnly;
 
     currentTLB = (++currentTLB) % TLBSize;
 
-    (void) interrupt->SetLevel(oldLevel);
 
     return 0;
 }
 
-void EvictTLB() {
-    tlbLock->Acquire();
-    currentTLB = (++currentTLB) % TLBSize;
-    tlbLock->Release();
-}
-
 int PageFaultHandler(int vaddr) {
     // printf("In PageFaultHandler\n");
-    // EvictTLB();
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
     int virtualPage = vaddr / PageSize;
     int physicalPage = -1;
     iptLock->Acquire();
@@ -1115,6 +1120,9 @@ int PageFaultHandler(int vaddr) {
     }
 
     PopulateTLB(physicalPage, virtualPage);
+    // printf("Exit PageFaultHandler\n\n");
+    (void) interrupt->SetLevel(oldLevel);
+
     return 0;
 
 }
@@ -1307,7 +1315,7 @@ void ExceptionHandler(ExceptionType which) {
     } else if (which == PageFaultException) {
         DEBUG('a', "PageFaultException triggered\n");
         // interrupt->Halt();
-        PageFaultHandler(machine->ReadRegister(39));
+        PageFaultHandler(machine->ReadRegister(BadVAddrReg));
     }
     else {
         cout << "Unexpected user mode exception - which:" << which << "  type:" << type << endl;
