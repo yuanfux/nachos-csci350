@@ -179,10 +179,11 @@ SpaceId Exec_Syscall(int vaddr, int len) {
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
-        addressSpace->AllocateSpaceForNewThread();
-
         thread->space = addressSpace;
-
+        int index;
+        index = addressSpace->AllocateSpaceForNewThread();
+        thread->SetIndex(index);
+        
         int spaceId = processTable.Put(addressSpace);
         //set space ID for process
         thread->space->SetSpaceID(spaceId);
@@ -384,11 +385,12 @@ void Fork_Syscall(int vaddr) {
     int virtualAddr = vaddr;
 
     Thread *thread = new Thread("kernel_thread");
-
+    
+    int index;
     thread->space = currentThread->space;
-    thread->space->AllocateSpaceForNewThread();
+    index = thread->space->AllocateSpaceForNewThread();
     thread->SetStackIndex(currentThread->space->GetMemorySize() - 16);
-    thread->SetIndex(thread->space->GetNumThread());
+    thread->SetIndex(index);
     thread->Fork(kernel_thread, virtualAddr);
     executeLock->Release();
 }
@@ -598,7 +600,7 @@ int AcquireServer_Syscall(int lockIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -606,7 +608,7 @@ int AcquireServer_Syscall(int lockIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
     
@@ -623,7 +625,7 @@ int ReleaseServer_Syscall(int lockIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -631,7 +633,7 @@ int ReleaseServer_Syscall(int lockIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
 }
@@ -647,7 +649,7 @@ int WaitServer_Syscall(int conditionIndex, int lockIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -655,9 +657,16 @@ int WaitServer_Syscall(int conditionIndex, int lockIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
-    
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
+
+     AcquireServer_Syscall(lockIndex);
+    
+//    char* receive2 = new char[100];
+//    
+//    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive2);
+//    
+//    fflush(stdout);
     return atoi(receive);
 }
 
@@ -672,7 +681,7 @@ int SignalServer_Syscall(int conditionIndex, int lockIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -680,9 +689,10 @@ int SignalServer_Syscall(int conditionIndex, int lockIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     
     fflush(stdout);
+    
     return atoi(receive);
 }
 
@@ -697,7 +707,7 @@ int BroadcastServer_Syscall(int conditionIndex, int lockIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -705,7 +715,7 @@ int BroadcastServer_Syscall(int conditionIndex, int lockIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     
     fflush(stdout);
     return atoi(receive);
@@ -724,7 +734,7 @@ int CreateLockServer_Syscall(int vaddr, int len){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -732,7 +742,7 @@ int CreateLockServer_Syscall(int vaddr, int len){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     
     return atoi(receive);
@@ -751,7 +761,7 @@ int DestroyLockServer_Syscall(int lockIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -759,7 +769,7 @@ int DestroyLockServer_Syscall(int lockIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
 
@@ -778,7 +788,7 @@ int CreateConditionServer_Syscall(int vaddr, int len){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -786,7 +796,7 @@ int CreateConditionServer_Syscall(int vaddr, int len){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     
     return atoi(receive);
@@ -804,7 +814,7 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -812,7 +822,7 @@ int DestroyConditionServer_Syscall(int conditionIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
 }
@@ -830,7 +840,7 @@ int CreateMVServer_Syscall(int vaddr, int len){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -838,7 +848,7 @@ int CreateMVServer_Syscall(int vaddr, int len){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     
     return atoi(receive);
@@ -858,7 +868,7 @@ int GetMVServer_Syscall(int monitorIndex){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
@@ -866,7 +876,7 @@ int GetMVServer_Syscall(int monitorIndex){
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
 
@@ -885,15 +895,15 @@ int SetMVServer_Syscall(int monitorIndex, int data){
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
-        printf("Send failed from syscall 31");
+        printf("Send failed from syscall 36");
         return -1;
     }
     char* receive = new char[100];
-    postOffice->Receive(0, &inPktHdr, &inMailHdr, receive);
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
     fflush(stdout);
     return atoi(receive);
     

@@ -295,7 +295,7 @@ void AddrSpace::RestoreState()
 #endif
 }
 
-void AddrSpace::AllocateSpaceForNewThread() {
+int AddrSpace::AllocateSpaceForNewThread() {
 
     numPages += 8;
     PageTable *newPageTable = new PageTable[numPages];
@@ -338,11 +338,13 @@ void AddrSpace::AllocateSpaceForNewThread() {
     }
 
     delete [] pageTable;
-
+    
+    int index;
+    index = threadBitMap.Find();
     pageTable = newPageTable;
-
     numThread++;
     currentThread->space->RestoreState();
+    return index;
 
 }
 

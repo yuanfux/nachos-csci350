@@ -28,5 +28,8 @@ main()
 	      A[j] = A[j + 1];
 	      A[j + 1] = tmp;
     	   }
+    for( i = 0 ; i < 1024 ; i++){
+        Printint(A[i]);
+    }
     Exit(A[0]);		/* and then we're done -- should be 0! */
 }

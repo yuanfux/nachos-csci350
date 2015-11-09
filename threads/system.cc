@@ -32,6 +32,8 @@ Machine *machine;   // user program memory and registers
 Table processTable(MAX_PROCESS_NUM);
 BitMap memoryMap(NumPhysPages);
 IPT* ipt;
+
+BitMap threadBitMap(NumThreads);
 #endif
 
 #ifdef NETWORK
@@ -172,7 +174,7 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef NETWORK
-    postOffice = new PostOffice(netname, rely, 10);
+    postOffice = new PostOffice(netname, rely, 1000);
 #endif
 }
 

@@ -87,24 +87,28 @@ MailTest(int farAddr)
 #define NUM_CONDITION 1000
 #define NUM_MONITOR 1000
 
+//
+//struct Binder{
+//    int replyTo;
+//    int ThreadIndex;
+//    
+//    Binder(int r, int T){
+//        replyTo = r;
+//        ThreadIndex = T;
+//    }
+//};
 
 struct ServerLock{
     char* name;
     List* queue;
     int lockHolder;
-    
+    int spaceHolder;
     ServerLock(){
         name = NULL;
         queue = new List;
         lockHolder = -1;
+        spaceHolder = -1;
     }
-    
-    ServerLock(char* lockName){
-        name = lockName;
-        queue = new List;
-        lockHolder = -1;
-    }
-    
     
 };
 
@@ -112,16 +116,9 @@ struct ServerCondition{
     char* name;
     int waitingLock;
     List* queue;
-    
+    int spaceHolder;
     ServerCondition(){
         name = NULL;
-        waitingLock = -1;
-        queue = new List;
-    }
-    
-    
-    ServerCondition(char* conditionName){
-        name = conditionName;
         waitingLock = -1;
         queue = new List;
     }
@@ -131,7 +128,7 @@ struct ServerCondition{
 struct ServerMonitorVariable{
     char* name;
     int data;
-    
+    int spaceHolder;
     ServerMonitorVariable(){
         name = NULL;
     }
@@ -154,20 +151,20 @@ int numLock = 0;
 int numCondition = 0;
 int numMonitor = 0;
 
-void sendInt(int replyTo, int value){
+void sendInt(int replyTo, int threadIndex, int value){
     
     PacketHeader outPktHdr;
     MailHeader outMailHdr;
     
     outPktHdr.to = replyTo;
     outPktHdr.from = 0;
-    outMailHdr.to = 0;
+    outMailHdr.to = threadIndex;
     outMailHdr.from = 0;
     
     char* send = new char[20];
-    sprintf(send, "%d", numLock);
+    sprintf(send, "%d", value);
     outMailHdr.length = strlen(send) + 1;
-    
+    printf("send from server to %d : %d\n", replyTo, value);
     if(postOffice->Send(outPktHdr, outMailHdr, send) == false){
         printf("Send failed from Sever CreateLock\n");
         return;
@@ -176,91 +173,109 @@ void sendInt(int replyTo, int value){
 }
 
 
-void CreateLock(char* name, int replyTo){
+void CreateLock(char* name, int replyTo, int ThreadIndex){
     
     serverLock[numLock].name = name;
-    
-    sendInt(replyTo, numLock);
+    serverLock[numLock].spaceHolder = replyTo;
+    sendInt(replyTo,ThreadIndex, numLock);
     
     numLock++;
     
     return;
 }
 
-void Acquire(int lockIndex, int replyTo){
+void Acquire(int lockIndex, int replyTo, int ThreadIndex){
     if(lockIndex >= numLock || lockIndex < 0){
         printf("Acquire: out of Lock boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
-    if(serverLock[lockIndex].lockHolder == replyTo){
+    if(serverLock[lockIndex].spaceHolder != replyTo){
+        printf("Acquire: cannot access lock from other machines\n");
+        sendInt(replyTo, ThreadIndex, -1);
+        return;
+        
+    }
+    
+    if(serverLock[lockIndex].spaceHolder == replyTo && serverLock[lockIndex].lockHolder == ThreadIndex){
         printf("Acquire: already the lock holder\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
-    else if(serverLock[lockIndex].lockHolder == -1){
-        serverLock[lockIndex].lockHolder = replyTo;
-        sendInt(replyTo, lockIndex);
+    else if(serverLock[lockIndex].spaceHolder == replyTo && serverLock[lockIndex].lockHolder == -1){
+        printf("Acquire: no lock holder, hold the lock\n");
+        serverLock[lockIndex].spaceHolder = replyTo;
+        serverLock[lockIndex].lockHolder = ThreadIndex;
+        sendInt(replyTo, ThreadIndex, lockIndex);
         return;
     }
     else{
-        serverLock[lockIndex].queue->Append((void*)replyTo);
+        printf("Acquire: someone is holding the lock, wait\n");
+        serverLock[lockIndex].queue->Append((void*)ThreadIndex);
         return;
     }
 }
 
-void Release(int lockIndex, int replyTo){
+void Release(int lockIndex, int replyTo, int ThreadIndex){
     if(lockIndex >= numLock || lockIndex < 0){
         printf("Release: out of Lock boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
-    if(serverLock[lockIndex].lockHolder != replyTo){
+    if(serverLock[lockIndex].spaceHolder != replyTo || serverLock[lockIndex].lockHolder != ThreadIndex){
         printf("Release: not the lock holder\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     else{
-        sendInt(replyTo, lockIndex);
+        
+        sendInt(replyTo, ThreadIndex, lockIndex);
         if(serverLock[lockIndex].queue->IsEmpty()){
             serverLock[lockIndex].lockHolder = -1;
             return;
         }
         else{
             
-            int nextReply = (int)serverLock[lockIndex].queue->Remove();
+            int  nextReply = (int )serverLock[lockIndex].queue->Remove();
             serverLock[lockIndex].lockHolder = nextReply;
-            sendInt(nextReply, lockIndex);
+            sendInt(replyTo, nextReply, lockIndex);
             return;
         }
     }
     
 }
 
-void DestroyLock(int lockIndex, int replyTo){
+void DestroyLock(int lockIndex, int replyTo, int ThreadIndex){
     if(lockIndex >= numLock || lockIndex < 0){
         printf("DestroyLock: out of Lock boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
+    }
+    
+    if(serverLock[lockIndex].spaceHolder != replyTo){
+        printf("DestroyLock: cannot access lock from other machines\n");
+        sendInt(replyTo, ThreadIndex, -1);
+        return;
+        
     }
     
     serverLock[lockIndex].name = NULL;
     serverLock[lockIndex].lockHolder = NULL;
-    
+    serverLock[lockIndex].spaceHolder = NULL;
     numLock--;
     
-    sendInt(replyTo, lockIndex);
+    sendInt(replyTo, ThreadIndex, lockIndex);
     
     return;
 }
 
-void CreateCondition(char* name, int replyTo){
+void CreateCondition(char* name, int replyTo, int ThreadIndex){
     
     serverCondition[numCondition].name = name;
-    
-    sendInt(replyTo, numCondition);
+    serverCondition[numCondition].spaceHolder = replyTo;
+    sendInt(replyTo, ThreadIndex, numCondition);
     
     numCondition++;
     
@@ -268,125 +283,145 @@ void CreateCondition(char* name, int replyTo){
     
 }
 
-void Wait(int conditionIndex, int lockIndex, int replyTo){
+void Wait(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
+    
     
     if(lockIndex >= numLock || lockIndex < 0){
         printf("Wait: out of Lock boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
     if(conditionIndex >= numCondition || conditionIndex < 0){
         printf("Wait: out of Condition boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
-    if(serverLock[lockIndex].lockHolder != replyTo){
+    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
+        printf("Wait: cannot access the lock or condition from other machine\n");
+        sendInt(replyTo, ThreadIndex, -1);
+        return;
+    }
+    
+    if(serverLock[lockIndex].lockHolder != ThreadIndex){
         printf("Wait: not the lock holder\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
     if(serverCondition[conditionIndex].waitingLock == -1){
         serverCondition[conditionIndex].waitingLock = lockIndex;
     }
+    
     else if (serverCondition[conditionIndex].waitingLock != lockIndex){
         printf("Wait: wrong condition to wait\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
-    serverCondition[conditionIndex].queue->Append((void*)replyTo);
+    serverCondition[conditionIndex].queue->Append((void*)ThreadIndex);
     
-    //no one is waiting
-    if(serverLock[lockIndex].queue->IsEmpty()){
-        serverLock[lockIndex].lockHolder = -1;
+    if(!serverLock[lockIndex].queue->IsEmpty()){
+        int nextReply = (int)serverLock[lockIndex].queue->Remove();
+        serverLock[lockIndex].lockHolder = nextReply;
+        sendInt(replyTo, nextReply, lockIndex);
         return;
     }
     else{
-        int nextReply = (int)serverLock[lockIndex].queue->Remove();
-        serverLock[lockIndex].lockHolder = nextReply;
-        sendInt(nextReply, lockIndex);
+        serverLock[lockIndex].lockHolder = -1;
         return;
     }
-    
 }
 
-void Signal(int conditionIndex, int lockIndex, int replyTo){
+void Signal(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
     
     if(lockIndex >= numLock || lockIndex < 0){
         printf("Signal: out of Lock boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
     if(conditionIndex >= numCondition || conditionIndex < 0){
         printf("Signal: out of Condition boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
-    if(serverLock[lockIndex].lockHolder != replyTo){
+    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
+        printf("Signal: cannot access the lock or condition from other machine\n");
+        sendInt(replyTo, ThreadIndex, -1);
+        return;
+    }
+    
+    if(serverLock[lockIndex].lockHolder != ThreadIndex ){
         printf("Signal: not the lock holder\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     if (serverCondition[conditionIndex].waitingLock != lockIndex){
         printf("Signal: wrong condition to signal\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
-    if(serverLock[lockIndex].queue->IsEmpty()){
+    if(serverCondition[conditionIndex].queue->IsEmpty()){
         printf("Signal: nothing to signal\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     //?
     int nextReply = (int)serverCondition[conditionIndex].queue->Remove();
     if (serverCondition[conditionIndex].queue->IsEmpty()) {
+        //no one is waiting
         serverCondition[conditionIndex].waitingLock = -1;
     }
-    if (serverLock[lockIndex].lockHolder == -1) {
-        serverLock[lockIndex].lockHolder = nextReply;
-        
-        // SEND MESSAGE TO nextWaiting
-        sendInt(nextReply, lockIndex);
-        
-    }
-    else{
-        serverLock[lockIndex].queue->Append((void*)nextReply);
-    }
     
-    sendInt(replyTo, lockIndex);
+    //if (serverLock[lockIndex].lockHolder != -1) {
+        serverLock[lockIndex].queue->Append((void*)nextReply);
+        
+    //}
+    //else{
+      //  serverLock[lockIndex].lockHolder = nextReply;
+       // printf("in side signal: lockHolder: %d \n", nextReply);
+    
+      //  sendInt(replyTo, nextReply, lockIndex);
+    //}
+    
+    sendInt(replyTo, ThreadIndex, lockIndex);
 }
 
-void Broadcast(int conditionIndex, int lockIndex, int replyTo){
+void Broadcast(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
     if(lockIndex >= numLock || lockIndex < 0){
         printf("Broadcast: out of Lock boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
     if(conditionIndex >= numCondition || conditionIndex < 0){
         printf("Broadcast: out of Condition boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     
-    if(serverLock[lockIndex].lockHolder != replyTo){
+    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
+        printf("Broadcast: cannot access the lock or condition from other machine\n");
+        sendInt(replyTo, ThreadIndex, -1);
+        return;
+    }
+    
+    if(serverLock[lockIndex].lockHolder != ThreadIndex ){
         printf("Broadcast: not the lock holder\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     if (serverCondition[conditionIndex].waitingLock != lockIndex){
         printf("Broadcast: wrong condition to signal\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
-    if(serverLock[lockIndex].queue->IsEmpty()){
+    if(serverCondition[conditionIndex].queue->IsEmpty()){
         printf("Broadcast: nothing to signal\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
     //?
@@ -394,43 +429,42 @@ void Broadcast(int conditionIndex, int lockIndex, int replyTo){
         
         int nextReply = (int)serverCondition[conditionIndex].queue->Remove();
         
-        if (serverLock[lockIndex].lockHolder == -1) {
-            serverLock[lockIndex].lockHolder = nextReply;
-            
-            // SEND MESSAGE TO nextWaiting
-            sendInt(replyTo, lockIndex);
-        }
-        else {
             serverLock[lockIndex].queue->Append((void*)nextReply);
-        }
+        
     }
     
-    // SEND MESSAGE BACK TO machineID
-    sendInt(replyTo, 0);
-    serverCondition[conditionIndex].waitingLock = -1;
+   serverCondition[conditionIndex].waitingLock = -1;
+    
+   sendInt(replyTo, ThreadIndex, 0);
 }
 
-void DestroyCondition(int conditionIndex, int replyTo){
+void DestroyCondition(int conditionIndex, int replyTo, int ThreadIndex){
     if(conditionIndex >= numCondition || conditionIndex < 0){
         printf("DestroyCondition: out of Condition boundary\n");
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
         return;
     }
+    if(serverCondition[conditionIndex].spaceHolder != replyTo){
+        printf("DestroyCondition: cannot access the lock or condition from other machine\n");
+        sendInt(replyTo, ThreadIndex, -1);
+        return;
+    }
+    
     serverCondition[conditionIndex].name = NULL;
     serverCondition[conditionIndex].waitingLock = -1;
     serverCondition[conditionIndex].queue = new List;
     numCondition--;
     
-    sendInt(replyTo, conditionIndex);
+    sendInt(replyTo, ThreadIndex, conditionIndex);
     
     return;
 }
 
-void CreateMV(char* name, int replyTo){
+void CreateMV(char* name, int replyTo, int ThreadIndex){
     
     serverMonitorVariable[numMonitor].name = name;
     
-    sendInt(replyTo, numMonitor);
+    sendInt(replyTo, ThreadIndex, numMonitor);
     
     numMonitor++;
     
@@ -438,30 +472,35 @@ void CreateMV(char* name, int replyTo){
     
 }
 
-void GetMV(int monitorIndex, int replyTo){
+void GetMV(int monitorIndex, int replyTo, int ThreadIndex){
     if(monitorIndex >= numMonitor || monitorIndex < 0 ){
         printf("GetMV: out of boundary");
         
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
+        
+        return;
     }
     
-    sendInt(replyTo, serverMonitorVariable[monitorIndex].data);
+    sendInt(replyTo, ThreadIndex, serverMonitorVariable[monitorIndex].data);
     
     return;
     
 }
 
-void SetMV(int monitorIndex, int value, int replyTo){
+void SetMV(int monitorIndex, int value, int replyTo, int ThreadIndex){
     if(monitorIndex >= numMonitor || monitorIndex < 0 ){
         printf("GetMV: out of boundary");
         
-        sendInt(replyTo, -1);
+        sendInt(replyTo, ThreadIndex, -1);
+        
+        return;
     }
     
     serverMonitorVariable[monitorIndex].data = value;
     
-    sendInt(replyTo, monitorIndex);
+    sendInt(replyTo, ThreadIndex, monitorIndex);
     
+    return;
 }
 
 void Server(){
@@ -488,7 +527,7 @@ void Server(){
             int lockIndex;
             ss >> lockIndex;
             
-            Acquire(lockIndex, replyTo);
+            Acquire(lockIndex, replyTo, serverInMailHdr.from);
             printf("Server: Acquire syscall\n");
             
         }
@@ -496,7 +535,7 @@ void Server(){
             int lockIndex;
             ss >> lockIndex;
             
-            Release(lockIndex, replyTo);
+            Release(lockIndex, replyTo, serverInMailHdr.from);
             printf("Server: Release syscall\n");
         }
         else if(syscall == 27){
@@ -504,7 +543,7 @@ void Server(){
             ss >> conditionIndex;
             int lockIndex;
             ss >> lockIndex;
-            Wait(conditionIndex, lockIndex, replyTo);
+            Wait(conditionIndex, lockIndex, replyTo, serverInMailHdr.from);
             printf("Server: Wait syscall\n");
         }
         else if(syscall == 28){
@@ -512,7 +551,7 @@ void Server(){
             ss >> conditionIndex;
             int lockIndex;
             ss >> lockIndex;
-            Signal(conditionIndex, lockIndex, replyTo);
+            Signal(conditionIndex, lockIndex, replyTo, serverInMailHdr.from);
             printf("Server: Signal syscall\n");
             
         }
@@ -521,21 +560,21 @@ void Server(){
             ss >> conditionIndex;
             int lockIndex;
             ss >> lockIndex;
-            Broadcast(conditionIndex, lockIndex, replyTo);
+            Broadcast(conditionIndex, lockIndex, replyTo, serverInMailHdr.from);
             printf("Server: Broadcast syscall\n");
         }
         else if(syscall == 30){
             char lockName[100];
             ss >> lockName;
             
-            CreateLock(lockName, replyTo);
+            CreateLock(lockName, replyTo, serverInMailHdr.from);
             printf("Server: CreateLock syscall\n");
         }
         else if(syscall == 31){
             int lockIndex;
             ss >> lockIndex;
             
-            DestroyLock(lockIndex, replyTo);
+            DestroyLock(lockIndex, replyTo, serverInMailHdr.from);
             printf("Server: DestroyLock syscall\n");
             
         }
@@ -543,28 +582,28 @@ void Server(){
             char conditionName[100];
             ss >> conditionName;
             
-            CreateCondition(conditionName, replyTo);
+            CreateCondition(conditionName, replyTo, serverInMailHdr.from);
             printf("Server: CreateCondition syscall\n");
         }
         else if(syscall == 33){
             int conditionIndex;
             ss >> conditionIndex;
             
-            DestroyCondition(conditionIndex, replyTo);
+            DestroyCondition(conditionIndex, replyTo, serverInMailHdr.from);
             printf("Server: DestroyCondition syscall\n");
         }
         else if(syscall == 34){
             char monitorName[100];
             ss >> monitorName;
             
-            CreateCondition(monitorName, replyTo);
+            CreateMV(monitorName, replyTo, serverInMailHdr.from);
             printf("Server: CreateMonitor syscall\n");
         }
         else if(syscall == 35){
             int monitorIndex;
             ss >> monitorIndex;
             
-            GetMV(monitorIndex, replyTo);
+            GetMV(monitorIndex, replyTo, serverInMailHdr.from);
             printf("Server: GetMV syscall\n");
         }
         else if(syscall == 36){
@@ -573,7 +612,7 @@ void Server(){
             ss >> monitorIndex;
             ss >> data;
             
-            SetMV(monitorIndex, data, replyTo);
+            SetMV(monitorIndex, data, replyTo, serverInMailHdr.from);
             printf("Server: SetMV syscall\n");
         }
         

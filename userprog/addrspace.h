@@ -36,7 +36,7 @@ public:
     void SaveState();           // Save/restore address space-specific
     void RestoreState();        // info on a context switch
     Table fileTable;            // Table of openfiles
-    void AllocateSpaceForNewThread();
+    int AllocateSpaceForNewThread();
     void DeallocateSpaceForThread();
     int GetNumThread();
     int GetSpaceID();
