@@ -32,11 +32,6 @@ main()
     Write("Result of sort test: ", sizeof("Result of sort test: "), ConsoleOutput);
     Printint(A[0]);
     Write("\n", sizeof("\n"), ConsoleOutput);
-    for (i = 0; i < 1024; i++)
-    {
-        Printint(A[i]);
-        Write("\n", sizeof("\n"), ConsoleOutput);
-    }
 
     Exit(A[0]);     /* and then we're done -- should be 0! */
 }

@@ -36,8 +36,6 @@ main()
 				C[i][j] += A[i][k] * B[k][j];
 			}
 		}
-		Printint(C[i][Dim - 1]);
-		Write("\n", sizeof("\n"), ConsoleOutput);
 	}
 
 

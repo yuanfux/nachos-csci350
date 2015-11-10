@@ -183,8 +183,6 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
             pageTable[i].byteOffset = -1;
             pageTable[i].location = DISK;
         }
-        // executable->ReadAt(&(machine->mainMemory[pageTable[i].physicalPage * PageSize]),
-        // PageSize, noffH.code.inFileAddr + pageTable[i].virtualPage * PageSize);
 
     }
 
@@ -219,7 +217,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
 AddrSpace::~AddrSpace()
 {
     delete pageTable;
-    delete privateExecutable;
+    // delete privateExecutable;
 }
 
 //----------------------------------------------------------------------
@@ -264,18 +262,7 @@ AddrSpace::InitRegisters()
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState()
-{
-// #ifdef USE_TLB
-//     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-//     for (int i = 0; i < TLBSize; i++)
-//     {
-//         if (machine->tlb[i].valid == TRUE)
-//             ipt[machine->tlb[i].physicalPage].dirty = machine->tlb[i].dirty;
-//         machine->tlb[i].valid = FALSE;
-//     }
-//     (void) interrupt->SetLevel(oldLevel);
-// #endif
-}
+{}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState
@@ -347,19 +334,7 @@ int AddrSpace::AllocateSpaceForNewThread() {
 
 void AddrSpace::DeallocateSpaceForThread() {
 
-    // numPages -= 8;
-
-    // TranslationEntry *newPageTable = new TranslationEntry[0];
-
-    // for (unsigned int i = 0; i < numPages; i++) {
-    //     newPageTable[i] = pageTable[i];
-    // }
-
     delete pageTable;
-
-    // pageTable = newPageTable;
-
-    // numThread--;
 
 }
 
