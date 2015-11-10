@@ -203,7 +203,7 @@ int CreateConditionServer(int vaddr, int len);
 
 int DestroyConditionServer(int lockIndex);
 
-int CreateMVServer(int vaddr, int len);
+int CreateMVServer(int vaddr, int len, int data);
 
 int GetMVServer(int monitorIndex);
 

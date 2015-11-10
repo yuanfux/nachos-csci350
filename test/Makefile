@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles exec_exittest forktest release_acquiretest yieldtest signal_waittest randomtest broadcasttest destroy_condition_locktest printinttest passportoffice multioffice TestSuit monitortest client lock_function_test lock_function_test2 condition_function_test broadcast_function_test
+all: halt matmult sort testfiles exec_exittest forktest release_acquiretest yieldtest signal_waittest randomtest broadcasttest destroy_condition_locktest printinttest passportoffice multioffice TestSuit monitortest lock_function_test1 lock_function_test2 condition_function_test serverbroadcast_function_test monitor_function_test1 monitor_function_test2 monitor_function_test3
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -140,17 +140,11 @@ monitortest: monitortest.o start.o
 	$(LD) $(LDFLAGS) start.o monitortest.o -o monitortest.coff
 	../bin/coff2noff monitortest.coff monitortest
 
-client.o: client.c
-	$(CC) $(CFLAGS) -c client.c
-client: client.o start.o
-	$(LD) $(LDFLAGS) start.o client.o -o client.coff
-	../bin/coff2noff client.coff client
-
-lock_function_test.o: lock_function_test.c
-	$(CC) $(CFLAGS) -c lock_function_test.c
-lock_function_test: lock_function_test.o start.o
-	$(LD) $(LDFLAGS) start.o lock_function_test.o -o lock_function_test.coff
-	../bin/coff2noff lock_function_test.coff lock_function_test
+lock_function_test1.o: lock_function_test1.c
+	$(CC) $(CFLAGS) -c lock_function_test1.c
+lock_function_test1: lock_function_test1.o start.o
+	$(LD) $(LDFLAGS) start.o lock_function_test1.o -o lock_function_test1.coff
+	../bin/coff2noff lock_function_test1.coff lock_function_test1
 
 lock_function_test2.o: lock_function_test2.c
 	$(CC) $(CFLAGS) -c lock_function_test2.c
@@ -164,11 +158,30 @@ condition_function_test: condition_function_test.o start.o
 	$(LD) $(LDFLAGS) start.o condition_function_test.o -o condition_function_test.coff
 	../bin/coff2noff condition_function_test.coff condition_function_test
 
-broadcast_function_test.o: broadcast_function_test.c
-	$(CC) $(CFLAGS) -c broadcast_function_test.c
-broadcast_function_test: broadcast_function_test.o start.o
-	$(LD) $(LDFLAGS) start.o broadcast_function_test.o -o broadcast_function_test.coff
-	../bin/coff2noff broadcast_function_test.coff broadcast_function_test
+serverbroadcast_function_test.o: serverbroadcast_function_test.c
+	$(CC) $(CFLAGS) -c serverbroadcast_function_test.c
+serverbroadcast_function_test: serverbroadcast_function_test.o start.o
+	$(LD) $(LDFLAGS) start.o serverbroadcast_function_test.o -o serverbroadcast_function_test.coff
+	../bin/coff2noff serverbroadcast_function_test.coff serverbroadcast_function_test
+
+monitor_function_test1.o: monitor_function_test1.c
+	$(CC) $(CFLAGS) -c monitor_function_test1.c
+monitor_function_test1: monitor_function_test1.o start.o
+	$(LD) $(LDFLAGS) start.o monitor_function_test1.o -o monitor_function_test1.coff
+	../bin/coff2noff monitor_function_test1.coff monitor_function_test1
+
+monitor_function_test2.o: monitor_function_test2.c
+	$(CC) $(CFLAGS) -c monitor_function_test2.c
+monitor_function_test2: monitor_function_test2.o start.o
+	$(LD) $(LDFLAGS) start.o monitor_function_test2.o -o monitor_function_test2.coff
+	../bin/coff2noff monitor_function_test2.coff monitor_function_test2
+
+monitor_function_test3.o: monitor_function_test3.c
+	$(CC) $(CFLAGS) -c monitor_function_test3.c
+monitor_function_test3: monitor_function_test3.o start.o
+	$(LD) $(LDFLAGS) start.o monitor_function_test3.o -o monitor_function_test3.coff
+	../bin/coff2noff monitor_function_test3.coff monitor_function_test3
+
 
 clean:
 	rm -f *.o *.coff

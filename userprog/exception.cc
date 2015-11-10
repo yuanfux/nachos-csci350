@@ -608,7 +608,9 @@ int AcquireServer_Syscall(int lockIndex){
         return -1;
     }
     char* receive = new char[100];
+   // printf("before receive thread: %d\n", currentThread->GetIndex());
     postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
+   // printf("after receive thread: %d\n", currentThread->GetIndex());
     fflush(stdout);
     return atoi(receive);
     
@@ -827,7 +829,7 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     return atoi(receive);
 }
 
-int CreateMVServer_Syscall(int vaddr, int len){
+int CreateMVServer_Syscall(int vaddr, int len, int data){
     char* mvName = new char[len];
     copyin(vaddr, len, mvName);
     PacketHeader outPktHdr;
@@ -836,7 +838,7 @@ int CreateMVServer_Syscall(int vaddr, int len){
     MailHeader inMailHdr;
     
     char* send = new char[100];
-    sprintf(send, "34 %s", mvName);
+    sprintf(send, "34 %s %d", mvName, data);
     
     outPktHdr.to = 0;
     outMailHdr.to = 0;
@@ -1153,7 +1155,8 @@ void ExceptionHandler(ExceptionType which) {
             case SC_CreateMVServer:
                 DEBUG('a', "CreateMVServerServer syscall.\n");
                 rv = CreateMVServer_Syscall(machine->ReadRegister(4),
-                                            machine->ReadRegister(5));
+                                            machine->ReadRegister(5),
+                                            machine->ReadRegister(6));
                 break;
             case SC_GetMVServer:
                 DEBUG('a', "GetMVServerServer syscall.\n");
