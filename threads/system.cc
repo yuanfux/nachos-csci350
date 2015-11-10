@@ -42,6 +42,7 @@ BitMap threadBitMap(NumThreads);
 
 #ifdef NETWORK
 PostOffice *postOffice;
+bool isServer = false ;
 #endif
 
 
@@ -133,6 +134,9 @@ Initialize(int argc, char **argv)
         } else if (!strcmp(*argv, "-m")) {
             ASSERT(argc > 1);
             netname = atoi(*(argv + 1));
+            if(netname == 0){
+                isServer = true;
+            }
             argCount = 2;
         }
 #endif
@@ -164,7 +168,7 @@ Initialize(int argc, char **argv)
         ipt[i].valid = FALSE;
     }
     evictQueue = new List;
-    swapFile = fileSystem->Open("swapFile");
+    swapFile = fileSystem->Open("../vm/swapFile");
 #endif
 
 #ifdef FILESYS
@@ -176,7 +180,7 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef NETWORK
-    postOffice = new PostOffice(netname, rely, 10);
+    postOffice = new PostOffice(netname, rely, 1000);
 #endif
 }
 
@@ -210,4 +214,10 @@ Cleanup()
 
     Exit(0);
 }
+
+#ifdef NETWORK
+bool CheckServer(){
+    return isServer;
+}
+#endif
 

@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles exec_exittest forktest release_acquiretest yieldtest signal_waittest randomtest broadcasttest destroy_condition_locktest printinttest passportoffice multioffice TestSuit monitortest multisort multimat
+all: halt matmult sort testfiles lock_function_test1 lock_function_test2 condition_function_test serverbroadcast_function_test monitor_function_test1 monitor_function_test2 monitor_function_test3 multisort multimat
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -56,90 +56,6 @@ matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
 
-exec_exittest.o: exec_exittest.c
-	$(CC) $(CFLAGS) -c exec_exittest.c
-exec_exittest: exec_exittest.o start.o
-	$(LD) $(LDFLAGS) start.o exec_exittest.o -o exec_exittest.coff
-	../bin/coff2noff exec_exittest.coff exec_exittest
-
-forktest.o: forktest.c
-	$(CC) $(CFLAGS) -c forktest.c
-forktest: forktest.o start.o
-	$(LD) $(LDFLAGS) start.o forktest.o -o forktest.coff
-	../bin/coff2noff forktest.coff forktest
-
-signal_waittest.o: signal_waittest.c
-	$(CC) $(CFLAGS) -c signal_waittest.c
-signal_waittest: signal_waittest.o start.o
-	$(LD) $(LDFLAGS) start.o signal_waittest.o -o signal_waittest.coff
-	../bin/coff2noff signal_waittest.coff signal_waittest
-
-yieldtest.o: yieldtest.c
-	$(CC) $(CFLAGS) -c yieldtest.c
-yieldtest: yieldtest.o start.o
-	$(LD) $(LDFLAGS) start.o yieldtest.o -o yieldtest.coff
-	../bin/coff2noff yieldtest.coff yieldtest
-
-release_acquiretest.o: release_acquiretest.c
-	$(CC) $(CFLAGS) -c release_acquiretest.c
-release_acquiretest: release_acquiretest.o start.o
-	$(LD) $(LDFLAGS) start.o release_acquiretest.o -o release_acquiretest.coff
-	../bin/coff2noff release_acquiretest.coff release_acquiretest
-
-testfiles.o: testfiles.c
-	$(CC) $(CFLAGS) -c testfiles.c
-testfiles: testfiles.o start.o
-	$(LD) $(LDFLAGS) start.o testfiles.o -o testfiles.coff
-	../bin/coff2noff testfiles.coff testfiles
-
-randomtest.o: randomtest.c
-	$(CC) $(CFLAGS) -c randomtest.c
-randomtest: randomtest.o start.o
-	$(LD) $(LDFLAGS) start.o randomtest.o -o randomtest.coff
-	../bin/coff2noff randomtest.coff randomtest
-
-broadcasttest.o: broadcasttest.c
-	$(CC) $(CFLAGS) -c broadcasttest.c
-broadcasttest: broadcasttest.o start.o
-	$(LD) $(LDFLAGS) start.o broadcasttest.o -o broadcasttest.coff
-	../bin/coff2noff broadcasttest.coff broadcasttest
-
-destroy_condition_locktest.o: destroy_condition_locktest.c
-	$(CC) $(CFLAGS) -c destroy_condition_locktest.c
-destroy_condition_locktest: destroy_condition_locktest.o start.o
-	$(LD) $(LDFLAGS) start.o destroy_condition_locktest.o -o destroy_condition_locktest.coff
-	../bin/coff2noff destroy_condition_locktest.coff destroy_condition_locktest
-
-printinttest.c.o: printinttest.c
-	$(CC) $(CFLAGS) -c printinttest.c
-printinttest: printinttest.o start.o
-	$(LD) $(LDFLAGS) start.o printinttest.o -o printinttest.coff
-	../bin/coff2noff printinttest.coff printinttest
-
-passportoffice.o: passportoffice.c
-	$(CC) $(CFLAGS) -c passportoffice.c
-passportoffice: passportoffice.o start.o
-	$(LD) $(LDFLAGS) start.o passportoffice.o -o passportoffice.coff
-	../bin/coff2noff passportoffice.coff passportoffice
-
-multioffice.o: multioffice.c
-	$(CC) $(CFLAGS) -c multioffice.c
-multioffice: multioffice.o start.o
-	$(LD) $(LDFLAGS) start.o multioffice.o -o multioffice.coff
-	../bin/coff2noff multioffice.coff multioffice
-
-TestSuit.o: TestSuit.c
-	$(CC) $(CFLAGS) -c TestSuit.c
-TestSuit: TestSuit.o start.o
-	$(LD) $(LDFLAGS) start.o TestSuit.o -o TestSuit.coff
-	../bin/coff2noff TestSuit.coff TestSuit
-
-monitortest.o: monitortest.c
-	$(CC) $(CFLAGS) -c monitortest.c
-monitortest: monitortest.o start.o
-	$(LD) $(LDFLAGS) start.o monitortest.o -o monitortest.coff
-	../bin/coff2noff monitortest.coff monitortest
-
 multisort.o: multisort.c
 	$(CC) $(CFLAGS) -c multisort.c
 multisort: multisort.o start.o
@@ -151,5 +67,49 @@ multimat.o: multimat.c
 multimat: multimat.o start.o
 	$(LD) $(LDFLAGS) start.o multimat.o -o multimat.coff
 	../bin/coff2noff multimat.coff multimat
+
+lock_function_test1.o: lock_function_test1.c
+	$(CC) $(CFLAGS) -c lock_function_test1.c
+lock_function_test1: lock_function_test1.o start.o
+	$(LD) $(LDFLAGS) start.o lock_function_test1.o -o lock_function_test1.coff
+	../bin/coff2noff lock_function_test1.coff lock_function_test1
+
+lock_function_test2.o: lock_function_test2.c
+	$(CC) $(CFLAGS) -c lock_function_test2.c
+lock_function_test2: lock_function_test2.o start.o
+	$(LD) $(LDFLAGS) start.o lock_function_test2.o -o lock_function_test2.coff
+	../bin/coff2noff lock_function_test2.coff lock_function_test2
+
+condition_function_test.o: condition_function_test.c
+	$(CC) $(CFLAGS) -c condition_function_test.c
+condition_function_test: condition_function_test.o start.o
+	$(LD) $(LDFLAGS) start.o condition_function_test.o -o condition_function_test.coff
+	../bin/coff2noff condition_function_test.coff condition_function_test
+
+serverbroadcast_function_test.o: serverbroadcast_function_test.c
+	$(CC) $(CFLAGS) -c serverbroadcast_function_test.c
+serverbroadcast_function_test: serverbroadcast_function_test.o start.o
+	$(LD) $(LDFLAGS) start.o serverbroadcast_function_test.o -o serverbroadcast_function_test.coff
+	../bin/coff2noff serverbroadcast_function_test.coff serverbroadcast_function_test
+
+monitor_function_test1.o: monitor_function_test1.c
+	$(CC) $(CFLAGS) -c monitor_function_test1.c
+monitor_function_test1: monitor_function_test1.o start.o
+	$(LD) $(LDFLAGS) start.o monitor_function_test1.o -o monitor_function_test1.coff
+	../bin/coff2noff monitor_function_test1.coff monitor_function_test1
+
+monitor_function_test2.o: monitor_function_test2.c
+	$(CC) $(CFLAGS) -c monitor_function_test2.c
+monitor_function_test2: monitor_function_test2.o start.o
+	$(LD) $(LDFLAGS) start.o monitor_function_test2.o -o monitor_function_test2.coff
+	../bin/coff2noff monitor_function_test2.coff monitor_function_test2
+
+monitor_function_test3.o: monitor_function_test3.c
+	$(CC) $(CFLAGS) -c monitor_function_test3.c
+monitor_function_test3: monitor_function_test3.o start.o
+	$(LD) $(LDFLAGS) start.o monitor_function_test3.o -o monitor_function_test3.coff
+	../bin/coff2noff monitor_function_test3.coff monitor_function_test3
+
+
 clean:
 	rm -f *.o *.coff

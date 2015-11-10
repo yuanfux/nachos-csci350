@@ -253,7 +253,7 @@ AcquireServer:
 
 	.globl ReleaseServer
 	.ent	ReleaseServer
-Release:
+ReleaseServer:
 	addiu $2,$0,SC_ReleaseServer
 	syscall
 	j	$31

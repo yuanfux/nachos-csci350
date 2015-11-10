@@ -61,7 +61,8 @@ extern void TestSuite(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
-
+extern bool CheckServer();
+extern void Server();
 //----------------------------------------------------------------------
 // main
 //  Bootstrap the operating system kernel.
@@ -153,6 +154,9 @@ main(int argc, char **argv)
 #ifdef NETWORK
         if (!strcmp(*argv, "-o")) {
             ASSERT(argc > 1);
+            if(CheckServer()){
+                Server();
+            }
             Delay(2);               // delay for 2 seconds
             // to give the user time to
             // start up another nachos

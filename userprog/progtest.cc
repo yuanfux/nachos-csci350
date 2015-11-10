@@ -32,15 +32,13 @@ StartProcess(char *filename)
         printf("Unable to open file %s\n", filename);
         return;
     }
-
     space = new AddrSpace(executable);
-
     currentThread->space = space;
     int spaceId = processTable.Put(space);
     currentThread->space->SetSpaceID(spaceId);
-    currentThread->space->AllocateSpaceForNewThread();
-
-
+    int index;
+    index = currentThread->space->AllocateSpaceForNewThread();
+    currentThread->SetIndex(index);
     // delete executable;          // close file
 
     space->InitRegisters();     // set the initial register values
