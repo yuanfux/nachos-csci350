@@ -93,6 +93,11 @@ struct Binder{
     int replyTo;
     int ThreadIndex;
     
+    Binder(){
+        replyTo = -1;
+        ThreadIndex = -1;
+    }
+    
     Binder(int r, int T){
         replyTo = r;
         ThreadIndex = T;
@@ -102,13 +107,11 @@ struct Binder{
 struct ServerLock{
     char* name;
     List* queue;
-    int lockHolder;
-    int spaceHolder;
+    Binder lockHolder;
+    std::vector<Binder> spaceHolder;
     ServerLock(){
         name = NULL;
         queue = new List;
-        lockHolder = -1;
-        spaceHolder = -1;
     }
     
 };
@@ -117,7 +120,7 @@ struct ServerCondition{
     char* name;
     int waitingLock;
     List* queue;
-    int spaceHolder;
+    std::vector<Binder> spaceHolder;
     ServerCondition(){
         name = NULL;
         waitingLock = -1;
@@ -177,31 +180,72 @@ void Acquire(int lockIndex, int replyTo, int ThreadIndex){
         return;
     }
     
-    if(serverLock[lockIndex].spaceHolder != replyTo){
-        printf("Acquire: cannot access lock from other machines\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
+//    if(serverLock[lockIndex].spaceHolder != replyTo){
+//        printf("Acquire: cannot access lock from other machines\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//        
+//    }
+    
+    std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
+    
+    for(unsigned int i = 0; i < binderV.size(); i++){
         
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+            //is the space holder, can possibly hold the lock
+            if(serverLock[lockIndex].lockHolder.replyTo == replyTo && serverLock[lockIndex].lockHolder.ThreadIndex == ThreadIndex){
+                printf("Acquire: already the lock holder\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+            }
+            else if(serverLock[lockIndex].lockHolder.replyTo == -1 && serverLock[lockIndex].lockHolder.ThreadIndex == -1){
+                printf("Acquire: no lock holder, hold the lock\n");
+                serverLock[lockIndex].lockHolder.replyTo = replyTo;
+                serverLock[lockIndex].lockHolder.ThreadIndex = ThreadIndex;
+                sendInt(replyTo, ThreadIndex, lockIndex);
+                return;
+            }
+            else{
+                //someone is holding the lock. Wait here
+                printf("Acquire: someone is holding the lock, wait\n");
+                Binder* binder = new Binder(replyTo, ThreadIndex);
+                serverLock[lockIndex].queue->Append((Binder*)binder);
+                return;
+                
+            }
+            
+            
+            sendInt(replyTo, ThreadIndex, lockIndex);
+            
+            return;
+            
+        }
     }
     
-    if(serverLock[lockIndex].spaceHolder == replyTo && serverLock[lockIndex].lockHolder == ThreadIndex){
-        //printf("Acquire: already the lock holder\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    else if(serverLock[lockIndex].spaceHolder == replyTo && serverLock[lockIndex].lockHolder == -1){
-        //printf("Acquire: no lock holder, hold the lock\n");
-        serverLock[lockIndex].spaceHolder = replyTo;
-        serverLock[lockIndex].lockHolder = ThreadIndex;
-        sendInt(replyTo, ThreadIndex, lockIndex);
-        return;
-    }
-    else{
-        //wait here
-        //printf("Acquire: someone is holding the lock, wait\n");
-        serverLock[lockIndex].queue->Append((void*)ThreadIndex);
-        return;
-    }
+    printf("Acquire: not the space holder\n");
+    sendInt(replyTo, ThreadIndex, -1);
+    return;
+    
+    
+    
+//    if(serverLock[lockIndex].spaceHolder == replyTo && serverLock[lockIndex].lockHolder == ThreadIndex){
+//        //printf("Acquire: already the lock holder\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//    else if(serverLock[lockIndex].spaceHolder == replyTo && serverLock[lockIndex].lockHolder == -1){
+//        //printf("Acquire: no lock holder, hold the lock\n");
+//        serverLock[lockIndex].spaceHolder = replyTo;
+//        serverLock[lockIndex].lockHolder = ThreadIndex;
+//        sendInt(replyTo, ThreadIndex, lockIndex);
+//        return;
+//    }
+//    else{
+//        //wait here
+//        //printf("Acquire: someone is holding the lock, wait\n");
+//        serverLock[lockIndex].queue->Append((void*)ThreadIndex);
+//        return;
+//    }
 }
 
 void Release(int lockIndex, int replyTo, int ThreadIndex){
@@ -212,28 +256,72 @@ void Release(int lockIndex, int replyTo, int ThreadIndex){
         return;
     }
     
-    if(serverLock[lockIndex].spaceHolder != replyTo || serverLock[lockIndex].lockHolder != ThreadIndex){
-        printf("Release: not the lock holder\n");
+    std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
+    for(unsigned int i = 0; i < binderV.size(); i++){
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+         //is the space holder, can possibly release the lock
+            if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
+                printf("Release: not the lock holder\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+
+            }
+            else{
+                //can actually release here
+                sendInt(replyTo, ThreadIndex, lockIndex);
+                if(serverLock[lockIndex].queue->IsEmpty()){
+                    serverLock[lockIndex].lockHolder.replyTo = -1;
+                    serverLock[lockIndex].lockHolder.ThreadIndex = -1;
+                    return;
+                }
+                //some one is waiting
+                else{
+                    
+                    Binder*  nextReply = (Binder*)serverLock[lockIndex].queue->Remove();
+                    serverLock[lockIndex].lockHolder.replyTo = nextReply->replyTo;
+                    serverLock[lockIndex].lockHolder.ThreadIndex = nextReply->ThreadIndex;
+                    sendInt(nextReply->replyTo, nextReply->ThreadIndex, lockIndex);
+                    return;
+                }
+                
+            }
+            
+            
+            
+            
+        }
+    }
+        
+        printf("Release: not the space holder\n");
         sendInt(replyTo, ThreadIndex, -1);
         return;
-    }
-    else{
-        // send back to client
-        sendInt(replyTo, ThreadIndex, lockIndex);
-        //if no one is waiting
-        if(serverLock[lockIndex].queue->IsEmpty()){
-            serverLock[lockIndex].lockHolder = -1;
-            return;
-        }
-        //some one is waiting
-        else{
-            
-            int  nextReply = (int )serverLock[lockIndex].queue->Remove();
-            serverLock[lockIndex].lockHolder = nextReply;
-            sendInt(replyTo, nextReply, lockIndex);
-            return;
-        }
-    }
+    
+    
+//    if(serverLock[lockIndex].spaceHolder != replyTo || serverLock[lockIndex].lockHolder != ThreadIndex){
+//        printf("Release: not the lock holder\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+    
+    
+//    
+//    else{
+//        // send back to client
+//        sendInt(replyTo, ThreadIndex, lockIndex);
+//        //if no one is waiting
+//        if(serverLock[lockIndex].queue->IsEmpty()){
+//            serverLock[lockIndex].lockHolder = -1;
+//            return;
+//        }
+//        //some one is waiting
+//        else{
+//            
+//            int  nextReply = (int )serverLock[lockIndex].queue->Remove();
+//            serverLock[lockIndex].lockHolder = nextReply;
+//            sendInt(replyTo, nextReply, lockIndex);
+//            return;
+//        }
+//    }
     
 }
 
@@ -253,41 +341,88 @@ void Wait(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
         return;
     }
     
-    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
-        printf("Wait: cannot access the lock or condition from other machine\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
+//    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
+//        printf("Wait: cannot access the lock or condition from other machine\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//
+    std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
+    for(unsigned int i = 0; i < binderV.size(); i++){
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+            //is the space holder, can possibly wait
+            if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
+                printf("Release: not the lock holder\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+                
+            }
+            
+            if(serverCondition[conditionIndex].waitingLock == -1){
+                serverCondition[conditionIndex].waitingLock = lockIndex;
+            }
+            
+            else if(serverCondition[conditionIndex].waitingLock != -1 && serverCondition[conditionIndex].waitingLock != lockIndex){
+                printf("Wait: wrong condition to wait\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+            }
+            
+            Binder* binder = new Binder(replyTo, ThreadIndex);
+            serverCondition[conditionIndex].queue->Append((Binder*)binder);
+            //if someone is waiting
+            if(!(serverLock[lockIndex].queue->IsEmpty())){
+                Binder* nextReply = (Binder*)serverLock[lockIndex].queue->Remove();
+                serverLock[lockIndex].lockHolder.replyTo = nextReply->replyTo;
+                serverLock[lockIndex].lockHolder.ThreadIndex = nextReply->ThreadIndex;
+
+                sendInt(nextReply->replyTo, nextReply->ThreadIndex, lockIndex);
+                return;
+            }
+            //if none is waiting
+            else{
+                serverLock[lockIndex].lockHolder.replyTo = -1;
+                serverLock[lockIndex].lockHolder.ThreadIndex = -1;
+
+            }
+            
+        }
     }
     
-    if(serverLock[lockIndex].lockHolder != ThreadIndex){
-        printf("Wait: not the lock holder\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
+    printf("Wait: not the lock sapce holder\n");
+    sendInt(replyTo, ThreadIndex, -1);
+    return;
+
     
-    if(serverCondition[conditionIndex].waitingLock == -1){
-        serverCondition[conditionIndex].waitingLock = lockIndex;
-    }
+//    if(serverLock[lockIndex].lockHolder != ThreadIndex){
+//        printf("Wait: not the lock holder\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
     
-    else if (serverCondition[conditionIndex].waitingLock != lockIndex){
-        printf("Wait: wrong condition to wait\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    
-    serverCondition[conditionIndex].queue->Append((void*)ThreadIndex);
-    //if someone is waiting
-    if(!(serverLock[lockIndex].queue->IsEmpty())){
-        int nextReply = (int)serverLock[lockIndex].queue->Remove();
-        serverLock[lockIndex].lockHolder = nextReply;
-        sendInt(replyTo, nextReply, lockIndex);
-        return;
-    }
-    //if none is waiting
-    else{
-        serverLock[lockIndex].lockHolder = -1;
-        return;
-    }
+//    if(serverCondition[conditionIndex].waitingLock == -1){
+//        serverCondition[conditionIndex].waitingLock = lockIndex;
+//    }
+//    
+//    else if (serverCondition[conditionIndex].waitingLock != lockIndex){
+//        printf("Wait: wrong condition to wait\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//    
+//    serverCondition[conditionIndex].queue->Append((void*)ThreadIndex);
+//    //if someone is waiting
+//    if(!(serverLock[lockIndex].queue->IsEmpty())){
+//        int nextReply = (int)serverLock[lockIndex].queue->Remove();
+//        serverLock[lockIndex].lockHolder = nextReply;
+//        sendInt(replyTo, nextReply, lockIndex);
+//        return;
+//    }
+//    //if none is waiting
+//    else{
+//        serverLock[lockIndex].lockHolder = -1;
+//        return;
+//    }
 }
 
 void Signal(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
@@ -304,34 +439,70 @@ void Signal(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
         return;
     }
     
-    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
-        printf("Signal: cannot access the lock or condition from other machine\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
+//    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
+//        printf("Signal: cannot access the lock or condition from other machine\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+    
+    std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
+    for(unsigned int i = 0; i < binderV.size(); i++){
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        //is the space holder
+            if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
+                printf("Signal: not the lock holder\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+                
+            }
+            if (serverCondition[conditionIndex].waitingLock != lockIndex){
+                printf("Signal: wrong condition to signal\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+            }
+            if(serverCondition[conditionIndex].queue->IsEmpty()){
+                printf("Signal: nothing to signal\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+            }
+            Binder* nextReply = (Binder*)serverCondition[conditionIndex].queue->Remove();
+            if (serverCondition[conditionIndex].queue->IsEmpty()) {
+                //no one is waiting
+                serverCondition[conditionIndex].waitingLock = -1;
+            }
+            
+            serverLock[lockIndex].queue->Append((Binder*)nextReply);
+            sendInt(replyTo, ThreadIndex, lockIndex);
+        }
     }
     
-    if(serverLock[lockIndex].lockHolder != ThreadIndex ){
-        printf("Signal: not the lock holder\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    if (serverCondition[conditionIndex].waitingLock != lockIndex){
-        printf("Signal: wrong condition to signal\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    if(serverCondition[conditionIndex].queue->IsEmpty()){
-        printf("Signal: nothing to signal\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    int nextReply = (int)serverCondition[conditionIndex].queue->Remove();
-    if (serverCondition[conditionIndex].queue->IsEmpty()) {
-        //no one is waiting
-        serverCondition[conditionIndex].waitingLock = -1;
-    }
-    serverLock[lockIndex].queue->Append((void*)nextReply);
-    sendInt(replyTo, ThreadIndex, lockIndex);
+    printf("Signal: not the lock sapce holder\n");
+    sendInt(replyTo, ThreadIndex, -1);
+    return;
+
+    
+//    if(serverLock[lockIndex].lockHolder != ThreadIndex ){
+//        printf("Signal: not the lock holder\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//    if (serverCondition[conditionIndex].waitingLock != lockIndex){
+//        printf("Signal: wrong condition to signal\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//    if(serverCondition[conditionIndex].queue->IsEmpty()){
+//        printf("Signal: nothing to signal\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//    int nextReply = (int)serverCondition[conditionIndex].queue->Remove();
+//    if (serverCondition[conditionIndex].queue->IsEmpty()) {
+//        //no one is waiting
+//        serverCondition[conditionIndex].waitingLock = -1;
+//    }
+//    serverLock[lockIndex].queue->Append((void*)nextReply);
+//    sendInt(replyTo, ThreadIndex, lockIndex);
 }
 
 
@@ -351,45 +522,106 @@ void Broadcast(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
         return;
     }
     
-    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
-        printf("Broadcast: cannot access the lock or condition from other machine\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
+//    if(serverLock[lockIndex].spaceHolder != replyTo || serverCondition[conditionIndex].spaceHolder != replyTo){
+//        printf("Broadcast: cannot access the lock or condition from other machine\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+    
+//    if(serverLock[lockIndex].lockHolder != ThreadIndex ){
+//        printf("Broadcast: not the lock holder\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+    
+    std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
+    for(unsigned int i = 0; i < binderV.size(); i++){
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+            //is the space holder
+            if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
+                printf("Signal: not the lock holder\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+                
+            }
+            
+            if (serverCondition[conditionIndex].waitingLock != lockIndex){
+                printf("Broadcast: wrong condition to signal\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+            }
+            
+            if(serverCondition[conditionIndex].queue->IsEmpty()){
+                printf("Broadcast: nothing to signal\n");
+                sendInt(replyTo, ThreadIndex, -1);
+                return;
+            }
+            
+            while (!serverCondition[conditionIndex].queue->IsEmpty()){
+                
+                Binder* nextReply = (Binder*)serverCondition[conditionIndex].queue->Remove();
+                
+                serverLock[lockIndex].queue->Append((Binder*)nextReply);
+                
+            }
+            
+            serverCondition[conditionIndex].waitingLock = -1;
+            
+            sendInt(replyTo, ThreadIndex, 0);
+            
+        }
     }
     
-    if(serverLock[lockIndex].lockHolder != ThreadIndex ){
-        printf("Broadcast: not the lock holder\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    if (serverCondition[conditionIndex].waitingLock != lockIndex){
-        printf("Broadcast: wrong condition to signal\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
-    if(serverCondition[conditionIndex].queue->IsEmpty()){
-        printf("Broadcast: nothing to signal\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-    }
+    printf("Broadcast: not the lock sapce holder\n");
+    sendInt(replyTo, ThreadIndex, -1);
+    return;
+    
+    
+    
+//    if (serverCondition[conditionIndex].waitingLock != lockIndex){
+//        printf("Broadcast: wrong condition to signal\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+//    if(serverCondition[conditionIndex].queue->IsEmpty()){
+//        printf("Broadcast: nothing to signal\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
     //while loop to signal each waiting client
-    while (!serverCondition[conditionIndex].queue->IsEmpty()){
-        
-        int nextReply = (int)serverCondition[conditionIndex].queue->Remove();
-        
-        serverLock[lockIndex].queue->Append((void*)nextReply);
-        
-    }
-    
-    serverCondition[conditionIndex].waitingLock = -1;
-    
-    sendInt(replyTo, ThreadIndex, 0);
+//    while (!serverCondition[conditionIndex].queue->IsEmpty()){
+//        
+//        int nextReply = (int)serverCondition[conditionIndex].queue->Remove();
+//        
+//        serverLock[lockIndex].queue->Append((void*)nextReply);
+//        
+//    }
+//    
+//    serverCondition[conditionIndex].waitingLock = -1;
+//    
+//    sendInt(replyTo, ThreadIndex, 0);
 }
 
 void CreateLock(char* name, int replyTo, int ThreadIndex){
     //create Lock syscall
+    Binder binder(replyTo, ThreadIndex);
+    for(int i = 0 ; i < numLock ; i++){
+        
+        if(strcmp(serverLock[i].name, name) == 0){//name already exists -> share
+            
+            serverLock[i].spaceHolder.push_back(binder);
+            
+            sendInt(replyTo, ThreadIndex, i);//send back the lock index
+            
+            return;
+        }
+    }
+    //name does not exist
+    
     serverLock[numLock].name = name;
-    serverLock[numLock].spaceHolder = replyTo;
+    
+    serverLock[numLock].spaceHolder.push_back(binder);
+    
     sendInt(replyTo,ThreadIndex, numLock);
     
     numLock++;
@@ -405,27 +637,58 @@ void DestroyLock(int lockIndex, int replyTo, int ThreadIndex){
         return;
     }
     
-    if(serverLock[lockIndex].spaceHolder != replyTo){
-        printf("DestroyLock: cannot access lock from other machines\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
-        
+//    if(serverLock[lockIndex].spaceHolder != replyTo){
+//        printf("DestroyLock: cannot access lock from other machines\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//        
+//    }
+    
+    std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
+    for(unsigned int i = 0; i < binderV.size(); i++){
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+            //is the space holder
+            serverLock[lockIndex].name = NULL;
+            serverLock[lockIndex].lockHolder.replyTo = -1;
+            serverLock[lockIndex].lockHolder.ThreadIndex = -1;
+            serverLock[lockIndex].spaceHolder.clear();
+            numLock--;
+            
+            sendInt(replyTo, ThreadIndex, lockIndex);
+            
+            return;
+        }
     }
     
-    serverLock[lockIndex].name = NULL;
-    serverLock[lockIndex].lockHolder = NULL;
-    serverLock[lockIndex].spaceHolder = NULL;
-    numLock--;
+    printf("DestroyLock: not the space holder\n");
     
-    sendInt(replyTo, ThreadIndex, lockIndex);
+    sendInt(replyTo, ThreadIndex, -1);
     
     return;
+
 }
 
 void CreateCondition(char* name, int replyTo, int ThreadIndex){
     
+    Binder binder(replyTo, ThreadIndex);
+    for(int i = 0 ; i < numLock ; i++){
+        
+        if(strcmp(serverLock[i].name, name) == 0){//name already exists -> share
+            
+            serverLock[i].spaceHolder.push_back(binder);
+            
+            sendInt(replyTo, ThreadIndex, i);//send back the condition index
+            
+            return;
+        }
+    }
+    
+    
+    
     serverCondition[numCondition].name = name;
-    serverCondition[numCondition].spaceHolder = replyTo;
+    
+    serverCondition[numCondition].spaceHolder.push_back(binder);
+    
     sendInt(replyTo, ThreadIndex, numCondition);
     
     numCondition++;
@@ -442,20 +705,34 @@ void DestroyCondition(int conditionIndex, int replyTo, int ThreadIndex){
         sendInt(replyTo, ThreadIndex, -1);
         return;
     }
-    if(serverCondition[conditionIndex].spaceHolder != replyTo){
-        printf("DestroyCondition: cannot access the lock or condition from other machine\n");
-        sendInt(replyTo, ThreadIndex, -1);
-        return;
+//    if(serverCondition[conditionIndex].spaceHolder != replyTo){
+//        printf("DestroyCondition: cannot access the lock or condition from other machine\n");
+//        sendInt(replyTo, ThreadIndex, -1);
+//        return;
+//    }
+    
+    std::vector<Binder> binderV = serverCondition[conditionIndex].spaceHolder;
+    for(unsigned int i = 0; i < binderV.size(); i++){
+        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+            //is the space holder
+            serverCondition[conditionIndex].name = NULL;
+            serverCondition[conditionIndex].waitingLock = -1;
+            serverCondition[conditionIndex].queue = new List;
+            serverCondition[conditionIndex].spaceHolder.clear();
+            numCondition--;
+            
+            sendInt(replyTo, ThreadIndex, conditionIndex);
+            
+            return;
+            
+        }
+        
     }
     
-    serverCondition[conditionIndex].name = NULL;
-    serverCondition[conditionIndex].waitingLock = -1;
-    serverCondition[conditionIndex].queue = new List;
-    numCondition--;
-    
-    sendInt(replyTo, ThreadIndex, conditionIndex);
-    
+    printf("DestroyCondition: not the space holder\n");
+    sendInt(replyTo, ThreadIndex, -1);
     return;
+
 }
 
 void CreateMV(char* name, int replyTo, int ThreadIndex, int data){
@@ -474,7 +751,7 @@ void CreateMV(char* name, int replyTo, int ThreadIndex, int data){
         }
     }
     
-    //name does not exits
+    //name does not exit
     
     serverMonitorVariable[numMonitor].name = name;
     
