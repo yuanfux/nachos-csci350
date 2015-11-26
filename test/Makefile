@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort testfiles lock_function_test1 lock_function_test2 condition_function_test serverbroadcast_function_test monitor_function_test1 monitor_function_test2 monitor_function_test3 multisort multimat
+all: halt matmult sort testfiles lock_function_test1 lock_function_test2 condition_function_test serverbroadcast_function_test monitor_function_test1 monitor_function_test2 monitor_function_test3 multisort multimat client1 client2
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -110,6 +110,17 @@ monitor_function_test3: monitor_function_test3.o start.o
 	$(LD) $(LDFLAGS) start.o monitor_function_test3.o -o monitor_function_test3.coff
 	../bin/coff2noff monitor_function_test3.coff monitor_function_test3
 
+client1.o: client1.c
+	$(CC) $(CFLAGS) -c client1.c
+client1: client1.o start.o
+	$(LD) $(LDFLAGS) start.o client1.o -o client1.coff
+	../bin/coff2noff client1.coff client1
+
+client2.o: client2.c
+	$(CC) $(CFLAGS) -c client2.c
+client2: client2.o start.o
+	$(LD) $(LDFLAGS) start.o client2.o -o client2.coff
+	../bin/coff2noff client2.coff client2
 
 clean:
 	rm -f *.o *.coff

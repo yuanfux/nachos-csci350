@@ -161,7 +161,7 @@ void sendInt(int replyTo, int threadIndex, int value){
     outMailHdr.to = threadIndex;
     outMailHdr.from = 0;
     
-    char* send = new char[20];
+    char* send = new char[10];
     sprintf(send, "%d", value);
     outMailHdr.length = strlen(send) + 1;
     //printf("send from server to machine %d, thread %d, value %d\n", replyTo, threadIndex,value);
@@ -191,7 +191,7 @@ void Acquire(int lockIndex, int replyTo, int ThreadIndex){
     
     for(unsigned int i = 0; i < binderV.size(); i++){
         
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             //is the space holder, can possibly hold the lock
             if(serverLock[lockIndex].lockHolder.replyTo == replyTo && serverLock[lockIndex].lockHolder.ThreadIndex == ThreadIndex){
                 printf("Acquire: already the lock holder\n");
@@ -258,7 +258,7 @@ void Release(int lockIndex, int replyTo, int ThreadIndex){
     
     std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
          //is the space holder, can possibly release the lock
             if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
                 printf("Release: not the lock holder\n");
@@ -349,7 +349,7 @@ void Wait(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
 //
     std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             //is the space holder, can possibly wait
             if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
                 printf("Release: not the lock holder\n");
@@ -383,6 +383,7 @@ void Wait(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
             else{
                 serverLock[lockIndex].lockHolder.replyTo = -1;
                 serverLock[lockIndex].lockHolder.ThreadIndex = -1;
+                return;
 
             }
             
@@ -447,7 +448,7 @@ void Signal(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
     
     std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
         //is the space holder
             if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
                 printf("Signal: not the lock holder\n");
@@ -473,6 +474,7 @@ void Signal(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
             
             serverLock[lockIndex].queue->Append((Binder*)nextReply);
             sendInt(replyTo, ThreadIndex, lockIndex);
+            return;
         }
     }
     
@@ -536,7 +538,7 @@ void Broadcast(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
     
     std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             //is the space holder
             if(serverLock[lockIndex].lockHolder.replyTo != replyTo || serverLock[lockIndex].lockHolder.ThreadIndex != ThreadIndex){
                 printf("Signal: not the lock holder\n");
@@ -568,6 +570,8 @@ void Broadcast(int conditionIndex, int lockIndex, int replyTo, int ThreadIndex){
             serverCondition[conditionIndex].waitingLock = -1;
             
             sendInt(replyTo, ThreadIndex, 0);
+            
+            return;
             
         }
     }
@@ -609,22 +613,30 @@ void CreateLock(char* name, int replyTo, int ThreadIndex){
         
         if(strcmp(serverLock[i].name, name) == 0){//name already exists -> share
             
+            printf("CreateLock: name already exists\n");
+            
             serverLock[i].spaceHolder.push_back(binder);
             
+            
             sendInt(replyTo, ThreadIndex, i);//send back the lock index
+            
+
             
             return;
         }
     }
     //name does not exist
-    
+
     serverLock[numLock].name = name;
-    
+
     serverLock[numLock].spaceHolder.push_back(binder);
+
     
     sendInt(replyTo,ThreadIndex, numLock);
-    
+
     numLock++;
+    
+
     
     return;
 }
@@ -646,7 +658,7 @@ void DestroyLock(int lockIndex, int replyTo, int ThreadIndex){
     
     std::vector<Binder> binderV = serverLock[lockIndex].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             //is the space holder
             serverLock[lockIndex].name = NULL;
             serverLock[lockIndex].lockHolder.replyTo = -1;
@@ -671,10 +683,10 @@ void DestroyLock(int lockIndex, int replyTo, int ThreadIndex){
 void CreateCondition(char* name, int replyTo, int ThreadIndex){
     
     Binder binder(replyTo, ThreadIndex);
-    for(int i = 0 ; i < numLock ; i++){
+    for(int i = 0 ; i < numCondition ; i++){
         
-        if(strcmp(serverLock[i].name, name) == 0){//name already exists -> share
-            
+        if(strcmp(serverCondition[i].name, name) == 0){//name already exists -> share
+            printf("CreateCondition: name already exists\n");
             serverLock[i].spaceHolder.push_back(binder);
             
             sendInt(replyTo, ThreadIndex, i);//send back the condition index
@@ -713,7 +725,7 @@ void DestroyCondition(int conditionIndex, int replyTo, int ThreadIndex){
     
     std::vector<Binder> binderV = serverCondition[conditionIndex].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             //is the space holder
             serverCondition[conditionIndex].name = NULL;
             serverCondition[conditionIndex].waitingLock = -1;
@@ -781,7 +793,7 @@ void GetMV(int monitorIndex, int replyTo, int ThreadIndex){
     std::vector<Binder> binderV = serverMonitorVariable[monitorIndex].spaceHolder;
     
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             
             sendInt(replyTo, ThreadIndex, serverMonitorVariable[monitorIndex].data);
             
@@ -812,7 +824,7 @@ void SetMV(int monitorIndex, int value, int replyTo, int ThreadIndex){
     std::vector<Binder> binderV = serverMonitorVariable[monitorIndex].spaceHolder;
     
     for(unsigned int i = 0; i < binderV.size(); i++){
-        if(binderV[i].replyTo == replyTo && binderV[i].ThreadIndex == ThreadIndex){
+        if(binderV[i].replyTo == replyTo){
             
             serverMonitorVariable[monitorIndex].data = value;
             
