@@ -43,6 +43,8 @@ BitMap threadBitMap(NumThreads);
 #ifdef NETWORK
 PostOffice *postOffice;
 bool isServer = false ;
+int MachineName = -1;
+
 #endif
 
 
@@ -134,8 +136,9 @@ Initialize(int argc, char **argv)
         } else if (!strcmp(*argv, "-m")) {
             ASSERT(argc > 1);
             netname = atoi(*(argv + 1));
-            if(netname == 0){
+            if(netname < NumServers){
                 isServer = true;
+                MachineName = netname;
             }
             argCount = 2;
         }
@@ -218,6 +221,10 @@ Cleanup()
 #ifdef NETWORK
 bool CheckServer(){
     return isServer;
+}
+
+int getMachineID(){
+    return MachineName;
 }
 #endif
 

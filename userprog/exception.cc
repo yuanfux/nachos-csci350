@@ -594,7 +594,7 @@ int AcquireServer_Syscall(int lockIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "25 %d", lockIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -621,7 +621,7 @@ int ReleaseServer_Syscall(int lockIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "26 %d", lockIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -645,7 +645,7 @@ int WaitServer_Syscall(int conditionIndex, int lockIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "27 %d %d", conditionIndex, lockIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -677,7 +677,7 @@ int SignalServer_Syscall(int conditionIndex, int lockIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "28 %d %d", conditionIndex, lockIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -703,7 +703,7 @@ int BroadcastServer_Syscall(int conditionIndex, int lockIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "29 %d %d", conditionIndex, lockIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -730,7 +730,7 @@ int CreateLockServer_Syscall(int vaddr, int len){
     char* send = new char[MaxMailSize];
     sprintf(send, "30 %s", lockName);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -759,7 +759,7 @@ int DestroyLockServer_Syscall(int lockIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "31 %d", lockIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -786,7 +786,7 @@ int CreateConditionServer_Syscall(int vaddr, int len){
     char* send = new char[MaxMailSize];
     sprintf(send, "32 %s", cvName);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -812,7 +812,7 @@ int DestroyConditionServer_Syscall(int conditionIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "33 %d", conditionIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -838,7 +838,7 @@ int CreateMVServer_Syscall(int vaddr, int len, int data){
     char* send = new char[MaxMailSize];
     sprintf(send, "34 %s %d", mvName, data);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -866,13 +866,13 @@ int GetMVServer_Syscall(int monitorIndex){
     char* send = new char[MaxMailSize];
     sprintf(send, "35 %d", monitorIndex);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
     
     if(!postOffice->Send(outPktHdr, outMailHdr, send)){
-        printf("Send failed from syscall 31");
+        printf("Send failed from syscall 35");
         return -1;
     }
     char* receive = new char[MaxMailSize];
@@ -893,7 +893,7 @@ int SetMVServer_Syscall(int monitorIndex, int data){
     char* send = new char[MaxMailSize];
     sprintf(send, "36 %d %d", monitorIndex, data);
     
-    outPktHdr.to = 0;
+    outPktHdr.to = rand() % NumServers;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->GetIndex();
     outMailHdr.length = strlen(send) + 1;
@@ -908,6 +908,89 @@ int SetMVServer_Syscall(int monitorIndex, int data){
     return atoi(receive);
     
 }
+
+int CreateMVArrayServer_Syscall(int vaddr, int len, int length){
+    char* mvName = new char[len];
+    copyin(vaddr, len, mvName);
+    PacketHeader outPktHdr;
+    PacketHeader inPktHdr;
+    MailHeader outMailHdr;
+    MailHeader inMailHdr;
+    
+    char* send = new char[MaxMailSize];
+    sprintf(send, "37 %s %d", mvName, length);
+    
+    outPktHdr.to = rand() % NumServers;
+    outMailHdr.to = 0;
+    outMailHdr.from = currentThread->GetIndex();
+    outMailHdr.length = strlen(send) + 1;
+    
+    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+        printf("Send failed from syscall 37");
+        return -1;
+    }
+    char* receive = new char[MaxMailSize];
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
+    fflush(stdout);
+    
+    return atoi(receive);
+    
+    
+}
+
+int GetMVArrayServer_Syscall(int monitorArrayIndex, int index){
+    
+    PacketHeader outPktHdr;
+    PacketHeader inPktHdr;
+    MailHeader outMailHdr;
+    MailHeader inMailHdr;
+    
+    char* send = new char[MaxMailSize];
+    sprintf(send, "38 %d %d", monitorArrayIndex, index);
+    
+    outPktHdr.to = rand() % NumServers;
+    outMailHdr.to = 0;
+    outMailHdr.from = currentThread->GetIndex();
+    outMailHdr.length = strlen(send) + 1;
+    
+    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+        printf("Send failed from syscall 38");
+        return -1;
+    }
+    char* receive = new char[MaxMailSize];
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
+    fflush(stdout);
+    return atoi(receive);
+    
+    
+}
+
+int SetMVArrayServer_Syscall(int monitorArrayIndex, int index,int data){
+    
+    PacketHeader outPktHdr;
+    PacketHeader inPktHdr;
+    MailHeader outMailHdr;
+    MailHeader inMailHdr;
+    
+    char* send = new char[MaxMailSize];
+    sprintf(send, "39 %d %d %d", monitorArrayIndex, index, data);
+    
+    outPktHdr.to = rand() % NumServers;
+    outMailHdr.to = 0;
+    outMailHdr.from = currentThread->GetIndex();
+    outMailHdr.length = strlen(send) + 1;
+    
+    if(!postOffice->Send(outPktHdr, outMailHdr, send)){
+        printf("Send failed from syscall 39");
+        return -1;
+    }
+    char* receive = new char[MaxMailSize];
+    postOffice->Receive(currentThread->GetIndex(), &inPktHdr, &inMailHdr, receive);
+    fflush(stdout);
+    return atoi(receive);
+    
+}
+
 #endif
 
 void UpdateEvictedPageTable(int swapFileLocation, int virtualPage, int physicalPage) {
@@ -1296,6 +1379,22 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG('a', "SetMVServerServer syscall.\n");
             SetMVServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
             break;
+                
+                
+            case SC_CreateMVArrayServer:
+                DEBUG('a', "CreateMVServerServer syscall.\n");
+                rv = CreateMVArrayServer_Syscall(machine->ReadRegister(4),
+                                            machine->ReadRegister(5),
+                                            machine->ReadRegister(6));
+                break;
+            case SC_GetMVArrayServer:
+                DEBUG('a', "GetMVServerServer syscall.\n");
+                rv = GetMVArrayServer_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
+                break;
+            case SC_SetMVArrayServer:
+                DEBUG('a', "SetMVServerServer syscall.\n");
+                SetMVArrayServer_Syscall(machine->ReadRegister(4), machine->ReadRegister(5),machine->ReadRegister(6));
+                break;
 
 #endif
         }

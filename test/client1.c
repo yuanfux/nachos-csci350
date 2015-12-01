@@ -34,7 +34,7 @@ void main(){
     Write("\nC1 Trying to Wait\n", sizeof("\nC1 Trying to Wait\n"), ConsoleOutput);
 
     
-    WaitServer(lockindex, conditionindex);
+    WaitServer(conditionindex, lockindex);
     
     Write("\nC1 Gets signaled\n", sizeof("\nC1 Gets signaled\n"), ConsoleOutput);
 

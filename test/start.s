@@ -339,6 +339,30 @@ SetMVServer:
 	j	$31
 	.end SetMVServer
 
+    .globl CreateMVArrayServer
+	.ent	CreateMVArrayServer
+CreateMVArrayServer:
+	addiu $2,$0,SC_CreateMVArrayServer
+	syscall
+	j	$31
+	.end CreateMVArrayServer
+
+    .globl GetMVArrayServer
+	.ent	GetMVArrayServer
+GetMVArrayServer:
+	addiu $2,$0,SC_GetMVArrayServer
+	syscall
+	j	$31
+	.end GetMVArrayServer
+
+    .globl SetMVArrayServer
+	.ent	SetMVArrayServer
+SetMVArrayServer:
+	addiu $2,$0,SC_SetMVArrayServer
+	syscall
+	j	$31
+	.end SetMVArrayServer
+
 
 /* dummy function to keep gcc happy */
         .globl  __main
