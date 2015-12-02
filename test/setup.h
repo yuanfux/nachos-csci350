@@ -147,6 +147,7 @@ int shortestPassportLineSize;
 int shortestCashierLine;
 int shortestCashierLineSize;
 
+/* Name Variables */
 char *applicationLockName = "ApplicationLock ";
 char *applicationCVName = "applicationCV ";
 char *applicationBribeCVName = "applicaitonBribeCV ";

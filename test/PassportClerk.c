@@ -10,11 +10,12 @@ void main() {
     int passportClerkPunishment;
     int inBribeLine = 0;
     int myLine;
+    int lockData, cvData;
 
-    Acquire(incrementCount);
+    AcquireServer(incrementCount);
     myLine = passClerkNum + 1;
     passClerkNum++;
-    Release(incrementCount);
+    ReleaseServer(incrementCount);
     while (1) {
         inBribeLine = 0;
 
@@ -40,15 +41,15 @@ void main() {
                 printed = 0;
             }
 
-            Acquire(senatorPassportWaitLock);
-            Acquire(senatorWaitLock);
+            AcquireServer(senatorPassportWaitLock);
+            AcquireServer(senatorWaitLock);
 
             senatorServiceId = myLine;
-            Signal(senatorPassportWaitCV, senatorWaitLock);
+            SignalServer(senatorPassportWaitCV, senatorWaitLock);
             Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
-            Wait(senatorPassportWaitCV, senatorWaitLock);
+            WaitServer(senatorPassportWaitCV, senatorWaitLock);
             Write("PassportClerk[", sizeof("PassportClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
@@ -73,61 +74,66 @@ void main() {
             Printint(senatorData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
             senatorStatus += 3;
-            Signal(senatorPassportWaitCV, senatorWaitLock);
-            Release(senatorWaitLock);
-            Release(senatorPassportWaitLock);
+            SignalServer(senatorPassportWaitCV, senatorWaitLock);
+            ReleaseServer(senatorWaitLock);
+            ReleaseServer(senatorPassportWaitLock);
         } else if (hasSenator == 1 && myLine != 0) { /* if there is no senator present and I am not the index 0 clerk. Put myself on break */
             passportClerkState[myLine] = ONBREAK;
         }
 
         Yield();
-        Acquire(ClerkLineLock);
+        AcquireServer(ClerkLineLock);
 
         if (passportClerkState[myLine] != ONBREAK && hasSenator == 0) { /* if there is no senator present and I am not on break, deal with the normal customers */
             if (passportClerkBribeLineCount[myLine] > 0) { /* bribe line first */
-                Signal(passportClerkBribeLineWaitCV[myLine], ClerkLineLock);
+                cvData = GetMVArrayServer(passportClerkBribeLineWaitCV, myLine);
+                SignalServer(cvData, ClerkLineLock);
                 Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
                 passportClerkState[myLine] = BUSY;
                 inBribeLine = 1;
             } else if (passportClerkLineCount[myLine] > 0) { /* regular line next */
-                Signal(passportClerkLineWaitCV[myLine], ClerkLineLock);
+                cvData = GetMVArrayServer(passportClerkLineWaitCV, myLine);
+                SignalServer(cvData, ClerkLineLock);
                 Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
                 passportClerkState[myLine] = BUSY;
             } else { /* put myself on break if there is no customers */
                 passportClerkState[myLine] = ONBREAK;
-                Release(ClerkLineLock);
+                ReleaseServer(ClerkLineLock);
                 Yield();/* context switch */
                 if (remainingCustomer == 0) break;
                 continue;
             }
         } else {
-            Release(ClerkLineLock);
+            ReleaseServer(ClerkLineLock);
             Yield();/* context switch */
             if (remainingCustomer == 0) break;
             continue;
         }
 
-        Acquire(passportClerkLineLock[myLine]);
-        Release(ClerkLineLock);
+        lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+        AcquireServer(lockData);
+        ReleaseServer(ClerkLineLock);
 
         if (inBribeLine) { /* deal with bribe line customers */
             /* clerk service starts */
-            Wait(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
+            lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+            cvData = GetMVArrayServer(passportClerkBribeLineCV, myLine);
+            WaitServer(cvData, lockData);
             id = passportClerkCustomerId[myLine];
 
             /* Collect Bribe Money From Customer */
-            Acquire(passportMoneyLock);
+            AcquireServer(passportMoneyLock);
             MoneyFromPassportClerk += 500;
             Write("PassportClerk[", sizeof("PassportClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received $500 from Customer[", sizeof("] has received $500 from Customer["), ConsoleOutput);
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            Release(passportMoneyLock);
+            ReleaseServer(passportMoneyLock);
 
             Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
             Printint(myLine);
@@ -157,7 +163,9 @@ void main() {
                 Write("] has recorded Customer[", sizeof("] has recorded Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] passport documentation\n", sizeof("] passport documentation\n"), ConsoleOutput);
-                Signal(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
+                lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+                cvData = GetMVArrayServer(passportClerkBribeLineCV, myLine);
+                SignalServer(cvData, lockData);
 
             } else { /* customer does not have both their applicaiton and picture completed */
 
@@ -166,13 +174,17 @@ void main() {
                 Write("] has determined that Customer[", sizeof("] has determined that Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] does not have both their application and picture completed\n", sizeof("] does not have both their application and picture completed\n"), ConsoleOutput);
-                Signal(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
+                lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+                cvData = GetMVArrayServer(passportClerkBribeLineCV, myLine);
+                SignalServer(cvData, lockData);
 
             }
 
         } else { /* deal with regular line customers */
 
-            Wait(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
+            lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+            cvData = GetMVArrayServer(passportClerkLineCV, myLine);
+            WaitServer(cvData, lockData);
             id = passportClerkCustomerId[myLine];
 
             Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
@@ -202,7 +214,9 @@ void main() {
                 Write("] has recorded Customer[", sizeof("] has recorded Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] passport documentation\n", sizeof("] passport documentation\n"), ConsoleOutput);
-                Signal(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
+                lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+                cvData = GetMVArrayServer(passportClerkLineCV, myLine);
+                SignalServer(cvData, lockData);
 
             } else {
 
@@ -211,13 +225,16 @@ void main() {
                 Write("] has determined that Customer[", sizeof("] has determined that Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] does not have both their application and picture completed\n", sizeof("] does not have both their application and picture completed\n"), ConsoleOutput);
-                Signal(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
+                lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+                cvData = GetMVArrayServer(passportClerkLineCV, myLine);
+                SignalServer(cvData, lockData);
 
             }
 
         }
 
-        Release(passportClerkLineLock[myLine]);
+        lockData = GetMVArrayServer(passportClerkLineLock, myLine);
+        ReleaseServer(lockData);
 
         if (remainingCustomer == 0) break;
     }
