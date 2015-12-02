@@ -7,6 +7,7 @@ void main() {
     unsigned int i;
     int money;
     int choseClerk;
+    int randomNum;
     int myLine;
 
     Acquire(incrementCount);

@@ -7,28 +7,34 @@ void main() {
     unsigned int i;
     int InBribeLine = 0;
     int myLine;
-    int lockData, cvData;
+    int state, count, bribeCount, lockData, cvData, money, status, has;
 
     AcquireServer(incrementCount);
-    myLine = appClerkNum + 1;
-    appClerkNum++;
+    state = GetMVServer(appClerkNum);
+    myLine = state + 1;
+    state++;
+    SetMVServer(appClerkNum, state);
     ReleaseServer(incrementCount);
 
     while (1) {
         InBribeLine = 0;
-        if (ApplicationClerkState[myLine] == ONBREAK && !printed) {
+        state = GetMVArrayServer(ApplicationClerkStateArray, myLine);
+        if (state == ONBREAK && !printed) {
             Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] is going on break\n", sizeof("] is going on break\n"), ConsoleOutput);
             printed = 1;
-        } else if (ApplicationClerkState[myLine] != ONBREAK) {
+        } else if (state != ONBREAK) {
             printed = 0;
         }
 
-        if (hasSenator == 1 && myLine == 0 && senatorStatus == 0) { /* if there is a senator present and i am the index 0 clerk */
+        has = GetMVServer(hasSenator);
+        if (has == 1 && myLine == 0 && senatorStatus == 0) { /* if there is a senator present and i am the index 0 clerk */
 
-            if (ApplicationClerkState[myLine] == ONBREAK) {
-                ApplicationClerkState[myLine] = BUSY;
+            state = GetMVArrayServer(ApplicationClerkStateArray, myLine);
+
+            if (state == ONBREAK) {
+                SetMVArrayServer(ApplicationClerkStateArray, myLine, BUSY);
                 Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] sees a senator\n", sizeof("] sees a senator\n"), ConsoleOutput);
@@ -41,11 +47,11 @@ void main() {
             AcquireServer(senatorApplicationWaitLock);
             AcquireServer(senatorWaitLock);
 
-            senatorServiceId = myLine;
             SignalServer(senatorApplicationWaitCV, senatorWaitLock);
             Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
+
             WaitServer(senatorApplicationWaitCV, senatorWaitLock);
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
@@ -59,37 +65,46 @@ void main() {
             Write("] has recorded a completed application for Senator [", sizeof("] has recorded a completed application for Senator ["), ConsoleOutput);
             Printint(senatorData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            senatorStatus++;
+
+            status = GetMVServer(senatorStatus);
+            status++;
+            SetMVServer(senatorStatus, status);
+
             SignalServer(senatorApplicationWaitCV, senatorWaitLock);
 
             ReleaseServer(senatorApplicationWaitLock);
             ReleaseServer(senatorWaitLock);
-        } else if (hasSenator == 1 && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
-            ApplicationClerkState[myLine] = ONBREAK;
+        } else if (has == 1 && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
+            SetMVArrayServer(ApplicationClerkStateArray, myLine, ONBREAK);
         }
 
         Yield();
         AcquireServer(ClerkLineLock);/* acquire the line lock in case of line size change */
 
-        if (ApplicationClerkState[myLine] != ONBREAK && hasSenator == 0) { /* no senator, not on break, deal with normal customers */
-            if (ApplicationClerkBribeLineCount[myLine] > 0) { /* bribe line customer first */
-                cvData = GetMVArrayServer(ApplicationClerkBribeLineWaitCV, myLine);
+        state = GetMVArrayServer(ApplicationClerkStateArray, myLine);
+
+        has = GetMVServer(hasSenator);
+        if (state != ONBREAK && has == 0) { /* no senator, not on break, deal with normal customers */
+            bribeCount = GetMVArrayServer(ApplicationClerkBribeLineCountArray, myLine);
+            count = GetMVArrayServer(ApplicationClerkLineCountArray, myLine);
+            if (bribeCount > 0) { /* bribe line customer first */
+                cvData = GetMVArrayServer(ApplicationClerkBribeLineWaitCVArray, myLine);
                 SignalServer(cvData, ClerkLineLock);
                 Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
-                ApplicationClerkState[myLine] = BUSY;
+                SetMVArrayServer(ApplicationClerkStateArray, myLine, BUSY);
                 InBribeLine = 1;
-            } else if (ApplicationClerkLineCount[myLine] > 0) { /* regular line customer next */
-                cvData = GetMVArrayServer(ApplicationClerkLineWaitCV, myLine);
+            } else if (count > 0) { /* regular line customer next */
+                cvData = GetMVArrayServer(ApplicationClerkLineWaitCVArray, myLine);
                 SignalServer(cvData, ClerkLineLock);
                 Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
-                ApplicationClerkState[myLine] = BUSY;
+                SetMVArrayServer(ApplicationClerkStateArray, myLine, BUSY);
 
             } else { /* no customer present */
-                ApplicationClerkState[myLine] = ONBREAK;
+                SetMVArrayServer(ApplicationClerkStateArray, myLine, ONBREAK);
                 ReleaseServer(ClerkLineLock);
                 Yield();/* context switch */
                 if (remainingCustomer == 0) break;
@@ -102,21 +117,24 @@ void main() {
             continue;
         }
 
-        lockData = GetMVArrayServer(ApplicationClerkLineLock, myLine);
+        lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
         AcquireServer(lockData);
         ReleaseServer(ClerkLineLock);
         /* wait for customer data */
 
         if (InBribeLine) { /* in bribe line */
 
-            lockData = GetMVArrayServer(ApplicationClerkLineLock, myLine);
-            cvData = GetMVArrayServer(ApplicationClerkBribeLineCV, myLine);
+            lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
+            cvData = GetMVArrayServer(ApplicationClerkBribeLineCVArray, myLine);
             WaitServer(cvData, lockData);
-            id = ApplicationClerkData[myLine];
+            id = GetMVArrayServer(ApplicationClerkData, myLine);
 
             /* Collect Bribe Money From Customer */
             AcquireServer(applicationMoneyLock);
-            MoneyFromApplicationClerk += 500;
+            money = GetMVServer(MoneyFromApplicationClerk);
+            money += 500;
+            SetMVServer(MoneyFromApplicationClerk, money);
+
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received $500 from Customer[", sizeof("] has received $500 from Customer["), ConsoleOutput);
@@ -139,22 +157,26 @@ void main() {
             Yield();
             Yield();
             Yield();
-            customerApplicationStatus[id]++;
+
+            data = GetMVArrayServer(customerApplicationStatusArray, id);
+            data++;
+            SetMVArrayServer(customerApplicationStatusArray, id, data);
+
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Customer[", sizeof("] has recorded a completed application for Customer["), ConsoleOutput);
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            lockData = GetMVArrayServer(ApplicationClerkLineLock, myLine);
-            cvData = GetMVArrayServer(ApplicationClerkBribeLineCV, myLine);
+            lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
+            cvData = GetMVArrayServer(ApplicationClerkBribeLineCVArray, myLine);
             SignalServer(cvData, lockData);
         } else { /* not in bribe line */
-            lockData = GetMVArrayServer(ApplicationClerkLineLock, myLine);
-            cvData = GetMVArrayServer(ApplicationClerkLineCV, myLine);
+            lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
+            cvData = GetMVArrayServer(ApplicationClerkLineCVArray, myLine);
             WaitServer(cvData, lockData);
             /* do my job customer now waiting */
-            id = ApplicationClerkData[myLine];
+            id = GetMVArrayServer(ApplicationClerkDataArray, myLine);
 
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
@@ -172,23 +194,27 @@ void main() {
             Yield();
             Yield();
 
-            customerApplicationStatus[ApplicationClerkData[myLine]]++;
+            data = GetMVArrayServer(customerApplicationStatusArray, id);
+            data++;
+            SetMVArrayServer(customerApplicationStatusArray, id, data);
+
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Customer[", sizeof("] has recorded a completed application for Customer["), ConsoleOutput);
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            lockData = GetMVArrayServer(ApplicationClerkLineLock, myLine);
-            cvData = GetMVArrayServer(ApplicationClerkLineCV, myLine);
+            lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
+            cvData = GetMVArrayServer(ApplicationClerkLineCVArray, myLine);
             SignalServer(cvData, lockData);
 
         }
 
-        lockData = GetMVArrayServer(ApplicationClerkLineLock, myLine);
+        lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
         ReleaseServer(lockData);
 
-        if (remainingCustomer == 0) break;
+        data = GetMVServer(remainingCustomer);
+        if (data == 0) break;
     }/* while */
 
     Exit(0);

@@ -93,13 +93,12 @@ int senatorServiceId;
 int hasSenator = 0;
 
 
-int customerNum = -1; /*  number of customers came into the office. */
+int customerNum = -1; /*  number of customers came into the office. it is also ssn of customers */
 int appClerkNum = -1;
 int picClerkNum = -1;
 int passClerkNum = -1;
 int cashierNum = -1;
 
-/*  it is also ssn of customers */
 int remainingCustomer = 0; /*  number of customers still in the office */
 
 

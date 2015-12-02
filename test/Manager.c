@@ -24,10 +24,10 @@ void main() {
         Yield();
         Yield();
         /* acquire all the lock to print out the incoming statement */
-        Acquire(applicationMoneyLock);
-        Acquire(pictureMoneyLock);
-        Acquire(passportMoneyLock);
-        Acquire(cashierMoneyLock);
+        AcquireServer(applicationMoneyLock);
+        AcquireServer(pictureMoneyLock);
+        AcquireServer(passportMoneyLock);
+        AcquireServer(cashierMoneyLock);
 
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
         Printint(MoneyFromApplicationClerk);
@@ -50,10 +50,10 @@ void main() {
         Printint(MoneyTotal);
         Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
 
-        Release(applicationMoneyLock);
-        Release(pictureMoneyLock);
-        Release(passportMoneyLock);
-        Release(cashierMoneyLock);
+        ReleaseServer(applicationMoneyLock);
+        ReleaseServer(pictureMoneyLock);
+        ReleaseServer(passportMoneyLock);
+        ReleaseServer(cashierMoneyLock);
 
         count = 0;
 
@@ -61,7 +61,7 @@ void main() {
         /*  A vector of clerkCV */
 
         Yield();
-        Acquire(ClerkLineLock);
+        AcquireServer(ClerkLineLock);
 
         /* Application Clerks */
         for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
@@ -155,7 +155,7 @@ void main() {
 
         }
 
-        Release(ClerkLineLock);
+        ReleaseServer(ClerkLineLock);
 
         count++;
 
@@ -167,7 +167,7 @@ void main() {
     }
 
 
-    Acquire(printLock);
+    AcquireServer(printLock);
     Write("\n", sizeof("\n"), ConsoleOutput);
     Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
     Write("Passport Office Simulation Finshed.\n", sizeof("Passport Office Simulation Finshed.\n"), ConsoleOutput);
@@ -197,7 +197,7 @@ void main() {
     Printint(MoneyTotal);
     Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
     Write("\n\n--------------------------------------------\n\n", sizeof("\n\n--------------------------------------------\n\n"), ConsoleOutput);
-    Release(printLock);
+    ReleaseServer(printLock);
 
     Exit(0);
 }
