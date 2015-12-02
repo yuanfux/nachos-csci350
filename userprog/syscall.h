@@ -58,6 +58,9 @@
 #define SC_CreateMVServer 34
 #define SC_GetMVServer 35
 #define SC_SetMVServer 36
+#define SC_CreateMVArrayServer 37
+#define SC_GetMVArrayServer 38
+#define SC_SetMVArrayServer 39
 
 #define MAXFILENAME 256
 
@@ -208,6 +211,12 @@ int CreateMVServer(int vaddr, int len, int data);
 int GetMVServer(int monitorIndex);
 
 int SetMVServer(int monitorIndex, int data);
+
+int CreateMVArrayServer(int vaddr, int len , int length);
+
+int GetMVArrayServer(int monitorArrayIndex, int index);
+
+int SetMVArrayServer(int monitorArrayIndex, int index ,int data);
 
 
 #endif /* IN_ASM */

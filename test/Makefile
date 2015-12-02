@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: client1 client2
+all: client1 client2 lock1 lock2 monitor1 monitor2
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -49,6 +49,30 @@ client2.o: client2.c
 client2: client2.o start.o
 	$(LD) $(LDFLAGS) start.o client2.o -o client2.coff
 	../bin/coff2noff client2.coff client2
+
+lock1.o: lock1.c
+	$(CC) $(CFLAGS) -c lock1.c
+lock1: lock1.o start.o
+	$(LD) $(LDFLAGS) start.o lock1.o -o lock1.coff
+	../bin/coff2noff lock1.coff lock1
+
+lock2.o: lock2.c
+	$(CC) $(CFLAGS) -c lock2.c
+lock2: lock2.o start.o
+	$(LD) $(LDFLAGS) start.o lock2.o -o lock2.coff
+	../bin/coff2noff lock2.coff lock2
+
+monitor1.o: monitor1.c
+	$(CC) $(CFLAGS) -c monitor1.c
+monitor1: monitor1.o start.o
+	$(LD) $(LDFLAGS) start.o monitor1.o -o monitor1.coff
+	../bin/coff2noff monitor1.coff monitor1
+
+monitor2.o: monitor2.c
+	$(CC) $(CFLAGS) -c monitor2.c
+monitor2: monitor2.o start.o
+	$(LD) $(LDFLAGS) start.o monitor2.o -o monitor2.coff
+	../bin/coff2noff monitor2.coff monitor2
 
 clean:
 	rm -f *.o *.coff

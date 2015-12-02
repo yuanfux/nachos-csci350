@@ -166,6 +166,26 @@ char *CashierLockName = "CashierLock ";
 char *CashierCVName = "CashierCV ";
 char *CashierWaitCVName = "CashierWaitCV ";
 
+char *ApplicationClerkLineLockName = "ApplicationClerkLineLock";
+char *ApplicationClerkLineCVName = "ApplicationClerkLineCV";
+char *ApplicationClerkBribeLineCVName = "ApplicationClerkBribeLineCV";
+char *ApplicationClerkLineWaitCVName = "ApplicationClerkLineWaitCV";
+char *ApplicationClerkBribeLineWaitCVName = "ApplicationClerkBribeLineWaitCV";
+char *pictureClerkLineLockName = "pictureClerkLineLock";
+char *pictureClerkLineCVName = "pictureClerkLineCV";
+char *pictureClerkBribeLineCVName = "pictureClerkBribeLineCV";
+char *pictureClerkLineWaitCVName = "pictureClerkLineWaitCV";
+char *pictureClerkBribeLineWaitCVName = "pictureClerkBribeLineWaitCV";
+char *passportClerkLineLockName = "passportClerkLineLock";
+char *passportClerkLineCVName = "passportClerkLineCV";
+char *passportClerkBribeLineCVName = "passportClerkBribeLineCV";
+char *passportClerkLineWaitCVName = "passportClerkLineWaitCV";
+char *passportClerkBribeLineWaitCVName = "passportClerkBribeLineWaitCV";
+char *CashierLineLockName = "CashierLineLock";
+char *CashierLineCVName = "CashierLineCV";
+char *CashierLineWaitCVName = "CashierLineWaitCV";
+
+
 void setup(){
 
     unsigned int i;
@@ -189,38 +209,22 @@ void setup(){
 	ApplicationClerkLineWaitCVArray = CreateMVArrayServer("ApplicationClerkLineWaitCVArray", sizeof("ApplicationClerkLineWaitCVArray"), APPLICATIONCLERK_SIZE);
 	ApplicationClerkBribeLineCVArray = CreateMVArrayServer("ApplicationClerkBribeLineCVArray", sizeof("ApplicationClerkBribeLineCVArray"), APPLICATIONCLERK_SIZE);
 	ApplicationClerkBribeLineWaitCVArray = CreateMVArrayServer("ApplicationClerkBribeLineWaitCVArray", sizeof("ApplicationClerkBribeLineWaitCVArray"), APPLICATIONCLERK_SIZE);
-	ApplicationClerkLineCountArray = CreateMVArrayServer("ApplicationClerkLineCountArray", sizeof("ApplicationClerkLineCountArray"), APPLICATIONCLERK_SIZE);
-	ApplicationClerkBribeLineCountArray = CreateMVArrayServer("ApplicationClerkBribeLineCountArray", sizeof("ApplicationClerkBribeLineCountArray"), APPLICATIONCLERK_SIZE);
-	ApplicationClerkStateArray = CreateMVArrayServer("ApplicationClerkStateArray", sizeof("ApplicationClerkStateArray"), APPLICATIONCLERK_SIZE);
-	ApplicationClerkDataArray = CreateMVArrayServer("ApplicationClerkDataArray", sizeof("ApplicationClerkDataArray"), APPLICATIONCLERK_SIZE);
 
 	pictureClerkLineLockArray = CreateMVArrayServer("pictureClerkLineLockArray", sizeof("pictureClerkLineLockArray"), PICTURECLERK_SIZE);
 	pictureClerkLineCVArray = CreateMVArrayServer("pictureClerkLineCVArray", sizeof("pictureClerkLineCVArray"), PICTURECLERK_SIZE);
 	pictureClerkLineWaitCVArray = CreateMVArrayServer("pictureClerkLineWaitCVArray", sizeof("pictureClerkLineWaitCVArray"), PICTURECLERK_SIZE);
 	pictureClerkBribeLineCVArray = CreateMVArrayServer("pictureClerkBribeLineCVArray", sizeof("pictureClerkBribeLineCVArray"), PICTURECLERK_SIZE);
 	pictureClerkBribeLineWaitCVArray = CreateMVArrayServer("pictureClerkBribeLineWaitCVArray", sizeof("pictureClerkBribeLineWaitCVArray"), PICTURECLERK_SIZE);
-	pictureClerkLineCountArray = CreateMVArrayServer("pictureClerkLineCountArray", sizeof("pictureClerkLineCountArray"), PICTURECLERK_SIZE);
-	pictureClerkBribeLineCountArray = CreateMVArrayServer("pictureClerkBribeLineCountArray", sizeof("pictureClerkBribeLineCountArray"), PICTURECLERK_SIZE);
-	pictureClerkStateArray = CreateMVArrayServer("pictureClerkStateArray", sizeof("pictureClerkStateArray"), PICTURECLERK_SIZE);
-	pictureClerkDataArray = CreateMVArrayServer("pictureClerkDataArray", sizeof("pictureClerkDataArray"), PICTURECLERK_SIZE);
-	pictureAcceptanceArray = CreateMVArrayServer("pictureAcceptanceArray", sizeof("pictureAcceptanceArray"), PICTURECLERK_SIZE);
 
-	passportClerkCustomerIdArray = CreateMVArrayServer("passportClerkCustomerIdArray", sizeof("passportClerkCustomerIdArray"), PASSPORTCLERK_SIZE);
-	passportClerkStateArray = CreateMVArrayServer("passportClerkStateArray", sizeof("passportClerkStateArray"), PASSPORTCLERK_SIZE);
 	passportClerkLineLockArray = CreateMVArrayServer("passportClerkLineLockArray", sizeof("passportClerkLineLockArray"), PASSPORTCLERK_SIZE);
 	passportClerkLineCVArray = CreateMVArrayServer("passportClerkLineCVArray", sizeof("passportClerkLineCVArray"), PASSPORTCLERK_SIZE);
 	passportClerkLineWaitCVArray = CreateMVArrayServer("passportClerkLineWaitCVArray", sizeof("passportClerkLineWaitCVArray"), PASSPORTCLERK_SIZE);
 	passportClerkBribeLineCVArray = CreateMVArrayServer("passportClerkBribeLineCVArray", sizeof("passportClerkBribeLineCVArray"), PASSPORTCLERK_SIZE);
 	passportClerkBribeLineWaitCVArray = CreateMVArrayServer("passportClerkBribeLineWaitCVArray", sizeof("passportClerkBribeLineWaitCVArray"), PASSPORTCLERK_SIZE);
-	passportClerkLineCountArray = CreateMVArrayServer("passportClerkLineCountArray", sizeof("passportClerkLineCountArray"), PASSPORTCLERK_SIZE);
-	passportClerkBribeLineCountArray = CreateMVArrayServer("passportClerkBribeLineCountArray", sizeof("passportClerkBribeLineCountArray"), PASSPORTCLERK_SIZE);
 
-	CashierCustomerIdArray = CreateMVArrayServer("CashierCustomerIdArray", sizeof("CashierCustomerIdArray"), CASHIER_SIZE);
-	CashierStateArray = CreateMVArrayServer("CashierStateArray", sizeof("CashierStateArray"), CASHIER_SIZE);
 	CashierLineLockArray = CreateMVArrayServer("CashierLineLockArray", sizeof("CashierLineLockArray"), CASHIER_SIZE);
 	CashierLineCVArray = CreateMVArrayServer("CashierLineCVArray", sizeof("CashierLineCVArray"), CASHIER_SIZE);
 	CashierLineWaitCVArray = CreateMVArrayServer("CashierLineWaitCVArray", sizeof("CashierLineWaitCVArray"), CASHIER_SIZE);
-	CashierLineCountArray = CreateMVArrayServer("CashierLineCountArray", sizeof("CashierLineCountArray"), CASHIER_SIZE);
 
 
 
@@ -264,23 +268,28 @@ void setup(){
 
         /* application lock initialize */
         applicationLockName[15] = '0' + i;
-        ApplicationClerkLineLock[i] = applicationLock;
+        applicationLock = CreateLockServer(applicationLockName, 16);
+        SetMVArrayServer(ApplicationClerkLineLockArray, i, applicationLock);
 
         /* aplication CV initialize */
         applicationCVName[13] = '0' + i;
-        ApplicationClerkLineCV[i] = applicationCV;
+        applicationCV = CreateConditionServer(applicationCVName, 14);
+        SetMVArrayServer(ApplicationClerkLineCVArray, i, applicationCV);
 
         /* application bribe CV initialize */
         applicationBribeCVName[18] = '0' + i;
-        ApplicationClerkBribeLineCV[i] = applicationBribeCV;
+        applicationBribeCV = CreateConditionServer(applicationBribeCVName, 19);
+        SetMVArrayServer(ApplicationClerkBribeLineCVArray, i, applicationBribeCV);
 
         /* application Wait CV initialize */
         applicationWaitCVName[17] = '0' + i;
-        ApplicationClerkLineWaitCV[i] = applicationWaitCV;
+        applicationWaitCV = CreateConditionServer(applicationWaitCVName, 18);
+        SetMVArrayServer(ApplicationClerkLineWaitCVArray, i, applicationWaitCV);
 
         /* application Bribe Wait CV initialize */
         applicationBribeWaitCVName[22] = '0' + i;
-        ApplicationClerkBribeLineWaitCV[i] = applicationBribeWaitCV;
+        applicationBribeWaitCV = CreateConditionServer(applicationBribeWaitCVName, 23);
+        SetMVArrayServer(ApplicationClerkBribeLineWaitCVArray, i, applicationBribeWaitCV);
 
         /* application line size intialize */
         ApplicationClerkLineCount[i] = 0;
@@ -298,23 +307,28 @@ void setup(){
 
         /* picture lock initialize */
         pictureLockName[11] = '0' + i;
-        pictureClerkLineLock[i] = pictureLock;
+        pictureLock = CreateLockServer(pictureLockName, 12);
+        SetMVArrayServer(pictureClerkLineLockArray, i, pictureLock);
 
         /* picture CV initialize */
         pictureCVName[9] = '0' + i;
-        pictureClerkLineCV[i] = pictureCV;
+        pictureCV = CreateConditionServer(pictureCVName, 10);
+        SetMVArrayServer(pictureClerkLineCVArray, i, pictureCV);
 
         /* picture bribe CV initialize */
         pictureBribeCVName[14] = '0' + i;
-        pictureClerkBribeLineCV[i] = pictureBribeCV;
+        pictureBribeCV = CreateConditionServer(pictureBribeCVName, 15);
+        SetMVArrayServer(pictureClerkBribeLineCVArray, i, pictureBribeCV);
 
         /* picture Wait CV initialize */
         pictureWaitCVName[13] = '0' + i;
-        pictureClerkLineWaitCV[i] = pictureWaitCV;
+        pictureWaitCV = CreateConditionServer(pictureWaitCVName, 14);
+        SetMVArrayServer(pictureClerkLineWaitCVArray, i, pictureWaitCV);
 
         /* picture Bribe Wait CV initialize */
         pictureBribeWaitCVName[18] = '0' + i;
-        pictureClerkBribeLineWaitCV[i] = pictureBribeWaitCV;
+        pictureBribeWaitCV = CreateConditionServer(pictureBribeWaitCVName, 19);
+        SetMVArrayServer(pictureClerkBribeLineWaitCVArray, i, pictureBribeWaitCV);
 
         /* picture line size intialize */
         pictureClerkLineCount[i] = 0;
@@ -332,23 +346,28 @@ void setup(){
 
         /* passport lock initialize */
         passportLockName[12] = '0' + i;
-        passportClerkLineLock[i] = passportLock;
+        passportLock = CreateLockServer(passportLockName, 13);
+        SetMVArrayServer(passportClerkLineLockArray, i, passportLock);
 
         /* passport CV initialize */
         passportCVName[10] = '0' + i;
-        passportClerkLineCV[i] = passportCV;
+        passportCV = CreateConditionServer(passportCVName, 11);
+        SetMVArrayServer(passportClerkLineCVArray, i, passportCV);
 
         /* passport bribe CV initialize */
         passportBribeCVName[15] = '0' + i;
-        passportClerkBribeLineCV[i] = passportBribeCV;
+        passportBribeCV = CreateConditionServer(passportBribeCVName, 16);
+        SetMVArrayServer(passportClerkBribeLineCVArray, i, passportBribeCV);
 
         /* passport Wait CV initialize */
         passportWaitCVName[14] = '0' + i;
-        passportClerkLineWaitCV[i] = passportWaitCV;
+        passportWaitCV = CreateConditionServer(passportWaitCVName, 15);
+        SetMVArrayServer(passportClerkLineWaitCVArray, i, passportWaitCV);
 
         /* passport Bribe Wait CV initialize */
         passportBribeWaitCVName[19] = '0' + i;
-        passportClerkBribeLineWaitCV[i] = passportBribeWaitCV;
+        passportBribeWaitCV = CreateConditionServer(passportBribeWaitCVName, 20);
+        SetMVArrayServer(passportClerkBribeLineWaitCVArray, i, passportBribeWaitCV);
 
         /* passport line size intialize */
         passportClerkLineCount[i] = 0;
@@ -365,15 +384,18 @@ void setup(){
 
         /* cashier lock initialize */
         CashierLockName[11] = '0' + i;
-        CashierLineLock[i] = CashierLock;
+        CashierLock = CreateLockServer(CashierLockName, 12);
+        SetMVArrayServer(CashierLineLockArray, i, CashierLock);
 
         /* cashier CV initialize */
         CashierCVName[9] = '0' + i;
-        CashierLineCV[i] = CashierCV;
+        CashierCV = CreateConditionServer(CashierCVName, 10);
+        SetMVArrayServer(CashierLineCVArray, i, CashierCV);
 
         /* cashier Wait CV initialize */
         CashierWaitCVName[13] = '0' + i;
-        CashierLineWaitCV[i] = CashierWaitCV;
+        CashierWaitCV = CreateConditionServer(CashierWaitCVName, 14);
+        SetMVArrayServer(CashierLineWaitCVArray, i, CashierWaitCV);
 
         /* cashier line size intialize */
         CashierLineCount[i] = 0;
