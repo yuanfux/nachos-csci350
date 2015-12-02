@@ -176,7 +176,7 @@ SpaceId Exec_Syscall(int vaddr, int len) {
 
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
-        Thread *thread = new Thread("thread");
+        Thread *thread = new Thread("thread", mailboxIdx);
         addressSpace->AllocateSpaceForNewThread();
 
         thread->space = addressSpace;

@@ -1,4 +1,7 @@
-void Manager() {
+#include "syscall.h"
+#include "setup.h"
+
+void main() {
     int count = 0;
     int maxNumClerk = 0;
     unsigned int i;

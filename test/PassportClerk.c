@@ -1,4 +1,7 @@
-void PassportClerk() {
+#include "syscall.h"
+#include "setup.h"
+
+void main() {
     int id = 0;
     int i;
     int printed = 0;

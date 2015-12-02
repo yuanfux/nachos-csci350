@@ -1,4 +1,7 @@
-void ApplicationClerk() {
+#include "syscall.h"
+#include "setup.h"
+
+void main() {
     int id = 0;
     int printed = 0;
     unsigned int i;

@@ -1,4 +1,7 @@
-void Customer() {
+#include "syscall.h"
+#include "setup.h"
+
+void main() {
     /* get ssn for each customer */
     int id;
     unsigned int i;
