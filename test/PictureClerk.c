@@ -11,7 +11,7 @@ void main() {
     int myLine;
     int picAcc, data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
     clerkState state = ONBREAK;
-
+    setup();
     AcquireServer(incrementCount);
     data = GetMVServer(picClerkNum);
     myLine = data + 1;

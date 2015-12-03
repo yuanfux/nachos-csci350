@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager PassportClerk PictureClerk
+all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager PassportClerk PictureClerk 1Manager 5ApplicationClerk 5Cashier 5PassportClerk 5PictureClerk 10Senator 50Customer
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -80,11 +80,23 @@ ApplicationClerk: ApplicationClerk.o start.o
 	$(LD) $(LDFLAGS) start.o ApplicationClerk.o -o ApplicationClerk.coff
 	../bin/coff2noff ApplicationClerk.coff ApplicationClerk
 
+5ApplicationClerk.o: 5ApplicationClerk.c
+	$(CC) $(CFLAGS) -c 5ApplicationClerk.c
+5ApplicationClerk: 5ApplicationClerk.o start.o
+	$(LD) $(LDFLAGS) start.o 5ApplicationClerk.o -o 5ApplicationClerk.coff
+	../bin/coff2noff 5ApplicationClerk.coff 5ApplicationClerk
+
 Cashier.o: Cashier.c
 	$(CC) $(CFLAGS) -c Cashier.c
 Cashier: Cashier.o start.o
 	$(LD) $(LDFLAGS) start.o Cashier.o -o Cashier.coff
 	../bin/coff2noff Cashier.coff Cashier
+
+5Cashier.o: 5Cashier.c
+	$(CC) $(CFLAGS) -c 5Cashier.c
+5Cashier: 5Cashier.o start.o
+	$(LD) $(LDFLAGS) start.o 5Cashier.o -o 5Cashier.coff
+	../bin/coff2noff 5Cashier.coff 5Cashier
 
 Customer.o: Customer.c
 	$(CC) $(CFLAGS) -c Customer.c
@@ -92,11 +104,23 @@ Customer: Customer.o start.o
 	$(LD) $(LDFLAGS) start.o Customer.o -o Customer.coff
 	../bin/coff2noff Customer.coff Customer
 
+50Customer.o: 50Customer.c
+	$(CC) $(CFLAGS) -c 50Customer.c
+50Customer: 50Customer.o start.o
+	$(LD) $(LDFLAGS) start.o 50Customer.o -o 50Customer.coff
+	../bin/coff2noff 50Customer.coff 50Customer
+
 Manager.o: Manager.c
 	$(CC) $(CFLAGS) -c Manager.c
 Manager: Manager.o start.o
 	$(LD) $(LDFLAGS) start.o Manager.o -o Manager.coff
 	../bin/coff2noff Manager.coff Manager
+
+1Manager.o: 1Manager.c
+	$(CC) $(CFLAGS) -c 1Manager.c
+1Manager: 1Manager.o start.o
+	$(LD) $(LDFLAGS) start.o 1Manager.o -o 1Manager.coff
+	../bin/coff2noff 1Manager.coff 1Manager
 
 PassportClerk.o: PassportClerk.c
 	$(CC) $(CFLAGS) -c PassportClerk.c
@@ -104,11 +128,23 @@ PassportClerk: PassportClerk.o start.o
 	$(LD) $(LDFLAGS) start.o PassportClerk.o -o PassportClerk.coff
 	../bin/coff2noff PassportClerk.coff PassportClerk
 
+5PassportClerk.o: 5PassportClerk.c
+	$(CC) $(CFLAGS) -c 5PassportClerk.c
+5PassportClerk: 5PassportClerk.o start.o
+	$(LD) $(LDFLAGS) start.o 5PassportClerk.o -o 5PassportClerk.coff
+	../bin/coff2noff 5PassportClerk.coff 5PassportClerk
+
 PictureClerk.o: PictureClerk.c
 	$(CC) $(CFLAGS) -c PictureClerk.c
 PictureClerk: PictureClerk.o start.o
 	$(LD) $(LDFLAGS) start.o PictureClerk.o -o PictureClerk.coff
 	../bin/coff2noff PictureClerk.coff PictureClerk
+
+5PictureClerk.o: 5PictureClerk.c
+	$(CC) $(CFLAGS) -c 5PictureClerk.c
+5PictureClerk: 5PictureClerk.o start.o
+	$(LD) $(LDFLAGS) start.o 5PictureClerk.o -o 5PictureClerk.coff
+	../bin/coff2noff 5PictureClerk.coff 5PictureClerk
 
 clean:
 	rm -f *.o *.coff

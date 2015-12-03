@@ -177,8 +177,8 @@ SpaceId Exec_Syscall(int vaddr, int len) {
     if (newFile) {
         AddrSpace* addressSpace = new AddrSpace(newFile);
         Thread *thread = new Thread("thread");
-        addressSpace->AllocateSpaceForNewThread();
-
+        int index = addressSpace->AllocateSpaceForNewThread();
+        thread->SetIndex(index);
         thread->space = addressSpace;
 
         int spaceId = processTable.Put(addressSpace);

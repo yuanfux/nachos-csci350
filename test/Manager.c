@@ -7,7 +7,7 @@ void main() {
     int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
     int monTotal, monFromCashier, monFromApplicationClerk, monFromPictureClerk, monFromPassportClerk;
     clerkState state = ONBREAK;
-
+    setup();
     /* check the max number of the clerks */
     if (maxNumClerk < APPLICATIONCLERK_SIZE) maxNumClerk = APPLICATIONCLERK_SIZE;
     if (maxNumClerk < PICTURECLERK_SIZE) maxNumClerk = PICTURECLERK_SIZE;

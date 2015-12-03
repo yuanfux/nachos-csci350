@@ -8,7 +8,7 @@ void main() {
     int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer, serviceId;
     clerkState state = ONBREAK;
     unsigned int i;
-
+    setup();
     /* acquire all the necessary locks to get started */
     AcquireServer(customerWaitLock);
     AcquireServer(senatorPictureWaitLock);

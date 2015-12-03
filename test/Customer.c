@@ -24,7 +24,7 @@ void main() {
     int randomNum;
     int myLine, data, count, bribeCount, lockData, cvData, money, status, has, rmCustomer;
     clerkState state = ONBREAK;
-
+    setup();
     AcquireServer(incrementCount);
     data = GetMVServer(customerNum);
     id = data + 1;
