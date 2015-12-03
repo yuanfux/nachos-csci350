@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager PassportClerk PictureClerk 1Manager 5ApplicationClerk 5Cashier 5PassportClerk 5PictureClerk 10Senator 50Customer
+all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager PassportClerk PictureClerk Senator 1Manager 5ApplicationClerk 5Cashier 5PassportClerk 5PictureClerk 10Senator 50Customer 1ForEach PassportOffice
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -145,6 +145,30 @@ PictureClerk: PictureClerk.o start.o
 5PictureClerk: 5PictureClerk.o start.o
 	$(LD) $(LDFLAGS) start.o 5PictureClerk.o -o 5PictureClerk.coff
 	../bin/coff2noff 5PictureClerk.coff 5PictureClerk
+
+Senator.o: Senator.c
+	$(CC) $(CFLAGS) -c Senator.c
+Senator: Senator.o start.o
+	$(LD) $(LDFLAGS) start.o Senator.o -o Senator.coff
+	../bin/coff2noff Senator.coff Senator
+
+10Senator.o: 10Senator.c
+	$(CC) $(CFLAGS) -c 10Senator.c
+10Senator: 10Senator.o start.o
+	$(LD) $(LDFLAGS) start.o 10Senator.o -o 10Senator.coff
+	../bin/coff2noff 10Senator.coff 10Senator
+
+1ForEach.o: 1ForEach.c
+	$(CC) $(CFLAGS) -c 1ForEach.c
+1ForEach: 1ForEach.o start.o
+	$(LD) $(LDFLAGS) start.o 1ForEach.o -o 1ForEach.coff
+	../bin/coff2noff 1ForEach.coff 1ForEach
+
+PassportOffice.o: PassportOffice.c
+	$(CC) $(CFLAGS) -c PassportOffice.c
+PassportOffice: PassportOffice.o start.o
+	$(LD) $(LDFLAGS) start.o PassportOffice.o -o PassportOffice.coff
+	../bin/coff2noff PassportOffice.coff PassportOffice
 
 clean:
 	rm -f *.o *.coff

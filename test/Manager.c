@@ -54,7 +54,6 @@ void main() {
 
 
         monTotal = monFromApplicationClerk + monFromPictureClerk + monFromPassportClerk + monFromCashier;
-        SetMVServer(MoneyTotal, monTotal);
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
         Printint(monTotal);
         Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);

@@ -68,11 +68,10 @@ int applicationMoneyLock;
 int pictureMoneyLock;
 int passportMoneyLock;
 int cashierMoneyLock;
-int MoneyFromApplicationClerk = 0;
-int MoneyFromPictureClerk = 0;
-int MoneyFromPassportClerk = 0;
-int MoneyFromCashier = 0;
-int MoneyTotal = 0;
+int MoneyFromApplicationClerk;
+int MoneyFromPictureClerk;
+int MoneyFromPassportClerk;
+int MoneyFromCashier;
 
 int senatorWaitLock;
 int senatorApplicationWaitLock;
@@ -255,7 +254,6 @@ void setup() {
 	MoneyFromPictureClerk = CreateMVServer("MoneyFromPictureClerk", sizeof("MoneyFromPictureClerk"), 0);
 	MoneyFromPassportClerk = CreateMVServer("MoneyFromPassportClerk", sizeof("MoneyFromPassportClerk"), 0);
 	MoneyFromCashier = CreateMVServer("MoneyFromCashier", sizeof("MoneyFromCashier"), 0);
-	MoneyTotal = CreateMVServer("MoneyTotal", sizeof("MoneyTotal"), 0);
 
 	hasSenator = CreateMVServer("hasSenator", sizeof("hasSenator"), 0);
 
@@ -431,6 +429,5 @@ void setup() {
 	customerWaitCV = CreateConditionServer("customerCV", sizeof("customerCV"));
 	customerWaitLock = CreateLockServer("customerLock", sizeof("customerLock"));
 
-	Exit(0);
 }
 #endif

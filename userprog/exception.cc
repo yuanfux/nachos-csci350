@@ -34,8 +34,8 @@
 extern "C" { int bzero(char *, int); };
 using namespace std;
 
-#define MAX_NUM_LOCK 1000
-#define MAX_NUM_CONDITION 1000
+#define MAX_NUM_LOCK 10000
+#define MAX_NUM_CONDITION 10000
 #define MAX_NUM_MV 10000
 Table lockTable(MAX_NUM_LOCK);
 Table cvTable(MAX_NUM_CONDITION);
@@ -393,7 +393,8 @@ void Fork_Syscall(int vaddr) {
 }
 
 void Yield_Syscall() {
-    currentThread->Yield();
+    // currentThread->Yield();
+    for (int i = 0; i < 1000; i++);
 }
 
 int CreateLock_Syscall() {
