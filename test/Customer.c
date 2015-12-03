@@ -1,6 +1,21 @@
 #include "syscall.h"
 #include "setup.h"
 
+int shortestPictureLine;
+int shortestPictureBribeLine;
+int shortestPictureBribeLineSize;
+int shortestPictureLineSize;
+int shortestApplicationBribeLine;
+int shortestApplicationBribeLineSize;
+int shortestApplicationLine;
+int shortestApplicationLineSize;
+int shortestPassportBribeLine;
+int shortestPassportBribeLineSize;
+int shortestPassportLine;
+int shortestPassportLineSize;
+int shortestCashierLine;
+int shortestCashierLineSize;
+
 void main() {
     /* get ssn for each customer */
     int id;
@@ -8,12 +23,15 @@ void main() {
     int money;
     int choseClerk;
     int randomNum;
-    int myLine;
+    int count, bribeCount, lockData, cvData, money, status, has, rmCustomer;
+    clerkState state = ONBREAK;
 
-    Acquire(incrementCount);
-    id = customerNum + 1;
-    customerNum++;
-    Release(incrementCount);
+    AcquireServer(incrementCount);
+    data = GetMVServer(customerNum);
+    id = data + 1;
+    data++;
+    SetMVServer(customerNum, data);
+    ReleaseServer(incrementCount);
 
 
     /* determine amount of money customer has */
@@ -35,17 +53,21 @@ void main() {
     Write("\n", sizeof("\n"), ConsoleOutput);
 
     /* each customer needs to go through all the counters before leaving */
-    numCustomerWaiting[id] = id;
-    while (customerApplicationStatus[id] != 10) {
-        Acquire(customerWaitLock);
+    SetMVArryaServer(numCustomerWaiting, id, id);
+    while (true) {
+        status = GetMVArrayServer(customerApplicationStatusArray, id);
+        if (status == 10) {
+            break;
+        }
+        AcquireServer(customerWaitLock);
 
         choseClerk = Random(RAND_UPPER_LIMIT) % 2; /* randomly choosing application or picture clerk */
 
         /* Goes to Picture Clerk. */
-        if ((customerApplicationStatus[id] == 1) || (customerApplicationStatus[id] == 0 && choseClerk == 0)) { /* has finished applicaiton clerk */
+        if ((status == 1) || (status == 0 && choseClerk == 0)) { /* has finished applicaiton clerk */
 
             Yield();
-            Acquire(ClerkLineLock);
+            AcquireServer(ClerkLineLock);
             if (money > 500) { /* can bribe */
                 money -= 500; /*  give out money */
                 shortestPictureBribeLine = -1;
@@ -53,29 +75,37 @@ void main() {
 
                 /* find shortest line */
                 for (i = 0; i < PICTURECLERK_SIZE; i++) {
-                    if (pictureClerkBribeLineCount[i] < shortestPictureBribeLineSize) {
+                    count = GetMVArrayServer(pictureClerkBribeLineCountArray, i);
+                    if (count < shortestPictureBribeLineSize) {
 
                         shortestPictureBribeLine = i;
-                        shortestPictureBribeLineSize = pictureClerkBribeLineCount[i];
+                        shortestPictureBribeLineSize = count;
 
                     }
                 }
                 myLine = shortestPictureBribeLine;
 
                 /* wait in the picture clerk line */
-                pictureClerkBribeLineCount[myLine]++;
+                count = GetMVArrayServer(pictureClerkBribeLineCountArray, myLine);
+                count++;
+                SetMVArryaServer(pictureClerkBribeLineCountArray, myLine, count);
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has gotten in bribe line for PictureClerk[", sizeof("] has gotten in bribe line for PictureClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Release(customerWaitLock);
-                Wait(pictureClerkBribeLineWaitCV[myLine], ClerkLineLock); /* wait for signal from clerk */
-                pictureClerkBribeLineCount[myLine]--; /* leave the line and go to the counter */
-                Release(ClerkLineLock);
+                ReleaseServer(customerWaitLock);
+                cvData = GetMVArrayServer(pictureClerkBribeLineWaitCVArray, myLine);
+                WaitServer(cvData, ClerkLineLock); /* wait for signal from clerk */
+                count = GetMVArrayServer(pictureClerkBribeLineCountArray, myLine);
+                count--;
+                SetMVArryaServer(pictureClerkBribeLineCountArray, myLine, count);
 
-                Acquire(pictureClerkLineLock[myLine]);
-                pictureClerkData[myLine] = id; /* gives clerk the ssn */
+                lockData = GetMVArrayServer(pictureClerkLineLockArray, myLine);
+                AcquireServer(lockData);
+                ReleaseServer(ClerkLineLock);
+
+                SetMVArryaServer(pictureClerkDataArray, myLine, id); /* gives clerk the ssn */
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -83,28 +113,32 @@ void main() {
                 Write("] to PictureClerk[", sizeof("] to PictureClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Signal(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+
+                cvData = GetMVArrayServer(pictureClerkBribeLineCVArray, myLine);
+                SignalServer(cvData, lockData);
 
                 /* wait for picture clerk to take picture */
-                Wait(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                pictureAcceptance[myLine] = Random(RAND_UPPER_LIMIT) % 10; /*  customer decide whether to accept the picture */
-                Signal(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+                data = Random(RAND_UPPER_LIMIT) % 10; /*  customer decide whether to accept the picture */
+                SetMVArryaServer(pictureAcceptanceArray, data);
+                SignalServer(cvData, lockData);
 
                 /* wait for picture clerk to tell customer leave or not */
-                Wait(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                Release(pictureClerkLineLock[myLine]);
+                ReleaseServer(lockData);
 
             } else {
                 shortestPictureLine = -1;
                 shortestPictureLineSize = 10000;
 
                 for (i = 0; i < PICTURECLERK_SIZE; i++) {
-                    if (pictureClerkLineCount[i] < shortestPictureLineSize) {
+                    count = GetMVArrayServer(pictureClerkLineCountArray, i);
+                    if (count < shortestPictureLineSize) {
 
                         shortestPictureLine = i;
-                        shortestPictureLineSize = pictureClerkLineCount[i];
+                        shortestPictureLineSize = count;
 
                     }
 
@@ -113,19 +147,26 @@ void main() {
                 myLine = shortestPictureLine;
 
                 /* wait in the picture clerk line */
-                pictureClerkLineCount[myLine]++;
+                count = GetMVArrayServer(pictureClerkLineCountArray, myLine);
+                count++;
+                SetMVArryaServer(pictureClerkLineCountArray, myLine, count);
+
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has gotten in regular line for PictureClerk[", sizeof("] has gotten in regular line for PictureClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Release(customerWaitLock);
-                Wait(pictureClerkLineWaitCV[myLine], ClerkLineLock); /* wait for signal from clerk */
-                pictureClerkLineCount[myLine]--;
-                Release(ClerkLineLock);
+                ReleaseServer(customerWaitLock);
+                cvData = GetMVArrayServer(pictureClerkLineWaitCVArray, myLine);
+                WaitServer(cvData, ClerkLineLock); /* wait for signal from clerk */
+                count = GetMVArrayServer(pictureClerkLineCountArray, myLine);
+                count--;
+                SetMVArryaServer(pictureClerkLineCountArray, myLine, count);
 
-                Acquire(pictureClerkLineLock[myLine]);
-                pictureClerkData[myLine] = id; /* gives clerk the ssn */
+                lockData = GetMVArrayServer(pictureClerkLineLockArray, myLine);
+                AcquireServer(lockData);
+                ReleaseServer(ClerkLineLock);
+                SetMVArryaServer(pictureClerkDataArray, myLine, id); /* gives clerk the ssn */
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -133,18 +174,20 @@ void main() {
                 Write("] to PictureClerk[", sizeof("] to PictureClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+                cvData = GetMVArrayServer(pictureClerkLineCVArray, myLine);
+                SignalServer(cvData, lockData);
 
                 /* wait for picture clerk to take picture */
-                Wait(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                pictureAcceptance[myLine] = Random(RAND_UPPER_LIMIT) % 10; /*  customer decide whether receive the picture */
-                Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+                data = Random(RAND_UPPER_LIMIT) % 10; /*  customer decide whether receive the picture */
+                SetMVArryaServer(pictureAcceptanceArray, data);
+                SignalServer(cvData, lockData);
 
                 /* wait for picture clerk to tell customer leave or not */
-                Wait(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                Release(pictureClerkLineLock[myLine]);
+                ReleaseServer(lockData);
 
 
             }
@@ -152,12 +195,12 @@ void main() {
         }
 
         /* Goes to Application Clerk */
-        else if ((customerApplicationStatus[id] == 2) || (customerApplicationStatus[id] == 0 && choseClerk == 1)) { /* has finished picture clerk */
+        else if ((status == 2) || (status == 0 && choseClerk == 1)) { /* has finished picture clerk */
 
             shortestApplicationBribeLine = -1;
             shortestApplicationBribeLineSize = 10000;
             Yield();
-            Acquire(ClerkLineLock);
+            AcquireServer(ClerkLineLock);
             if (money > 500) { /* has bribe money */
                 money -= 500;
                 shortestApplicationBribeLine = -1;
@@ -165,28 +208,37 @@ void main() {
 
                 /* find shortest line */
                 for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
-                    if (ApplicationClerkBribeLineCount[i] < shortestApplicationBribeLineSize) {
+                    count = GetMVArrayServer(ApplicationClerkBribeLineCountArray, i);
+                    if (count < shortestApplicationBribeLineSize) {
                         shortestApplicationBribeLine = i;
-                        shortestApplicationBribeLineSize = ApplicationClerkBribeLineCount[i];
+                        shortestApplicationBribeLineSize = count;
                     }
                 }
                 myLine = shortestApplicationBribeLine;
 
                 /* wait in the application clerk line */
-                ApplicationClerkBribeLineCount[myLine]++;
+                count = GetMVArrayServer(ApplicationClerkBribeLineCountArray, myLine);
+                count++;
+                SetMVArryaServer(ApplicationClerkBribeLineCountArray, myLine, count);
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has gotten in bribe line for ApplicationClerk[", sizeof("] has gotten in bribe line for ApplicationClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Release(customerWaitLock);
+                ReleaseServer(customerWaitLock);
                 /* wait to be signalled by clerk */
-                Wait(ApplicationClerkBribeLineWaitCV[myLine], ClerkLineLock);
-                ApplicationClerkBribeLineCount[myLine]--;
-                Release(ClerkLineLock);
+                cvData = GetMVArrayServer(ApplicationClerkBribeLineWaitCVArray, myLine);
+                WaitServer(cvData, ClerkLineLock);
+                count = GetMVArrayServer(ApplicationClerkBribeLineCountArray, myLine);
+                count--;
+                SetMVArryaServer(ApplicationClerkBribeLineCountArray, myLine, count);
 
-                Acquire(ApplicationClerkLineLock[myLine]);
-                ApplicationClerkData[myLine] = id; /* give ssn to clerk */
+                lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
+                AcquireServer(lockData);
+                ReleaseServer(ClerkLineLock);
+
+                SetMVArryaServer(ApplicationClerkDataArray, myLine, id); /* give ssn to clerk */
+                
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -194,12 +246,14 @@ void main() {
                 Write("] to ApplicationClerk[", sizeof("] to ApplicationClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Signal(ApplicationClerkBribeLineCV[myLine], ApplicationClerkLineLock[myLine]);
+                
+                cvData = GetMVArrayServer(ApplicationClerkBribeLineCVArray, myLine);
+                SignalServer(cvData, lockData);
 
                 /* wait for clerk to do the job */
-                Wait(ApplicationClerkBribeLineCV[myLine], ApplicationClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                Release(ApplicationClerkLineLock[myLine]);
+                ReleaseServer(lockData);
 
             } else { /* does not have bribe money */
                 shortestApplicationLine = -1;
@@ -207,29 +261,37 @@ void main() {
 
                 /* find shortest line */
                 for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
-                    if (ApplicationClerkLineCount[i] < shortestApplicationLineSize) {
+                    count = GetMVArrayServer(ApplicationClerkLineCountArray, i);
+                    if (count < shortestApplicationLineSize) {
                         shortestApplicationLine = i;
-                        shortestApplicationLineSize = ApplicationClerkLineCount[i];
+                        shortestApplicationLineSize = count;
                     }
                 }
 
                 myLine = shortestApplicationLine;
 
                 /* wait in the application clerk line */
-                ApplicationClerkLineCount[myLine]++;
+                count = GetMVArrayServer(ApplicationClerkLineCountArray, myLine);
+                count++;
+                SetMVArryaServer(ApplicationClerkLineCountArray, myLine, count);
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has gotten in regular line for ApplicationClerk[", sizeof("] has gotten in regular line for ApplicationClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Release(customerWaitLock);
+                ReleaseServer(customerWaitLock);
                 /* wait to be signalled by clerk */
-                Wait(ApplicationClerkLineWaitCV[myLine], ClerkLineLock);
-                ApplicationClerkLineCount[myLine]--;
-                Release(ClerkLineLock);
+                cvData = GetMVArrayServer(ApplicationClerkLineWaitCVArray, myLine);
+                WaitServer(cvData, ClerkLineLock);
+                count = GetMVArrayServer(ApplicationClerkLineCountArray, myLine);
+                count--;
+                SetMVArryaServer(ApplicationClerkLineCountArray, myLine, count);
+                
+                lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
+                AcquireServer(lockData);
+                ReleaseServer(ClerkLineLock);
 
-                Acquire(ApplicationClerkLineLock[myLine]);
-                ApplicationClerkData[myLine] = id; /* give ssn to clerk */
+                SetMVArryaServer(ApplicationClerkDataArray, myLine, id); /* give ssn to clerk */
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -237,24 +299,24 @@ void main() {
                 Write("] to ApplicationClerk[", sizeof("] to ApplicationClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Signal(ApplicationClerkLineCV[myLine], ApplicationClerkLineLock[myLine]);
+                
+                cvData = GetMVArrayServer(ApplicationClerkLineCVArray, myLine);
+                SignalServer(cvData, lockData);
 
                 /* wait for clerk to do the job */
-                Wait(ApplicationClerkLineCV[myLine], ApplicationClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                Release(ApplicationClerkLineLock[myLine]);
+                ReleaseServer(lockData);
 
             }
 
         }
 
         /* Goes to Passport Clerk */
-        else if (customerApplicationStatus[id] == 3) {
+        else if (status == 3) {
 
-            shortestPassportBribeLine;
-            shortestPassportBribeLineSize;
             Yield();
-            Acquire(ClerkLineLock);
+            AcquireServer(ClerkLineLock);
 
             if (money > 500) { /* has bribe money */
                 money -= 500;
@@ -263,29 +325,38 @@ void main() {
 
                 /* find shortest line */
                 for (i = 0; i < PASSPORTCLERK_SIZE; i++) {
-                    if (passportClerkBribeLineCount[i] < shortestPassportBribeLineSize) {
+                    count = GetMVArrayServer(passportClerkBribeLineCountArray, i);
+                    if (count < shortestPassportBribeLineSize) {
                         shortestPassportBribeLine = i;
-                        shortestPassportBribeLineSize = passportClerkBribeLineCount[i];
+                        shortestPassportBribeLineSize = count;
                     }
                 }
                 myLine = shortestPassportBribeLine;
 
                 /* wait in the passport clerk line */
-                passportClerkBribeLineCount[myLine]++;
+                count = GetMVArrayServer(passportClerkBribeLineCountArray, myLine);
+                count++;
+                SetMVArryaServer(passportClerkBribeLineCountArray, myLine, count);
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has gotten in bribe line for PassportClerk[", sizeof("] has gotten in bribe line for PassportClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Release(customerWaitLock);
+                ReleaseServer(customerWaitLock);
                 /* /wait to get signalled by passport clerk */
-                Wait(passportClerkBribeLineWaitCV[myLine], ClerkLineLock);
-                passportClerkBribeLineCount[myLine]--;
-                Release(ClerkLineLock);
+                cvData = GetMVArrayServer(passportClerkBribeLineWaitCVArray, myLine);
+                WaitServer(cvData, ClerkLineLock);
+                count = GetMVArrayServer(passportClerkBribeLineCountArray, myLine);
+                count--;
+                SetMVArryaServer(passportClerkBribeLineCountArray, myLine, count);
+                
+
+                lockData = GetMVArrayServer(passportClerkLineLockArray, myLine);
+                AcquireServer(lockData);
+                ReleaseServer(ClerkLineLock);
 
                 /* give ssn to passport clerk */
-                Acquire(passportClerkLineLock[myLine]);
-                passportClerkCustomerId[myLine] = id;
+                SetMVArryaServer(passportClerkCustomerIdArray, myLine, id);
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -293,44 +364,55 @@ void main() {
                 Write("] to PassportClerk[", sizeof("] to PassportClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Signal(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
+                
+                cvData = GetMVArrayServer(passportClerkBribeLineCVArray, myLine);
+                SignalServer(cvData, lockData);
 
                 /* wait for clerk to do the job */
-                Wait(passportClerkBribeLineCV[myLine], passportClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
 
-                Release(passportClerkLineLock[myLine]);
+                ReleaseServer(lockData);
 
             } else { /* does not have bribe money */
                 shortestPassportLine = -1;
                 shortestPassportLineSize = 10000;
 
                 for (i = 0; i < PASSPORTCLERK_SIZE; i++) {
-                    if (passportClerkLineCount[i] < shortestPassportLineSize) {
+                    count = GetMVArrayServer(passportClerkLineCountArray, i);
+                    if (count < shortestPassportLineSize) {
 
                         shortestPassportLine = i;
-                        shortestPassportLineSize = passportClerkLineCount[i];
+                        shortestPassportLineSize = count;
 
                     }
                 }
 
                 myLine = shortestPassportLine;
 
-                passportClerkLineCount[myLine]++;
+                count = GetMVArrayServer(passportClerkLineCountArray, myLine);
+                count++;
+                SetMVArryaServer(passportClerkLineCountArray, myLine, count);
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has gotten in regular line for PassportClerk[", sizeof("] has gotten in regular line for PassportClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Release(customerWaitLock);
+                ReleaseServer(customerWaitLock);
                 /* wait to get signalled by passport clerk */
-                Wait(passportClerkLineWaitCV[myLine], ClerkLineLock);
-                passportClerkLineCount[myLine]--;
-                Release(ClerkLineLock);
+                cvData = GetMVArrayServer(passportClerkLineWaitCVArray, myLine);
+                WaitServer(cvData, ClerkLineLock);
+                count = GetMVArrayServer(passportClerkLineCountArray, myLine);
+                count--;
+                SetMVArryaServer(passportClerkLineCountArray, myLine, count);
+                
+                lockData = GetMVArrayServer(passportClerkLineLockArray, myLine);
+                AcquireServer(lockData);
+                ReleaseServer(ClerkLineLock);
 
                 /* give ssn to passport clerk */
-                Acquire(passportClerkLineLock[myLine]);
-                passportClerkCustomerId[myLine] = id;
+                SetMVArryaServer(passportClerkCustomerIdArray, myLine, id);
+
                 Write("Customer[", sizeof("Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -338,12 +420,14 @@ void main() {
                 Write("] to PassportClerk[", sizeof("] to PassportClerk["), ConsoleOutput);
                 Printint(myLine);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
-                Signal(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
+                
+                cvData = GetMVArrayServer(passportClerkLineCVArray, myLine);
+                SignalServer(cvData, lockData);
 
                 /* wait for clerk to do the job */
-                Wait(passportClerkLineCV[myLine], passportClerkLineLock[myLine]);
+                WaitServer(cvData, lockData);
 
-                Release(passportClerkLineLock[myLine]);
+                ReleaseServer(lockData);
 
             }
 
@@ -352,40 +436,48 @@ void main() {
         }
 
         /* Goes to Cashier counter */
-        else if (customerApplicationStatus[id] == 6) {
+        else if (status == 6) {
 
             shortestCashierLine;
             shortestCashierLineSize;
             Yield();
-            Acquire(ClerkLineLock);
+            AcquireServer(ClerkLineLock);
 
             shortestCashierLine = -1;
             shortestCashierLineSize = 10000;
 
             /* find shortest line */
             for (i = 0; i < CASHIER_SIZE; i++) {
-                if (CashierLineCount[i] < shortestCashierLineSize) {
+                count = GetMVArrayServer(CashierLineCountArray, i);
+                if (count < shortestCashierLineSize) {
                     shortestCashierLine = i;
-                    shortestCashierLineSize = passportClerkLineCount[i];
+                    shortestCashierLineSize = count;
                 }
             }
             myLine = shortestCashierLine;
 
             /* get into cashier line */
-            CashierLineCount[myLine]++;
+            count = GetMVArrayServer(CashierLineCountArray, myLine);
+            count++;
+            SetMVArryaServer(CashierLineCountArray, myLine, count);
             Write("Customer[", sizeof("Customer["), ConsoleOutput);
             Printint(id);
             Write("] has gotten in regular line for Cashier[", sizeof("] has gotten in regular line for Cashier["), ConsoleOutput);
             Printint(myLine);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            Release(customerWaitLock);
-            Wait(CashierLineWaitCV[myLine], ClerkLineLock);
-            CashierLineCount[myLine]--;
-            Release(ClerkLineLock);
+            ReleaseServer(customerWaitLock);
+            cvData = GetMVArrayServer(CashierLineWaitCVArray, myLine);
+            WaitServer(cvData, ClerkLineLock);
+            count = GetMVArrayServer(CashierLineCountArray, myLine);
+            count--;
+            SetMVArryaServer(CashierLineCountArray, myLine, count);
+            
+            lockData = GetMVArrayServer(ClerkLineLockArray, myLine);
+            AcquireServer(lockData);
+            ReleaseServer(ClerkLineLock);
 
             /* give cashier ssn */
-            Acquire(CashierLineLock[myLine]);
-            CashierCustomerId[myLine] = id;
+            SetMVArryaServer(CashierCustomerIdArray, myLine, id);
             Write("Customer[", sizeof("Customer["), ConsoleOutput);
             Printint(id);
             Write("] has given SSN [", sizeof("] has given SSN ["), ConsoleOutput);
@@ -393,27 +485,32 @@ void main() {
             Write("] to Cashier[", sizeof("] to Cashier["), ConsoleOutput);
             Printint(myLine);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            Signal(CashierLineCV[myLine], CashierLineLock[myLine]);
+
+            cvData = GetMVArrayServer(CashierLineCVArray, myLine);
+            SignalServer(cvData, lockData);
 
             /* wait for cashier to do the job */
-            Wait(CashierLineCV[myLine], CashierLineLock[myLine]);
-            Release(CashierLineLock[myLine]);
+            WaitServer(cvData, lockData);
+            ReleaseServer(lockData);
 
         }
 
     }
 
-    Acquire(incrementCount);
-    remainingCustomer--;
+    AcquireServer(incrementCount);
+    rmCustomer = GetMVServer(remainingCustomer);
+    rmCustomer--;
+    SetMVServer(remainingCustomer, rmCustomer);
 
     for (i = 0; i < CUSTOMER_SIZE; i++) {
-        if (numCustomerWaiting[i] == id) {
+        rmCustomer = GetMVServer(numCustomerWaitingArray, i);
+        if (rmCustomer == id) {
 
-            numCustomerWaiting[i] = -1;
+            SetMVArryaServer(numCustomerWaiting, i, -1);
 
         }
     }
-    Release(incrementCount);
+    ReleaseServer(incrementCount);
 
     Exit(0);
 

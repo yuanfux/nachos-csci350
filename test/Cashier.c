@@ -7,27 +7,35 @@ void main() {
     int photoAcceptance;
     int cashierPunishment;
     int myLine;
+    int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
+    clerkState state = ONBREAK;
 
-    Acquire(incrementCount);
-    myLine = cashierNum + 1;
-    cashierNum++;
-    Release(incrementCount);
+    AcquireServer(incrementCount);
+    data = GetMVServer(cashierNum);
+    myLine = data + 1;
+    data++;
+    SetMVServer(cashierNum, data);
+    ReleaseServer(incrementCount);
 
     while (1) {
+        state = GetMVArrayServer(CashierStateArray, myLine);
 
-        if (CashierState[myLine] == ONBREAK && !printed) {
+        if (state == ONBREAK && !printed) {
             Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
             Write("] is going on break\n", sizeof("] is going on break\n"), ConsoleOutput);
             printed = 1;
-        } else if (CashierState[myLine] != ONBREAK) {
+        } else if (state != ONBREAK) {
             printed = 0;
         }
 
-        if (hasSenator == 1 && (myLine == 0) && senatorStatus <= 6) { /* if has senator and my index is 0 */
+        has = GetMVServer(hasSenator);
+        senStatus = GetMVServer(senatorStatus);
+        if (has == 1 && (myLine == 0) && senStatus <= 6) { /* if has senator and my index is 0 */
 
-            if (CashierState[myLine] == ONBREAK) {
-                CashierState[myLine] = BUSY;
+            state = GetMVArrayServer(CashierStateArray, myLine);
+            if (state == ONBREAK) {
+                SetMVArrayServer(CashierStateArray, myLine, BUSY);
                 Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] sees a senator\n", sizeof("] sees a senator\n"), ConsoleOutput);
@@ -37,41 +45,46 @@ void main() {
                 printed = 0;
             }
 
-            Acquire(senatorCashierWaitLock);
-            Acquire(senatorWaitLock);
+            AcquireServer(senatorCashierWaitLock);
+            AcquireServer(senatorWaitLock);
 
-            senatorServiceId = myLine;
-            Signal(senatorCashierWaitCV, senatorWaitLock);
+            SignalServer(senatorCashierWaitCV, senatorWaitLock);
             Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
-            Wait(senatorCashierWaitCV, senatorWaitLock);
+
+            senData = GetMVServer(senatorData);
+            WaitServer(senatorCashierWaitCV, senatorWaitLock);
             Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
-            Printint(senatorData + 100);
+            Printint(senData + 100);
             Write("] from Senator [", sizeof("] from Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;/* randomness to make senator back of the line */
-            while (photoAcceptance <= 5) {
-                Write("Senator [", sizeof("Senator ["), ConsoleOutput);
-                Printint(senatorData);
-                Write("] has gone to Cashier [", sizeof("] has gone to Cashier ["), ConsoleOutput);
-                Printint(myLine);
-                Write("] too soon. They are going to the back of the line.\n", sizeof("] too soon. They are going to the back of the line.\n"), ConsoleOutput);
-                photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
-            }
+            /****************************************
+            *photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
+            *while (photoAcceptance <= 5) {
+            *    Write("Senator [", sizeof("Senator ["), ConsoleOutput);
+            *    Printint(senData);
+            *    Write("] has gone to Cashier [", sizeof("] has gone to Cashier ["), ConsoleOutput);
+            *    Printint(myLine);
+            *    Write("] too soon. They are going to the back of the line.\n", sizeof("] too soon. They are going to the back of the line.\n"), ConsoleOutput);
+            *    photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
+            *}
+            ****************************************/
 
             /* Collect Fee From Senator */
-            Acquire(cashierMoneyLock);
-            MoneyFromCashier += 100;
-            Release(cashierMoneyLock);
+            AcquireServer(cashierMoneyLock);
+            money = GetMVServer(MoneyFromCashier);
+            money += 100;
+            SetMVServer(MoneyFromCashier, money);
+            ReleaseServer(cashierMoneyLock);
 
 
             Write("Senator [", sizeof("Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("] has given Cashier [", sizeof("] has given Cashier ["), ConsoleOutput);
             Printint(myLine);
             Write("] $100.\n", sizeof("] $100.\n"), ConsoleOutput);
@@ -79,47 +92,60 @@ void main() {
             Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Senator [", sizeof("] has recorded a completed application for Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            senatorStatus += 4;
-            Signal(senatorCashierWaitCV, senatorWaitLock);
-            Release(senatorWaitLock);
-            Release(senatorCashierWaitLock);
-        } else if (hasSenator == 1 && myLine != 0) {
-            CashierState[myLine] = ONBREAK;
+
+            senStatus = GetMVServer(senatorStatus);
+            senStatus += 4;
+            SetMVServer(senatorStatus, senStatus);
+
+            SignalServer(senatorCashierWaitCV, senatorWaitLock);
+            ReleaseServer(senatorWaitLock);
+            ReleaseServer(senatorCashierWaitLock);
+        } else if (has == 1 && myLine != 0) {
+            SetMVArrayServer(CashierStateArray, myLine, ONBREAK);
         }
 
         Yield();
-        Acquire(ClerkLineLock);
-        if (CashierState[myLine] != ONBREAK && hasSenator == 0) {
+        AcquireServer(ClerkLineLock);
+
+        state = GetMVArrayServer(CashierStateArray, myLine);
+        has = GetMVServer(hasSenator);
+        if (state != ONBREAK && has == 0) {
             /* When CashierState != ONBREAK */
-            if (CashierLineCount[myLine] > 0) {
-                Signal(CashierLineWaitCV[myLine], ClerkLineLock);
+            count = GetMVArrayServer(CashierLineCount, myLine);
+            if (count > 0) {
+                cvData = GetMVArrayServer(CashierLineWaitCV, myLine);
+                SignalServer(cvData, ClerkLineLock);
                 Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
-                CashierState[myLine] = BUSY;
+                SetMVArrayServer(CashierStateArray, myLine, BUSY);
             } else {
-                Release(ClerkLineLock);
-                CashierState[myLine] = ONBREAK;     /*  */
-                /*  Wait(CashierCV[myLine], CashierLock[myLine]); */
+                ReleaseServer(ClerkLineLock);
+                SetMVArrayServer(CashierStateArray, myLine, ONBREAK);
                 Yield();
-                if (remainingCustomer == 0) break;
+                rmCustomer = GetMVServer(remainingCustomer);
+                if (rmCustomer == 0) break;
                 continue;
             }
         } else { /* When CashierState == ONBREAK, Do Nothing */
-            Release(ClerkLineLock);
+            ReleaseServer(ClerkLineLock);
             Yield();
-            if (remainingCustomer == 0) break;
+            rmCustomer = GetMVServer(remainingCustomer);
+            if (rmCustomer == 0) break;
             continue;
         }
 
-        Acquire(CashierLineLock[myLine]);
-        Release(ClerkLineLock);
+        lockData = GetMVArrayServer(CashierLineLock, myLine);
+        AcquireServer(lockData);
+        ReleaseServer(ClerkLineLock);
 
 
-        Wait(CashierLineCV[myLine], CashierLineLock[myLine]);
-        id = CashierCustomerId[myLine];
+        cvData = GetMVArrayServer(CashierLineCV, myLine);
+        lockData = GetMVArrayServer(CashierLineLock, myLine);
+        WaitServer(cvData, lockData);
+        id = GetMVArrayServer(CashierCustomerId, myLine);
         Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
         Printint(myLine);
         Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
@@ -138,9 +164,11 @@ void main() {
 
 
             /* Collect Fee From Customer */
-            Acquire(cashierMoneyLock);
-            MoneyFromCashier += 100;
-            Release(cashierMoneyLock);
+            AcquireServer(cashierMoneyLock);
+            money = GetMVServer(MoneyFromCashier);
+            money += 100;
+            SetMVServer(MoneyFromCashier, money);
+            ReleaseServer(cashierMoneyLock);
 
 
             Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
@@ -162,8 +190,12 @@ void main() {
             Printint(id);
             Write("] has been given their completed passport\n", sizeof("] has been given their completed passport\n"), ConsoleOutput);
 
-            customerApplicationStatus[id] += 4;
-            Signal(CashierLineCV[myLine], CashierLineLock[myLine]);
+            data = GetMVArrayServer(customerApplicationStatusArray, id);
+            data += 4;
+            SetMVArrayServer(customerApplicationStatusArray, id, data);
+            cvData = GetMVArrayServer(CashierLineCV, myLine);
+            lockData = GetMVArrayServer(CashierLineLock, myLine);
+            SignalServer(cvData, lockData);
         } else { /* Not yet Certified */
             Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
@@ -173,16 +205,22 @@ void main() {
             Write("customerApplicationStatus[", sizeof("customerApplicationStatus["), ConsoleOutput);
             Printint(id);
             Write("] is: ", sizeof("] is: "), ConsoleOutput);
-            Printint(customerApplicationStatus[id]);
+
+            data = GetMVArrayServer(customerApplicationStatusArray, id);
+            Printint(data);
             Write("\n", sizeof("\n"), ConsoleOutput);
-            Signal(CashierLineCV[myLine], CashierLineLock[myLine]);
+            cvData = GetMVArrayServer(CashierLineCV, myLine);
+            lockData = GetMVArrayServer(CashierLineLock, myLine);
+            SignalServer(cvData, lockData);
 
         }
 
 
-        Release(CashierLineLock[myLine]);
+        lockData = GetMVArrayServer(CashierLineLock, myLine);
+        ReleaseServer(lockData);
 
-        if (remainingCustomer == 0) break;
+        rmCustomer = GetMVServer(remainingCustomer);
+        if (rmCustomer == 0) break;
     }   /* while loop */
 
     Exit(0);

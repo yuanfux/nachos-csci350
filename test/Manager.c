@@ -2,9 +2,10 @@
 #include "setup.h"
 
 void main() {
-    int count = 0;
     int maxNumClerk = 0;
     unsigned int i;
+    int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
+    int monTotal, monFromCashier, monFromApplicationClerk, monFromPictureClerk, monFromPassportClerk;
 
     /* check the max number of the clerks */
     if (maxNumClerk < APPLICATIONCLERK_SIZE) maxNumClerk = APPLICATIONCLERK_SIZE;
@@ -24,59 +25,74 @@ void main() {
         Yield();
         Yield();
         /* acquire all the lock to print out the incoming statement */
-        AcquireServer(applicationMoneyLock);
-        AcquireServer(pictureMoneyLock);
-        AcquireServer(passportMoneyLock);
-        AcquireServer(cashierMoneyLock);
+        lockData = GetMVServer(applicationMoneyLock);
+        AcquireServer(lockData);
+        lockData = GetMVServer(pictureMoneyLock);
+        AcquireServer(lockData);
+        lockData = GetMVServer(passportMoneyLock);
+        AcquireServer(lockData);
+        lockData = GetMVServer(cashierMoneyLock);
+        AcquireServer(lockData);
+
+        monFromApplicationClerk = GetMVServer(MoneyFromApplicationClerk);
+        monFromPictureClerk = GetMVServer(MoneyFromPictureClerk);
+        monFromPassportClerk = GetMVServer(MoneyFromPassportClerk);
+        monFromCashier = GetMVServer(MoneyFromCashier);
 
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-        Printint(MoneyFromApplicationClerk);
+        Printint(monFromApplicationClerk);
         Write(" for ApplicationClerks\n", sizeof(" for ApplicationClerks\n"), ConsoleOutput);
 
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-        Printint(MoneyFromPictureClerk);
+        Printint(monFromPictureClerk);
         Write(" for PictureClerks\n", sizeof(" for PictureClerks\n"), ConsoleOutput);
 
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-        Printint(MoneyFromPassportClerk);
+        Printint(monFromPassportClerk);
         Write(" for PassportClerks\n", sizeof(" for PassportClerks\n"), ConsoleOutput);
 
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-        Printint(MoneyFromCashier);
+        Printint(monFromCashier);
         Write(" for Cashiers\n", sizeof(" for Cashiers\n"), ConsoleOutput);
 
-        MoneyTotal = MoneyFromApplicationClerk + MoneyFromPictureClerk + MoneyFromPassportClerk + MoneyFromCashier;
+
+        monTotal = monFromApplicationClerk + monFromPictureClerk + monFromPassportClerk + monFromCashier;
+        SetMVServer(MoneyTotal, monTotal);
         Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-        Printint(MoneyTotal);
+        Printint(monTotal);
         Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
 
-        ReleaseServer(applicationMoneyLock);
-        ReleaseServer(pictureMoneyLock);
-        ReleaseServer(passportMoneyLock);
-        ReleaseServer(cashierMoneyLock);
+        lockData = GetMVServer(applicationMoneyLock);
+        ReleaseServer(lockData);
+        lockData = GetMVServer(pictureMoneyLock);
+        ReleaseServer(lockData);
+        lockData = GetMVServer(passportMoneyLock);
+        ReleaseServer(lockData);
+        lockData = GetMVServer(cashierMoneyLock);
+        ReleaseServer(lockData);
 
-        count = 0;
-
-        /*  A vector of clerkState */
-        /*  A vector of clerkCV */
 
         Yield();
-        AcquireServer(ClerkLineLock);
+        lockData = GetMVServer(ClerkLineLock);
+        AcquireServer(lockData);
+        rmCustomer = GetMVServer(remainingCustomer);
 
         /* Application Clerks */
         for (i = 0; i < APPLICATIONCLERK_SIZE; i++) {
-            if (ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] >= 1
-                    && ApplicationClerkState[i] == ONBREAK) {
+            bribeCount = GetMVArrayServer(ApplicationClerkBribeLineCountArray, i);
+            count = GetMVArrayServer(ApplicationClerkLineCountArray, i);
+            state = GetMVArrayServer(ApplicationClerkStateArray, i);
 
-                ApplicationClerkState[i] = AVAILABLE;
+            if (count + bribeCount >= 1 && state == ONBREAK) {
+
+                SetMVArrayServer(ApplicationClerkStateArray, i, AVAILABLE);
                 Write("Manager has woken up an ApplicationClerk\n", sizeof("Manager has woken up an ApplicationClerk\n"), ConsoleOutput);
                 Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
                 Printint(i);
                 Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
-            } else if (remainingCustomer <= maxNumClerk * 3 &&
-                       ApplicationClerkLineCount[i] + ApplicationClerkBribeLineCount[i] > 0) {
+            } else if (rmCustomer <= maxNumClerk * 3 && count + bribeCount > 0) {
 
-                ApplicationClerkState[i] = AVAILABLE;
+                SetMVArrayServer(ApplicationClerkStateArray, i, AVAILABLE);
                 Write("Manager has woken up an ApplicationClerk\n", sizeof("Manager has woken up an ApplicationClerk\n"), ConsoleOutput);
                 Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
                 Printint(i);
@@ -88,18 +104,19 @@ void main() {
 
         /* Picture Clerks */
         for (i = 0; i < PICTURECLERK_SIZE; i++) {
-            if (pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] >= 1
-                    && pictureClerkState[i] == ONBREAK) {
+            bribeCount = GetMVArrayServer(pictureClerkBribeLineCountArray, i);
+            count = GetMVArrayServer(pictureClerkLineCountArray, i);
+            state = GetMVArrayServer(pictureClerkStateArray, i);
+            if (count + bribeCount >= 1 && state == ONBREAK) {
 
-                pictureClerkState[i] = AVAILABLE;
+                SetMVArrayServer(pictureClerkStateArray, i, AVAILABLE);
                 Write("Manager has woken up a PictureClerk\n", sizeof("Manager has woken up a PictureClerk\n"), ConsoleOutput);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(i);
                 Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
-            } else if (remainingCustomer <= maxNumClerk * 3 &&
-                       pictureClerkLineCount[i] + pictureClerkBribeLineCount[i] > 0) {
+            } else if (rmCustomer <= maxNumClerk * 3 && count + bribeCount > 0) {
 
-                pictureClerkState[i] = AVAILABLE;
+                SetMVArrayServer(pictureClerkStateArray, i, AVAILABLE);
                 Write("Manager has woken up a PictureClerk\n", sizeof("Manager has woken up a PictureClerk\n"), ConsoleOutput);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(i);
@@ -111,18 +128,19 @@ void main() {
 
         /* Passport Clerks */
         for (i = 0; i < PASSPORTCLERK_SIZE; i++) {
-            if (passportClerkLineCount[i] + passportClerkBribeLineCount[i] >= 1
-                    && passportClerkState[i] == ONBREAK) {
+            bribeCount = GetMVArrayServer(ApplicationClerkBribeLineCountArray, i);
+            count = GetMVArrayServer(ApplicationClerkLineCountArray, i);
+            state = GetMVArrayServer(ApplicationClerkStateArray, i);
+            if (count + bribeCount >= 1 && state == ONBREAK) {
 
-                passportClerkState[i] = AVAILABLE;
+                SetMVArrayServer(passportClerkStateArray, i, AVAILABLE);
                 Write("Manager has woken up a PassportClerk\n", sizeof("Manager has woken up a PassportClerk\n"), ConsoleOutput);
                 Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(i);
                 Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
-            } else if (remainingCustomer <= maxNumClerk * 3 &&
-                       passportClerkLineCount[i] + passportClerkBribeLineCount[i] > 0) {
+            } else if (rmCustomer <= maxNumClerk * 3 && count + bribeCount > 0) {
 
-                passportClerkState[i] = AVAILABLE;
+                SetMVArrayServer(passportClerkStateArray, i, AVAILABLE);
                 Write("Manager has woken up a PassportClerk\n", sizeof("Manager has woken up a PassportClerk\n"), ConsoleOutput);
                 Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);
                 Printint(i);
@@ -134,18 +152,18 @@ void main() {
 
         /* Cashiers */
         for (i = 0; i < CASHIER_SIZE; i++) {
-            if (CashierLineCount[i] >= 1
-                    && CashierState[i] == ONBREAK) {
+            count = GetMVArrayServer(CashierLineCountArray, i);
+            state = GetMVArrayServer(CashierStateArray, i);
+            if (count >= 1 && state == ONBREAK) {
 
-                CashierState[i] = AVAILABLE;
+                SetMVArrayServer(CashierStateArray, i, AVAILABLE);
                 Write("Manager has woken up a Cashier\n", sizeof("Manager has woken up a Cashier\n"), ConsoleOutput);
                 Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(i);
                 Write("] is coming off break\n", sizeof("] is coming off break\n"), ConsoleOutput);
-            } else if (remainingCustomer <= maxNumClerk * 3 &&
-                       CashierLineCount[i] > 0) {
+            } else if (rmCustomer <= maxNumClerk * 3 && count > 0) {
 
-                CashierState[i] = AVAILABLE;
+                SetMVArrayServer(CashierStateArray, i, AVAILABLE);
                 Write("Manager has woken up a Cashier\n", sizeof("Manager has woken up a Cashier\n"), ConsoleOutput);
                 Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(i);
@@ -155,11 +173,11 @@ void main() {
 
         }
 
-        ReleaseServer(ClerkLineLock);
+        lockData = GetMVServer(ClerkLineLock);
+        ReleaseServer(lockData);
 
-        count++;
-
-        if (remainingCustomer == 0) {
+        rmCustomer = GetMVServer(remainingCustomer);
+        if (rmCustomer == 0) {
             Write("No customer. Manager is closing the office\n", sizeof("No customer. Manager is closing the office\n"), ConsoleOutput);
             break;
         }
@@ -167,7 +185,12 @@ void main() {
     }
 
 
-    AcquireServer(printLock);
+    lockData = GetMVServer(printLock);
+    AcquireServer(lockData);
+    monFromApplicationClerk = GetMVServer(MoneyFromApplicationClerk);
+    monFromPictureClerk = GetMVServer(MoneyFromPictureClerk);
+    monFromPassportClerk = GetMVServer(MoneyFromPassportClerk);
+    monFromCashier = GetMVServer(MoneyFromCashier);
     Write("\n", sizeof("\n"), ConsoleOutput);
     Write("===================================\n", sizeof("===================================\n"), ConsoleOutput);
     Write("Passport Office Simulation Finshed.\n", sizeof("Passport Office Simulation Finshed.\n"), ConsoleOutput);
@@ -177,27 +200,29 @@ void main() {
     Write("\n\n--------------Simulation Summary---------------\n\n", sizeof("\n\n--------------Simulation Summary---------------\n\n"), ConsoleOutput);
 
     Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-    Printint(MoneyFromApplicationClerk);
+    Printint(monFromApplicationClerk);
     Write(" for ApplicationClerks\n", sizeof(" for ApplicationClerks\n"), ConsoleOutput);
 
     Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-    Printint(MoneyFromPictureClerk);
+    Printint(monFromPictureClerk);
     Write(" for PictureClerks\n", sizeof(" for PictureClerks\n"), ConsoleOutput);
 
     Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-    Printint(MoneyFromPassportClerk);
+    Printint(monFromPassportClerk);
     Write(" for PassportClerks\n", sizeof(" for PassportClerks\n"), ConsoleOutput);
 
     Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-    Printint(MoneyFromCashier);
+    Printint(monFromCashier);
     Write(" for Cashiers\n", sizeof(" for Cashiers\n"), ConsoleOutput);
 
-    MoneyTotal = MoneyFromApplicationClerk + MoneyFromPictureClerk + MoneyFromPassportClerk + MoneyFromCashier;
+    monTotal = monFromApplicationClerk + monFromPictureClerk + monFromPassportClerk + monFromCashier;
     Write("Manager has counted a total of $", sizeof("Manager has counted a total of $"), ConsoleOutput);
-    Printint(MoneyTotal);
+    Printint(monTotal);
     Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
     Write("\n\n--------------------------------------------\n\n", sizeof("\n\n--------------------------------------------\n\n"), ConsoleOutput);
-    ReleaseServer(printLock);
+
+    lockData = GetMVServer(printLock);
+    ReleaseServer(lockData);
 
     Exit(0);
 }

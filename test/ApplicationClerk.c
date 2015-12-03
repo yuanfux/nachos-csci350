@@ -7,13 +7,14 @@ void main() {
     unsigned int i;
     int InBribeLine = 0;
     int myLine;
-    int state, count, bribeCount, lockData, cvData, money, status, has;
+    int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
+    clerkState state = ONBREAK;
 
     AcquireServer(incrementCount);
-    state = GetMVServer(appClerkNum);
-    myLine = state + 1;
-    state++;
-    SetMVServer(appClerkNum, state);
+    data = GetMVServer(appClerkNum);
+    myLine = data + 1;
+    data++;
+    SetMVServer(appClerkNum, data);
     ReleaseServer(incrementCount);
 
     while (1) {
@@ -29,7 +30,8 @@ void main() {
         }
 
         has = GetMVServer(hasSenator);
-        if (has == 1 && myLine == 0 && senatorStatus == 0) { /* if there is a senator present and i am the index 0 clerk */
+        senStatus = GetMVServer(senatorStatus);
+        if (has == 1 && myLine == 0 && senStatus == 0) { /* if there is a senator present and i am the index 0 clerk */
 
             state = GetMVArrayServer(ApplicationClerkStateArray, myLine);
 
@@ -52,23 +54,24 @@ void main() {
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
 
+            senData = GetMVServer(senatorData);
             WaitServer(senatorApplicationWaitCV, senatorWaitLock);
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
-            Printint(senatorData + 100);
+            Printint(senData + 100);
             Write("] from Senator [", sizeof("] from Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
             Write("ApplicationClerk[", sizeof("ApplicationClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Senator [", sizeof("] has recorded a completed application for Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            status = GetMVServer(senatorStatus);
-            status++;
-            SetMVServer(senatorStatus, status);
+            senStatus = GetMVServer(senatorStatus);
+            senStatus++;
+            SetMVServer(senatorStatus, senStatus);
 
             SignalServer(senatorApplicationWaitCV, senatorWaitLock);
 
@@ -107,13 +110,15 @@ void main() {
                 SetMVArrayServer(ApplicationClerkStateArray, myLine, ONBREAK);
                 ReleaseServer(ClerkLineLock);
                 Yield();/* context switch */
-                if (remainingCustomer == 0) break;
+                rmCustomer = GetMVServer(remainingCustomer);
+                if (rmCustomer == 0) break;
                 continue;
             }
         } else { /* if there is no customers, put myself on break */
             ReleaseServer(ClerkLineLock);
             Yield();/* context switch */
-            if (remainingCustomer == 0) break;
+            rmCustomer = GetMVServer(remainingCustomer);
+            if (rmCustomer == 0) break;
             continue;
         }
 
@@ -127,7 +132,7 @@ void main() {
             lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
             cvData = GetMVArrayServer(ApplicationClerkBribeLineCVArray, myLine);
             WaitServer(cvData, lockData);
-            id = GetMVArrayServer(ApplicationClerkData, myLine);
+            id = GetMVArrayServer(ApplicationClerkDataArray, myLine);
 
             /* Collect Bribe Money From Customer */
             AcquireServer(applicationMoneyLock);
@@ -213,8 +218,8 @@ void main() {
         lockData = GetMVArrayServer(ApplicationClerkLineLockArray, myLine);
         ReleaseServer(lockData);
 
-        data = GetMVServer(remainingCustomer);
-        if (data == 0) break;
+        rmCustomer = GetMVServer(remainingCustomer);
+        if (rmCustomer == 0) break;
     }/* while */
 
     Exit(0);

@@ -9,28 +9,36 @@ void main() {
     int numCalls;
     int inBribeLine = 0;
     int myLine;
+    int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
+    clerkState state = ONBREAK;
 
-    Acquire(incrementCount);
-    myLine = picClerkNum + 1;
-    picClerkNum++;
-    Release(incrementCount);
+    AcquireServer(incrementCount);
+    data = GetMVServer(picClerkNum);
+    myLine = data + 1;
+    data++;
+    SetMVServer(picClerkNum, data);
+    ReleaseServer(incrementCount);
 
     while (1) {
 
         inBribeLine = 0;
-        if (pictureClerkState[myLine] == ONBREAK && !printed) {
+        state = GetMVArrayServer(pictureClerkStateArray, myLine);
+        if (state == ONBREAK && !printed) {
             Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] is going on break\n", sizeof("] is going on break\n"), ConsoleOutput);
             printed = 1;
-        } else if (pictureClerkState[myLine] != ONBREAK) {
+        } else if (state != ONBREAK) {
             printed = 0;
         }
 
-        if (hasSenator == 1 && (myLine == 0) && senatorStatus <= 1) { /* if there is a senator present and i am the index 0 clerk */
+        has = GetMVServer(hasSenator);
+        senStatus = GetMVServer(senatorStatus);
+        if (has == 1 && (myLine == 0) && senStatus <= 1) { /* if there is a senator present and i am the index 0 clerk */
 
-            if (pictureClerkState[myLine] == ONBREAK) {
-                pictureClerkState[myLine] = BUSY;
+            state = GetMVArrayServer(pictureClerkStateArray, myLine);
+            if (state == ONBREAK) {
+                SetMVArrayServer(pictureClerkStateArray, myLine, BUSY);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] sees a senator\n", sizeof("] sees a senator\n"), ConsoleOutput);
@@ -40,21 +48,21 @@ void main() {
                 printed = 0;
             }
 
-            Acquire(senatorPictureWaitLock);
-            Acquire(senatorWaitLock);
+            AcquireServer(senatorPictureWaitLock);
+            AcquireServer(senatorWaitLock);
 
-            senatorServiceId = myLine;
-            Signal(senatorPictureWaitCV, senatorWaitLock);
+            senData = GetMVServer(senatorData);
+            SignalServer(senatorPictureWaitCV, senatorWaitLock);
             Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
-            Wait(senatorPictureWaitCV, senatorWaitLock);
+            WaitServer(senatorPictureWaitCV, senatorWaitLock);
             Write("PictureClerk[", sizeof("PictureClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
-            Printint(senatorData + 100);
+            Printint(senData + 100);
             Write("] from Senator [", sizeof("] from Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
             photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
@@ -62,83 +70,98 @@ void main() {
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has taken a picture of Senator[", sizeof("] has taken a picture of Senator["), ConsoleOutput);
-                Printint(senatorData);
+                Printint(senData);
                 Write("]\n", sizeof("]\n"), ConsoleOutput);
 
                 Write("Senator [", sizeof("Senator ["), ConsoleOutput);
-                Printint(senatorData);
+                Printint(senData);
                 Write("] does not like their picture from PictureClerk [", sizeof("] does not like their picture from PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("].\n", sizeof("].\n"), ConsoleOutput);
                 photoAcceptance = Random(RAND_UPPER_LIMIT) % 100;
             }
 
+
             Write("Senator [", sizeof("Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("] does like their picture from PictureClerk [", sizeof("] does like their picture from PictureClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("].\n", sizeof("].\n"), ConsoleOutput);
             Write("PictureClerk[", sizeof("PictureClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has recorded a completed application for Senator [", sizeof("] has recorded a completed application for Senator ["), ConsoleOutput);
-            Printint(senatorData);
+            Printint(senData);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            senatorStatus += 2;
-            Signal(senatorPictureWaitCV, senatorWaitLock);
-            Release(senatorWaitLock);
-            Release(senatorPictureWaitLock);
-        } else if (hasSenator == 1 && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
-            pictureClerkState[myLine] = ONBREAK;
+            senStatus = GetMVServer(senatorStatus);
+            senStatus += 2;
+            SetMVServer(senatorStatus, senStatus);
+            SignalServer(senatorPictureWaitCV, senatorWaitLock);
+            ReleaseServer(senatorWaitLock);
+            ReleaseServer(senatorPictureWaitLock);
+        } else if (has == 1 && myLine != 0) { /* if there is a senator present and i am not the index 0 clerk. Put myself on break */
+            SetMVArrayServer(pictureClerkStateArray, myLine, ONBREAK);
         }
 
         Yield();
-        Acquire(ClerkLineLock);/* acquire the line lock in case of line size change */
-        if (pictureClerkState[myLine] != ONBREAK && hasSenator == 0) { /* no senator, not on break, deal with normal customers */
+        AcquireServer(ClerkLineLock);/* acquire the line lock in case of line size change */
+        state = GetMVArrayServer(pictureClerkStateArray, myLine);
+        has = GetMVServer(hasSenator);
+        if (state != ONBREAK && has == 0) { /* no senator, not on break, deal with normal customers */
 
-            if (pictureClerkBribeLineCount[myLine] > 0) { /* bribe line customer first */
-                Signal(pictureClerkBribeLineWaitCV[myLine], ClerkLineLock);
+            bribeCount = GetMVArrayServer(pictureClerkBribeLineCountArray, myLine);
+            count = GetMVArrayServer(pictureClerkLineCountArray, myLine);
+            if ( > 0) { /* bribe line customer first */
+                cvData = GetMVArrayServer(pictureClerkBribeLineWaitCVArray, myLine);
+                SignalServer(cvData, ClerkLineLock);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
-                pictureClerkState[myLine] = BUSY;
+                SetMVArrayServer(pictureClerkStateArray, myLine, BUSY);
                 inBribeLine = 1;
-            } else if (pictureClerkLineCount[myLine] > 0) { /* regular line next */
-                Signal(pictureClerkLineWaitCV[myLine], ClerkLineLock);
+            } else if (count > 0) { /* regular line next */
+                cvData = GetMVArrayServer(pictureClerkLineWaitCVArray, myLine);
+                SignalServer(cvData, ClerkLineLock);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has signalled a Customer to come to their counter.\n", sizeof("] has signalled a Customer to come to their counter.\n"), ConsoleOutput);
-                pictureClerkState[myLine] = BUSY;
+                SetMVArrayServer(pictureClerkStateArray, myLine, BUSY);
             } else { /* no customer present */
-                pictureClerkState[myLine] = ONBREAK;
-                Release(ClerkLineLock);
+                SetMVArrayServer(pictureClerkStateArray, myLine, ONBREAK);
+                ReleaseServer(ClerkLineLock);
                 Yield();/* context switch */
-                if (remainingCustomer == 0) break;
+                rmCustomer = GetMVServer(remainingCustomer);
+                if (rmCustomer == 0) break;
                 continue;
             }
         } else { /* if there is no customers, put myself on break */
-            Release(ClerkLineLock);
+            ReleaseServer(ClerkLineLock);
             Yield();/* context switch */
-            if (remainingCustomer == 0) break;
+            rmCustomer = GetMVServer(remainingCustomer);
+            if (rmCustomer == 0) break;
             continue;
         }
 
-        Acquire(pictureClerkLineLock[myLine]);/* acquire the clerk lock to serve a customer */
-        Release(ClerkLineLock);
+        lockData = GetMVArrayServer(pictureClerkLineLockArray, myLine);
+        AcquireServer(lockData);/* acquire the clerk lock to serve a customer */
+        ReleaseServer(ClerkLineLock);
         /* if in bribe line */
         if (inBribeLine) {
             /* customer service starts */
-            Wait(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
-            id = pictureClerkData[myLine];
+            cvData = GetMVArrayServer(pictureClerkBribeLineCVArray, myLine);
+            WaitServer(cvData, lockData);
+            id = GetMVArrayServer(pictureClerkDataArray, myLine);
 
             /* Collect Bribe Money From Customer */
-            Acquire(pictureMoneyLock);
-            MoneyFromPictureClerk += 500;
+            AcquireServer(pictureMoneyLock);
+            money = GetMVServer(MoneyFromPictureClerk);
+            money += 500;
+            SetMVServer(MoneyFromPictureClerk, money);
             Write("PictureClerk[", sizeof("PictureClerk["), ConsoleOutput);
             Printint(myLine);
             Write("] has received $500 from Customer[", sizeof("] has received $500 from Customer["), ConsoleOutput);
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
-            Release(pictureMoneyLock);
+            ReleaseServer(pictureMoneyLock);
 
             Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
             Printint(myLine);
@@ -153,10 +176,11 @@ void main() {
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            Signal(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
-            Wait(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+            SignalServer(cvData, lockData);
+            WaitServer(cvData, lockData);
 
-            if (pictureAcceptance[myLine] > 2) { /* if customer likes the picture */
+            picAcc = GetMVArrayServer(photoAcceptanceArray, myLine);
+            if (picAcc > 2) { /* if customer likes the picture */
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has been told that Customer[", sizeof("] has been told that Customer["), ConsoleOutput);
@@ -168,9 +192,11 @@ void main() {
                     Yield();
                 }
 
-                customerApplicationStatus[id] += 2;
+                data = GetMVArrayServer(customerApplicationStatusArray, id);
+                data += 2;
+                SetMVArrayServer(customerApplicationStatusArray, id, data);
 
-                Signal(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+                SignalServer(cvData, lockData);
 
             } else { /* if customer does not like the picture */
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
@@ -178,15 +204,16 @@ void main() {
                 Write("] has been told that Customer[", sizeof("] has been told that Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] does not like their picture\n", sizeof("] does not like their picture\n"), ConsoleOutput);
-                Signal(pictureClerkBribeLineCV[myLine], pictureClerkLineLock[myLine]);
+                SignalServer(cvData, lockData);
             }
 
         }
         /* if in regular line */
         else {
             /* customer service starts */
-            Wait(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
-            id = pictureClerkData[myLine];
+            cvData = GetMVArrayServer(pictureClerkLineCVArray, myLine);
+            WaitServer(cvData, lockData);
+            id = GetMVArrayServer(pictureClerkDataArray, myLine);
 
             Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
             Printint(myLine);
@@ -201,10 +228,11 @@ void main() {
             Printint(id);
             Write("]\n", sizeof("]\n"), ConsoleOutput);
 
-            Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
-            Wait(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+            SignalServer(cvData, lockData);
+            WaitServer(cvData, lockData);
 
-            if (pictureAcceptance[myLine] > 2) { /* if customer likes the picture */
+            picAcc = GetMVArrayServer(photoAcceptanceArray, myLine);
+            if (picAcc > 2) { /* if customer likes the picture */
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
                 Write("] has been told that Customer[", sizeof("] has been told that Customer["), ConsoleOutput);
@@ -216,9 +244,11 @@ void main() {
                     Yield();
                 }
 
-                customerApplicationStatus[id] += 2;
+                data = GetMVArrayServer(customerApplicationStatusArray, id);
+                data += 2;
+                SetMVArrayServer(customerApplicationStatusArray, id, data);
 
-                Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+                SignalServer(cvData, lockData);
 
             } else { /* if customer does not like the picture */
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
@@ -226,14 +256,15 @@ void main() {
                 Write("] has been told that Customer[", sizeof("] has been told that Customer["), ConsoleOutput);
                 Printint(id);
                 Write("] does not like their picture\n", sizeof("] does not like their picture\n"), ConsoleOutput);
-                Signal(pictureClerkLineCV[myLine], pictureClerkLineLock[myLine]);
+                SignalServer(cvData, lockData);
             }
 
         }
         /* customer service ends */
-        Release(pictureClerkLineLock[myLine]);
+        ReleaseServer(lockData);
 
-        if (remainingCustomer == 0) break;
+        rmCustomer = GetMVServer(remainingCustomer);
+        if (rmCustomer == 0) break;
     }
 
     Exit(0);
