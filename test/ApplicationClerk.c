@@ -19,6 +19,7 @@ void main() {
     ReleaseServer(incrementCount);
 
     while (1) {
+        
         InBribeLine = 0;
         state = GetMVArrayServer(ApplicationClerkStateArray, myLine);
         if (state == ONBREAK && !printed) {

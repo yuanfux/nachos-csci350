@@ -206,7 +206,7 @@ void Condition::Signal(Lock* conditionLock) {
     }
 
     if (queue->IsEmpty()){                                  //if the waiting queue is empty
-        printf("Warning. There's nothing to signal.\n");    //then it doesn't need to signal any thread
+       // printf("Warning. There's nothing to signal.\n");    //then it doesn't need to signal any thread
         (void) interrupt->SetLevel(oldLevel);
         return;
     }

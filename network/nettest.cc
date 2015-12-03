@@ -177,6 +177,38 @@ ServerMonitorVariable serverMonitorVariable[NUM_MONITOR];
 
 ServerMonitorArray serverMonitorArray[NUM_MONITOR_ARRAY];
 
+void initialize(){
+    for (int i =0 ; i < NUM_LOCK ; i++ ){
+        ServerLock tempLock;
+        tempLock.name = NULL;
+        tempLock.queue = new List;
+        serverLock[i] = tempLock;
+        
+    }
+    for (int i =0 ; i < NUM_CONDITION ; i++ ){
+        ServerCondition tempLock;
+        tempLock.name = NULL;
+        tempLock.queue = new List;
+        tempLock.waitingLock = -1;
+        serverCondition[i] = tempLock;
+        
+    }
+    for (int i =0 ; i < NUM_MONITOR ; i++ ){
+        ServerMonitorVariable tempLock;
+        tempLock.name = NULL;
+        
+        serverMonitorVariable[i] = tempLock;
+        
+    }
+    for (int i =0 ; i < NUM_MONITOR_ARRAY ; i++ ){
+        ServerMonitorArray tempLock;
+        tempLock.name = NULL;
+        serverMonitorArray[i] = tempLock;
+        
+    }
+    
+}
+
 
 int numLock = 0;
 int numCondition = 0;
@@ -1047,7 +1079,8 @@ void CreateLock(char* name, int replyTo, int ThreadIndex, int replyToClient, int
     
     if( replyTo >= NumServers){ //receive msg from clients
     for(int i = 0 ; i < numLock ; i++){
-        
+        printf("CreateLock: from client name: %s, in server name: %s\n", name, serverLock[i].name);
+        printf("CreateLock: Current Lock size: %d\n", numLock);
         if(strcmp(serverLock[i].name, name) == 0){//name already exists -> share
             
             printf("CreateLock: name already exists\n");
@@ -1079,17 +1112,20 @@ void CreateLock(char* name, int replyTo, int ThreadIndex, int replyToClient, int
         
         else{
             //create new
-        
-    
-            serverLock[numLock].name = name;
 
-            serverLock[numLock].spaceHolder.push_back(binder);
+            serverLock[numLock].name = new char[strlen(name)];
+            strcpy(serverLock[numLock].name, name);
             
+            
+            strcpy( serverLock[numLock].name, name);
+            serverLock[numLock].spaceHolder.push_back(binder);
+
 //            printf("in createlcok: binder.replyto: %d , binder.threadindex: %d \n", binder.replyTo, binder.ThreadIndex);
 
 
     
             sendInt(replyTo,ThreadIndex, NUM_LOCK*getMachineID()+numLock);
+            printf("5\n");
 
             numLock++;
         
@@ -1245,10 +1281,13 @@ void DestroyLock(int lockIndex, int replyTo, int ThreadIndex, int replyToClient,
 void CreateCondition(char* name, int replyTo, int ThreadIndex, int replyToClient, int ThreadIndexClient){
     
     Binder binder(replyTo, ThreadIndex);
-    
+    printf("11\n");
     if(replyTo >= NumServers){//client msg
+        printf("12\n");
     for(int i = 0 ; i < numCondition ; i++){
-        
+        printf("in loop: %d\n ", i);
+        printf("CreateCondition: from client name: %s, in server name: %s\n", name, serverCondition[i].name);
+        printf("CreateCondition: Current Lock size: %d\n", numCondition);
         if(strcmp(serverCondition[i].name, name) == 0){//name already exists -> share
             printf("CreateCondition: name already exists\n");
             serverLock[i].spaceHolder.push_back(binder);
@@ -1274,11 +1313,21 @@ void CreateCondition(char* name, int replyTo, int ThreadIndex, int replyToClient
         }
         else{
             //create new
-            serverCondition[numCondition].name = name;
+            printf("1\n");
+            serverCondition[numCondition].name = new char[strlen(name)];
+            printf("2\n");
+
+            strcpy(serverCondition[numCondition].name, name);
+            printf("3\n");
+
             
             serverCondition[numCondition].spaceHolder.push_back(binder);
+            printf("4\n");
+
             
             sendInt(replyTo, ThreadIndex, NUM_CONDITION*getMachineID() + numCondition);
+            printf("5\n");
+
             
             numCondition++;
             
@@ -1381,7 +1430,9 @@ void CreateMV(char* name, int replyTo, int ThreadIndex, int data, int replyToCli
         else{
             //create new
             
-            serverMonitorVariable[numMonitor].name = name;
+            serverMonitorVariable[numMonitor].name = new char[strlen(name)];
+            
+            strcpy(serverMonitorVariable[numMonitor].name, name);
             
             serverMonitorVariable[numMonitor].data = data;
             
@@ -1685,7 +1736,8 @@ void CreateMVArray(char* name, int length, int replyTo, int ThreadIndex, int rep
         else{
             //create new
             
-            serverMonitorArray[numMonitorArray].name = name;
+            serverMonitorArray[numMonitorArray].name = new char[strlen(name)];
+            strcpy(serverMonitorArray[numMonitorArray].name, name);
             
             serverMonitorArray[numMonitorArray].spaceHolder.push_back(binder);
             
@@ -1968,7 +2020,7 @@ void Server(){
     PacketHeader serverInPktHdr;
     MailHeader serverOutMailHdr;
     MailHeader serverInMailHdr;
-    
+    initialize();
     while(true){
         //printf("inside Server while loop\n");
         
@@ -1985,7 +2037,7 @@ void Server(){
         replyTo = serverInPktHdr.from;
         }
         else{
-            
+            printf("therer is something in the waiting queue\n");
             replyTo = msgQ[0].fromPktHeader;
             serverInMailHdr.from = msgQ[0].fromMailHeader;
             strcpy(receive, msgQ[0].buffer);

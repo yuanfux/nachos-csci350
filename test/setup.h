@@ -2,12 +2,12 @@
 #define SETUP_H
 #include "syscall.h"
 
-#define APPLICATIONCLERK_SIZE 5
-#define PICTURECLERK_SIZE 5
-#define PASSPORTCLERK_SIZE 5
-#define CASHIER_SIZE 5
-#define CUSTOMER_SIZE 20
-#define SENATOR_SIZE 10
+#define APPLICATIONCLERK_SIZE 1
+#define PICTURECLERK_SIZE 1
+#define PASSPORTCLERK_SIZE 1
+#define CASHIER_SIZE 1
+#define CUSTOMER_SIZE 2
+#define SENATOR_SIZE 1
 #define MANAGER_SIZE 1
 #define RAND_UPPER_LIMIT 10000
 
@@ -431,6 +431,5 @@ void setup() {
 	customerWaitCV = CreateConditionServer("customerCV", sizeof("customerCV"));
 	customerWaitLock = CreateLockServer("customerLock", sizeof("customerLock"));
 
-	Exit(0);
 }
 #endif

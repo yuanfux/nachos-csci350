@@ -3,7 +3,7 @@
 
 int main(){
     int i;
-    for(i = 0 ; i< 5;i++){
+    for(i = 0 ; i< 1;i++){
         Exec("../test/PassportClerk", sizeof("../test/PassportClerk"));
     }
     
