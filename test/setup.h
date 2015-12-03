@@ -248,25 +248,28 @@ void setup() {
 	CashierLineWaitCVArray = CreateMVArrayServer("CashierLineWaitCV", sizeof("CashierLineWaitCV"), CASHIER_SIZE);
 	CashierLineCountArray = CreateMVArrayServer("CashierLineCount", sizeof("CashierLineCount"), CASHIER_SIZE);
 
-	MoneyFromApplicationClerk = CreateMVServer("MoneyFromApplicationClerk", sizeof("MoneyFromApplicationClerk") 0);
-	MoneyFromPictureClerk = CreateMVServer("MoneyFromPictureClerk", sizeof("MoneyFromPictureClerk") 0);
-	MoneyFromPassportClerk = CreateMVServer("MoneyFromPassportClerk", sizeof("MoneyFromPassportClerk") 0);
-	MoneyFromCashier = CreateMVServer("MoneyFromCashier", sizeof("MoneyFromCashier") 0);
-	MoneyTotal = CreateMVServer("MoneyTotal", sizeof("MoneyTotal") 0);
+	numCustomerWaitingArray = CreateMVArrayServer("numCustomerWaiting", sizeof("numCustomerWaiting"), CUSTOMER_SIZE);
+	customerApplicationStatusArray = CreateMVArrayServer("customerApplicationStatus", sizeof("customerApplicationStatus"), CUSTOMER_SIZE);
 
-	hasSenator = CreateMVServer("hasSenator", sizeof("hasSenator") 0);
-	
-	customerNum = CreateMVServer("customerNum", sizeof("customerNum") - 1);
-	appClerkNum = CreateMVServer("appClerkNum", sizeof("appClerkNum") - 1);
-	picClerkNum = CreateMVServer("picClerkNum", sizeof("picClerkNum") - 1);
-	passClerkNum = CreateMVServer("passClerkNum", sizeof("passClerkNum") - 1);
-	cashierNum = CreateMVServer("cashierNum", sizeof("cashierNum") - 1);
+	MoneyFromApplicationClerk = CreateMVServer("MoneyFromApplicationClerk", sizeof("MoneyFromApplicationClerk"), 0);
+	MoneyFromPictureClerk = CreateMVServer("MoneyFromPictureClerk", sizeof("MoneyFromPictureClerk"), 0);
+	MoneyFromPassportClerk = CreateMVServer("MoneyFromPassportClerk", sizeof("MoneyFromPassportClerk"), 0);
+	MoneyFromCashier = CreateMVServer("MoneyFromCashier", sizeof("MoneyFromCashier"), 0);
+	MoneyTotal = CreateMVServer("MoneyTotal", sizeof("MoneyTotal"), 0);
 
-	remainingCustomer = CreateMVServer("remainingCustomer", sizeof("remainingCustomer") 0);
+	hasSenator = CreateMVServer("hasSenator", sizeof("hasSenator"), 0);
+
+	customerNum = CreateMVServer("customerNum", sizeof("customerNum"), -1);
+	appClerkNum = CreateMVServer("appClerkNum", sizeof("appClerkNum"), -1);
+	picClerkNum = CreateMVServer("picClerkNum", sizeof("picClerkNum"), -1);
+	passClerkNum = CreateMVServer("passClerkNum", sizeof("passClerkNum"), -1);
+	cashierNum = CreateMVServer("cashierNum", sizeof("cashierNum"), -1);
+
+	remainingCustomer = CreateMVServer("remainingCustomer", sizeof("remainingCustomer"), 0);
 
 	senatorData; CreateMVServer("senatorData", sizeof("senatorData"), -1);
-	senatorStatus = CreateMVServer("senatorStatus", sizeof("senatorStatus") 0);
-	senatorNum = CreateMVServer("senatorNum", sizeof("senatorNum") - 1);
+	senatorStatus = CreateMVServer("senatorStatus", sizeof("senatorStatus"), 0);
+	senatorNum = CreateMVServer("senatorNum", sizeof("senatorNum"), -1);
 
 	for (i = 0; i < CUSTOMER_SIZE; i++) {
 		SetMVArrayServer(numCustomerWaitingArray, i, -1);

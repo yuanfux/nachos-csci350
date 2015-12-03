@@ -48,12 +48,13 @@ void main() {
             AcquireServer(senatorCashierWaitLock);
             AcquireServer(senatorWaitLock);
 
+            senData = GetMVServer(senatorData);
+            SetMVServer(senatorServiceId, myLine);
             SignalServer(senatorCashierWaitCV, senatorWaitLock);
             Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
 
-            senData = GetMVServer(senatorData);
             WaitServer(senatorCashierWaitCV, senatorWaitLock);
             Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
             Printint(myLine);
@@ -113,9 +114,9 @@ void main() {
         has = GetMVServer(hasSenator);
         if (state != ONBREAK && has == 0) {
             /* When CashierState != ONBREAK */
-            count = GetMVArrayServer(CashierLineCount, myLine);
+            count = GetMVArrayServer(CashierLineCountArray, myLine);
             if (count > 0) {
-                cvData = GetMVArrayServer(CashierLineWaitCV, myLine);
+                cvData = GetMVArrayServer(CashierLineWaitCVArray, myLine);
                 SignalServer(cvData, ClerkLineLock);
                 Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
                 Printint(myLine);
@@ -137,15 +138,15 @@ void main() {
             continue;
         }
 
-        lockData = GetMVArrayServer(CashierLineLock, myLine);
+        lockData = GetMVArrayServer(CashierLineLockArray, myLine);
         AcquireServer(lockData);
         ReleaseServer(ClerkLineLock);
 
 
-        cvData = GetMVArrayServer(CashierLineCV, myLine);
-        lockData = GetMVArrayServer(CashierLineLock, myLine);
+        cvData = GetMVArrayServer(CashierLineCVArray, myLine);
+        lockData = GetMVArrayServer(CashierLineLockArray, myLine);
         WaitServer(cvData, lockData);
-        id = GetMVArrayServer(CashierCustomerId, myLine);
+        id = GetMVArrayServer(CashierCustomerIdArray, myLine);
         Write("Cashier[", sizeof("Cashier["), ConsoleOutput);
         Printint(myLine);
         Write("] has received SSN [", sizeof("] has received SSN ["), ConsoleOutput);
@@ -193,8 +194,8 @@ void main() {
             data = GetMVArrayServer(customerApplicationStatusArray, id);
             data += 4;
             SetMVArrayServer(customerApplicationStatusArray, id, data);
-            cvData = GetMVArrayServer(CashierLineCV, myLine);
-            lockData = GetMVArrayServer(CashierLineLock, myLine);
+            cvData = GetMVArrayServer(CashierLineCVArray, myLine);
+            lockData = GetMVArrayServer(CashierLineLockArray, myLine);
             SignalServer(cvData, lockData);
         } else { /* Not yet Certified */
             Write("Cashier [", sizeof("Cashier ["), ConsoleOutput);
@@ -209,14 +210,14 @@ void main() {
             data = GetMVArrayServer(customerApplicationStatusArray, id);
             Printint(data);
             Write("\n", sizeof("\n"), ConsoleOutput);
-            cvData = GetMVArrayServer(CashierLineCV, myLine);
-            lockData = GetMVArrayServer(CashierLineLock, myLine);
+            cvData = GetMVArrayServer(CashierLineCVArray, myLine);
+            lockData = GetMVArrayServer(CashierLineLockArray, myLine);
             SignalServer(cvData, lockData);
 
         }
 
 
-        lockData = GetMVArrayServer(CashierLineLock, myLine);
+        lockData = GetMVArrayServer(CashierLineLockArray, myLine);
         ReleaseServer(lockData);
 
         rmCustomer = GetMVServer(remainingCustomer);

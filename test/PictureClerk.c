@@ -9,7 +9,7 @@ void main() {
     int numCalls;
     int inBribeLine = 0;
     int myLine;
-    int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
+    int picAcc, data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
     clerkState state = ONBREAK;
 
     AcquireServer(incrementCount);
@@ -51,11 +51,13 @@ void main() {
             AcquireServer(senatorPictureWaitLock);
             AcquireServer(senatorWaitLock);
 
+            SetMVServer(senatorServiceId, myLine);
             senData = GetMVServer(senatorData);
             SignalServer(senatorPictureWaitCV, senatorWaitLock);
             Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
             Printint(myLine);
             Write("] has signalled a Senator to come to their counter.\n", sizeof("] has signalled a Senator to come to their counter.\n"), ConsoleOutput);
+            
             WaitServer(senatorPictureWaitCV, senatorWaitLock);
             Write("PictureClerk[", sizeof("PictureClerk["), ConsoleOutput);
             Printint(myLine);
@@ -110,7 +112,7 @@ void main() {
 
             bribeCount = GetMVArrayServer(pictureClerkBribeLineCountArray, myLine);
             count = GetMVArrayServer(pictureClerkLineCountArray, myLine);
-            if ( > 0) { /* bribe line customer first */
+            if (bribeCount > 0) { /* bribe line customer first */
                 cvData = GetMVArrayServer(pictureClerkBribeLineWaitCVArray, myLine);
                 SignalServer(cvData, ClerkLineLock);
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
@@ -179,7 +181,7 @@ void main() {
             SignalServer(cvData, lockData);
             WaitServer(cvData, lockData);
 
-            picAcc = GetMVArrayServer(photoAcceptanceArray, myLine);
+            picAcc = GetMVArrayServer(pictureAcceptanceArray, myLine);
             if (picAcc > 2) { /* if customer likes the picture */
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);
@@ -231,7 +233,7 @@ void main() {
             SignalServer(cvData, lockData);
             WaitServer(cvData, lockData);
 
-            picAcc = GetMVArrayServer(photoAcceptanceArray, myLine);
+            picAcc = GetMVArrayServer(pictureAcceptanceArray, myLine);
             if (picAcc > 2) { /* if customer likes the picture */
                 Write("PictureClerk [", sizeof("PictureClerk ["), ConsoleOutput);
                 Printint(myLine);

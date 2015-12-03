@@ -6,6 +6,7 @@ void main() {
     unsigned int i;
     int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
     int monTotal, monFromCashier, monFromApplicationClerk, monFromPictureClerk, monFromPassportClerk;
+    clerkState state = ONBREAK;
 
     /* check the max number of the clerks */
     if (maxNumClerk < APPLICATIONCLERK_SIZE) maxNumClerk = APPLICATIONCLERK_SIZE;
@@ -25,14 +26,10 @@ void main() {
         Yield();
         Yield();
         /* acquire all the lock to print out the incoming statement */
-        lockData = GetMVServer(applicationMoneyLock);
-        AcquireServer(lockData);
-        lockData = GetMVServer(pictureMoneyLock);
-        AcquireServer(lockData);
-        lockData = GetMVServer(passportMoneyLock);
-        AcquireServer(lockData);
-        lockData = GetMVServer(cashierMoneyLock);
-        AcquireServer(lockData);
+        AcquireServer(applicationMoneyLock);
+        AcquireServer(pictureMoneyLock);
+        AcquireServer(passportMoneyLock);
+        AcquireServer(cashierMoneyLock);
 
         monFromApplicationClerk = GetMVServer(MoneyFromApplicationClerk);
         monFromPictureClerk = GetMVServer(MoneyFromPictureClerk);
@@ -62,19 +59,14 @@ void main() {
         Printint(monTotal);
         Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
 
-        lockData = GetMVServer(applicationMoneyLock);
-        ReleaseServer(lockData);
-        lockData = GetMVServer(pictureMoneyLock);
-        ReleaseServer(lockData);
-        lockData = GetMVServer(passportMoneyLock);
-        ReleaseServer(lockData);
-        lockData = GetMVServer(cashierMoneyLock);
-        ReleaseServer(lockData);
+        ReleaseServer(applicationMoneyLock);
+        ReleaseServer(pictureMoneyLock);
+        ReleaseServer(passportMoneyLock);
+        ReleaseServer(cashierMoneyLock);
 
 
         Yield();
-        lockData = GetMVServer(ClerkLineLock);
-        AcquireServer(lockData);
+        AcquireServer(ClerkLineLock);
         rmCustomer = GetMVServer(remainingCustomer);
 
         /* Application Clerks */
@@ -173,8 +165,7 @@ void main() {
 
         }
 
-        lockData = GetMVServer(ClerkLineLock);
-        ReleaseServer(lockData);
+        ReleaseServer(ClerkLineLock);
 
         rmCustomer = GetMVServer(remainingCustomer);
         if (rmCustomer == 0) {
@@ -185,8 +176,7 @@ void main() {
     }
 
 
-    lockData = GetMVServer(printLock);
-    AcquireServer(lockData);
+    AcquireServer(printLock);
     monFromApplicationClerk = GetMVServer(MoneyFromApplicationClerk);
     monFromPictureClerk = GetMVServer(MoneyFromPictureClerk);
     monFromPassportClerk = GetMVServer(MoneyFromPassportClerk);
@@ -221,8 +211,7 @@ void main() {
     Write(" for The passport Office\n", sizeof(" for The passport Office\n"), ConsoleOutput);
     Write("\n\n--------------------------------------------\n\n", sizeof("\n\n--------------------------------------------\n\n"), ConsoleOutput);
 
-    lockData = GetMVServer(printLock);
-    ReleaseServer(lockData);
+    ReleaseServer(printLock);
 
     Exit(0);
 }

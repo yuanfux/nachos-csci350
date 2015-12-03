@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: client1 client2 lock1 lock2 monitor1 monitor2
+all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager PassportClerk PictureClerk
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -73,6 +73,42 @@ monitor2.o: monitor2.c
 monitor2: monitor2.o start.o
 	$(LD) $(LDFLAGS) start.o monitor2.o -o monitor2.coff
 	../bin/coff2noff monitor2.coff monitor2
+
+ApplicationClerk.o: ApplicationClerk.c
+	$(CC) $(CFLAGS) -c ApplicationClerk.c
+ApplicationClerk: ApplicationClerk.o start.o
+	$(LD) $(LDFLAGS) start.o ApplicationClerk.o -o ApplicationClerk.coff
+	../bin/coff2noff ApplicationClerk.coff ApplicationClerk
+
+Cashier.o: Cashier.c
+	$(CC) $(CFLAGS) -c Cashier.c
+Cashier: Cashier.o start.o
+	$(LD) $(LDFLAGS) start.o Cashier.o -o Cashier.coff
+	../bin/coff2noff Cashier.coff Cashier
+
+Customer.o: Customer.c
+	$(CC) $(CFLAGS) -c Customer.c
+Customer: Customer.o start.o
+	$(LD) $(LDFLAGS) start.o Customer.o -o Customer.coff
+	../bin/coff2noff Customer.coff Customer
+
+Manager.o: Manager.c
+	$(CC) $(CFLAGS) -c Manager.c
+Manager: Manager.o start.o
+	$(LD) $(LDFLAGS) start.o Manager.o -o Manager.coff
+	../bin/coff2noff Manager.coff Manager
+
+PassportClerk.o: PassportClerk.c
+	$(CC) $(CFLAGS) -c PassportClerk.c
+PassportClerk: PassportClerk.o start.o
+	$(LD) $(LDFLAGS) start.o PassportClerk.o -o PassportClerk.coff
+	../bin/coff2noff PassportClerk.coff PassportClerk
+
+PictureClerk.o: PictureClerk.c
+	$(CC) $(CFLAGS) -c PictureClerk.c
+PictureClerk: PictureClerk.o start.o
+	$(LD) $(LDFLAGS) start.o PictureClerk.o -o PictureClerk.coff
+	../bin/coff2noff PictureClerk.coff PictureClerk
 
 clean:
 	rm -f *.o *.coff

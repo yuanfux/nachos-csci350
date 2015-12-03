@@ -6,21 +6,16 @@ void main() {
     int id;
     int ssn = id + 100;
     int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer, serviceId;
+    clerkState state = ONBREAK;
     unsigned int i;
 
     /* acquire all the necessary locks to get started */
-    lockData = GetMVServer(customerWaitLock);
-    AcquireServer(lockData);
-    lockData = GetMVServer(senatorPictureWaitLock);
-    AcquireServer(lockData);
-    lockData = GetMVServer(senatorPassportWaitLock);
-    AcquireServer(lockData);
-    lockData = GetMVServer(senatorCashierWaitLock);
-    AcquireServer(lockData);
-    lockData = GetMVServer(senatorApplicationWaitLock);
-    AcquireServer(lockData);
-    lockData = GetMVServer(senatorWaitLock);
-    AcquireServer(lockData);
+    AcquireServer(customerWaitLock);
+    AcquireServer(senatorPictureWaitLock);
+    AcquireServer(senatorPassportWaitLock);
+    AcquireServer(senatorCashierWaitLock);
+    AcquireServer(senatorApplicationWaitLock);
+    AcquireServer(senatorWaitLock);
 
     data = GetMVServer(senatorNum);
     id = data + 1;
@@ -41,17 +36,14 @@ void main() {
         }
     }
 
-    lockData = GetMVServer(senatorApplicationWaitLock);
-    ReleaseServer(lockData);
+    ReleaseServer(senatorApplicationWaitLock);
     serviceId = GetMVServer(senatorServiceId);
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
     Write("] has gotten in regular line for ApplicationClerk [", sizeof("] has gotten in regular line for ApplicationClerk ["), ConsoleOutput);
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
-    cvData = GetMVServer(senatorApplicationWaitCV);
-    lockData = GetMVServer(senatorWaitLock);
-    WaitServer(cvData, lockData);/* wait for a clerk */
+    WaitServer(senatorApplicationWaitCV, senatorWaitLock);/* wait for a clerk */
 
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
@@ -61,21 +53,18 @@ void main() {
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
     SetMVServer(senatorData, id);
-    SignalServer(cvData, lockData);/* signal a clerk */
+    SignalServer(senatorApplicationWaitCV, senatorWaitLock);/* signal a clerk */
 
-    WaitServer(cvData, lockData);/* wait for a filed application */
+    WaitServer(senatorApplicationWaitCV, senatorWaitLock);/* wait for a filed application */
 
 
-    lockData = GetMVServer(senatorPictureWaitLock);
-    ReleaseServer(lockData);
+    ReleaseServer(senatorPictureWaitLock);
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
     Write("] has gotten in regular line for PictureClerk [", sizeof("] has gotten in regular line for PictureClerk ["), ConsoleOutput);
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
-    cvData = GetMVServer(senatorPictureWaitCV);
-    lockData = GetMVServer(senatorWaitLock);
-    WaitServer(cvData, lockData);/* wait for a clerk */
+    WaitServer(senatorPictureWaitCV, senatorWaitLock);/* wait for a clerk */
 
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
@@ -85,22 +74,17 @@ void main() {
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
     SetMVServer(senatorData, id);
-
-    SignalServer(cvData, lockData);/* signal a clerk */
-
-    WaitServer(cvData, lockData);/* wait for a filed application */
+    SignalServer(senatorPictureWaitCV, senatorWaitLock);/* signal a clerk */
+    WaitServer(senatorPictureWaitCV, senatorWaitLock);/* wait for a filed application */
 
 
-    lockData = GetMVServer(senatorPassportWaitLock);
-    ReleaseServer(lockData);
+    ReleaseServer(senatorPassportWaitLock);
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
     Write("] has gotten in regular line for PassportClerk [", sizeof("] has gotten in regular line for PassportClerk ["), ConsoleOutput);
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
-    cvData = GetMVServer(senatorPassportWaitCV);
-    lockData = GetMVServer(senatorWaitLock);
-    WaitServer(cvData, lockData);/* wait for a clerk */
+    WaitServer(senatorPassportWaitCV, senatorWaitLock);/* wait for a clerk */
 
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
@@ -110,22 +94,17 @@ void main() {
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
     SetMVServer(senatorData, id);
-
-    SignalServer(cvData, lockData);/* signal a clerk */
-
-    WaitServer(cvData, lockData);/* wait for a filed application */
+    SignalServer(senatorPassportWaitCV, senatorWaitLock);/* signal a clerk */
+    WaitServer(senatorPassportWaitCV, senatorWaitLock);/* wait for a filed application */
 
 
-    lockData = GetMVServer(senatorCashierWaitLock);
-    ReleaseServer(lockData);
+    ReleaseServer(senatorCashierWaitLock);
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
     Write("] has gotten in regular line for Cashier [", sizeof("] has gotten in regular line for Cashier ["), ConsoleOutput);
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
-    cvData = GetMVServer(senatorCashierWaitCV);
-    lockData = GetMVServer(senatorWaitLock);
-    WaitServer(cvData, lockData);/* wait for a clerk */
+    WaitServer(senatorCashierWaitCV, senatorWaitLock);/* wait for a clerk */
 
     Write("Senator [", sizeof("Senator ["), ConsoleOutput);
     Printint(id);
@@ -135,10 +114,8 @@ void main() {
     Printint(serviceId);
     Write("].\n", sizeof("].\n"), ConsoleOutput);
     SetMVServer(senatorData, id);
-
-    SignalServer(cvData, lockData);/* signal a clerk */
-
-    WaitServer(cvData, lockData);/* wait for a filed application */
+    SignalServer(senatorCashierWaitCV, senatorWaitLock);/* signal a clerk */
+    WaitServer(senatorCashierWaitCV, senatorWaitLock);/* wait for a filed application */
 
 
     SetMVServer(hasSenator, 0);
@@ -146,12 +123,8 @@ void main() {
     Write("Senator[", sizeof("Senator["), ConsoleOutput);
     Printint(id);
     Write("] is leaving the Passport Office\n", sizeof("] is leaving the Passport Office\n"), ConsoleOutput); /* senator is leaving the passport office */
-    
-    lockData = GetMVServer(customerWaitLock);
-    ReleaseServer(lockData);
-    
-    lockData = GetMVServer(senatorWaitLock);
-    ReleaseServer(lockData);
+    ReleaseServer(customerWaitLock);
+    ReleaseServer(senatorWaitLock);
 
     Exit(0);
 }

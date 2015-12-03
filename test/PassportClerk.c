@@ -10,7 +10,6 @@ void main() {
     int passportClerkPunishment;
     int inBribeLine = 0;
     int myLine;
-    int lockData, cvData;
     int data, count, bribeCount, lockData, cvData, money, status, senStatus, senData, has, rmCustomer;
     clerkState state = ONBREAK;
 
@@ -52,6 +51,7 @@ void main() {
             AcquireServer(senatorPassportWaitLock);
             AcquireServer(senatorWaitLock);
 
+            SetMVServer(senatorServiceId, myLine);
             senData = GetMVServer(senatorData);
             SignalServer(senatorPassportWaitCV, senatorWaitLock);
             Write("PassportClerk [", sizeof("PassportClerk ["), ConsoleOutput);

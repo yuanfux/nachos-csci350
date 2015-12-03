@@ -49,6 +49,7 @@ void main() {
             AcquireServer(senatorApplicationWaitLock);
             AcquireServer(senatorWaitLock);
 
+            SetMVServer(senatorServiceId, myLine);
             SignalServer(senatorApplicationWaitCV, senatorWaitLock);
             Write("ApplicationClerk [", sizeof("ApplicationClerk ["), ConsoleOutput);
             Printint(myLine);
