@@ -1,0 +1,240 @@
+Writeup for Project 3, Fall 2015
+11/8/2015
+Group:		Name					Email	
+		Ching Ho Anthony Cheung		chinghoc@usc.edu	
+		Yuan Fu					yuanfu@usc.edu
+		Chunan Zeng 				czeng@usc.edu
+
+
+I. REQUIREMENTS
+
+	There are three parts of project3. However, it is generally regarded as part1 (That is the tlb implementation) and part2 (That is the basic RPC implementation).
+
+II. ASSUMPTIONS
+
+	1. The Operating system will go SUPER SLOW if there are just too many processes/threads(10+) on the virtual memory system that the results will not be as appealing as it seems. (Since there are too many context switching that will slowdown everything)
+		
+	2. We ‘simulate’ the situation of remote server/client connections that we actually tried to simulate on the same computer. In other words, the messages are always DELIVERED (NO PACKET LOSS)
+
+	The server WILL ALWAYS DELIVER just like us that we always deliver the project. And the grading team is like the the client THAT WILL ALWAYS RECEIVE. Thus, this is the assumption we made for the client/server for part3 of this project.
+	
+III. DESIGN
+
+	Parts 1/2:
+		We basically follow the student documentations and the lecture notes during class which :
+			- We populate the TLB.
+			- Implement IPT and it’s basic functionality.
+			- Implement TLB functionality.
+			- Implement Virtual Memory as to stop preloading.
+				When eviction occurs, there are RANDOM/FIFO to decide which page to evict (By test cases)
+				If the page is dirty, the page will be written into swap file.
+				It will update the page table as to implement the new page into the slot of the evicted page.
+					- Copy the page entry from IPT to TLB
+				Restart the USERPROG.
+						
+	Part 3:
+		The program used the Post office (provided) as the concept that we used for message passing (Request and Receive). It will handle codes through as server/client kernel threads(code) that as suggested in student documentation.
+		Didn’t modify any previous Userprogram in project2. We just added some userprog functions (Listed below)
+		
+		As professor suggests that the locks cannot put the threads to sleep that we cannot use our old locks as the server lock. So, we decided to create a new lock class as ServerLock that will be able to prevent race condition but without putting the threads into sleep.
+		The locks and CVs we created in this project (project3) that they will be only be used in Server. Thus, they are Server CVs and Server Locks that will be implemented in part3 (Network RPC design) especially in the server part.		
+		The server/client simulation we implement in this project is that client act as a dummy that it’s only task is to request for a monitor variable whereas the server will do all the rests of the job.
+		
+		NOTE: The client will pass its client ID when it is going to make the request to the server (Able to distinguish the client from the other clients that also sent to server).
+
+		Whenever there is request received in server, the server will make a new thread specifically for the request. The thread will run until it will try to acquire the server lock (a permission to send the message back to the client). If the server lock is being hold, the thread will loop itself to keep checking if the lock is available or not. This will make sure there is only one message being sent back to client at a time. Thus, this will make the client/server simulation much more appropriate as opposed to the post office example/abstraction.
+
+		- The program will always check if it is going to access/populate locks, condition variables. It will check if it is a networking test or not so that it will create the appropriate locks instead of the wrong one.
+		- The network type of condition variable and locks will require specific parameters to pass inside in order to create the CVs/Locks. (Client ID and the newly created Thread ID)
+	- When the server finally sent the message back to the client, the client will finish the syscall and also finish one of the jobs in the test. Thus, if all the clients receive the message, it means the program is finished and exit upon.
+		
+
+	NOTE: We have changed a line in machine.h for the Virtual Memory to work
+		#define NumPhysPages 32		(This is for the DPVM)
+	
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+IV. IMPLEMENTATION
+
+	Userprog
+			Added File:
+				ipt.h		//creating a new class on top of the page table (new class as IPT)
+
+		addrspace.h/addrspace.cc
+			Added:	
+				OpenFile *privateExecutable;		//DataStructure
+				OpenFile *AddrSpace::GetExecutable();
+				void PopulateIPT(int vpn, int ppn);
+			Modified:	void AddrSpace::AllocateSpaceForNewThread()
+
+		syscall.h
+			Added:
+				Variables:
+				+#define SC_CreateMV 22
+				+#define SC_GetMV 23
+				+#define SC_SetMV 24
+				+#define SC_AcquireServer  25
+				+#define SC_ReleaseServer  26
+				+#define SC_WaitServer     27
+				+#define SC_SignalServer   28
+				+#define SC_BroadcastServer 29
+				+#define SC_CreateLockServer 30
+				+#define SC_DestroyLockServer 31
+				+#define SC_CreateConditionServer 32
+				+#define SC_DestroyConditionServer 33
+				+#define SC_CreateMVServer 34
+				+#define SC_GetMVServer 35
+				+#define SC_SetMVServer 36
+				Functions:
+				+int CreateMV(int data);
+				+int GetMV(int monitorIndex);
+				+void SetMV(int monitorIndex, int data);
+				+int AcquireServer(int lockIndex);
+				+int ReleaseServer(int lockIndex);
+				+int WaitServer(int conditionIndex, int lockIndex);
+				+int SignalServer(int conditionIndex, int lockIndex);
+				+int BroadcastServer(int conditionIndex, int lockIndex);
+				+int CreateLockServer(int vaddr, int len);
+				+int DestroyLockServer(int lockIndex);
+				+int CreateConditionServer(int vaddr, int len);
+				+int DestroyConditionServer(int lockIndex);
+				+int CreateMVServer(int vaddr, int len);
+				+int GetMVServer(int monitorIndex);
+				+int SetMVServer(int monitorIndex, int data);
+
+		exception.cc
+			Implemented the functions listed as in the syscall.h file. 
+
+		File Modified
+			- start.s		//Adding new tests into the set.
+			- main.cc		//Allow the user to choose RANDOM/FIFO eviction policy
+			- system.cc	//part1,2 for bitmap and swapfile
+			- system.h	//part1,2	for bitmap and swapfile
+			- pagetable.h	//An extra variable of swapFileLocation that will record the location in the page table.	
+			————————	TEST  ————————
+			- forktest.c
+			- Matmult.c
+			- Sort.c
+			- Client.c
+			- Monitortest.c
+
+		File Modified for part3 (RPCs)
+			nettest.c
+				-#define NUM_LOCK 1000
+				-#define NUM_CONDITION 1000
+				-#define NUM_MONITOR 1000
+				ServerLock serverLock[NUM_LOCK];
+				ServerCondition serverCondition[NUM_CONDITION];
+				ServerMonitorVariable serverMonitorVariable[NUM_MONITOR];
+				int numLock = 0;
+				int numCondition = 0;
+				int numMonitor = 0;
+
+				New DataStructure
+					-struct ServerLock{
+						char* name;
+						List* queue;
+						int lockHolder;}
+					-struct ServerCondition{
+						char* name;
+						int waitingLock;
+						List* queue;}
+					-struct ServerMonitor{
+						char* name;
+						int data;}
+
+				New Functions
+					void sendInt(int replyTo, int value);	//send the message
+					// LOCK
+					void CreateLock(char* name, int replyTo);
+					void Acquire(int lockIndex, int replyTo);
+					void Release(int lockIndex, int replyTo);
+					void Destroy(int lockIndex, int replyTo);
+					// Condition Variable
+					void Wait(int conditionIndex, int lockIndex, int replyTo);
+					void Signal(int conditionIndex, int lockIndex, int replyTo);
+					void Broadcast(int conditionIndex, int lockIndex, int replyTo);
+					void DestroyCondition(int conditionIndex, int replyTo);
+					// Monitor Variable
+					void CreateMV(char* name, int replyTo);
+					void GetMV(int monitorIndex, int replyTo);
+					void SetMV(int monitorIndex, int value, int replyTo);
+					// The Server Syscall 
+					void Server() //This is the syscall for the server itself (Originally in server.cc)
+
+			
+
+
+
+
+V. TESTING
+
+	The following tests are for part1/2 testing (TLB and Virtual Memory)
+	**********************************************************************************************************
+	Sort.c	(For testing part1/2 that the page table is no longer pre-loading
+	Matmult.c	(Adjusting the test just to fit into our data structure (Didn’t change the overview of the test)
+	Multisort.c	(This is for multi thread sorting)
+	Multimat.c	(This is for multi thread matrix multiplication)
+
+	nachos -x ../test/sort			//Single Sort
+	nachos -x ../test/Multisort		//Multiple Sort (2 threads for sorting process)
+	nachos -x ../test/Matmult		//Single Matrix Multiplication 
+	nachos -x ../test/Multimat		//Multiple Matrix Multiplication	(2 threads for matrix multiplication)
+	**********************************************************************************************************
+	
+
+	The following tests are for part3 testing (RPCs)	
+	**********************************************************************************************************
+	condition_function_test tests following server sys calls:
+	CreateConditionServer, SignalServer,  WaitServer, DestroyConditionServer
+	instruction to test:
+	start server: nachos -m 0 -o 1
+	start client: nachos -m 1 -x ../test/condition_function_test
+	**********************************************************************************************************
+
+	**********************************************************************************************************
+	serverbroadcast_function_test tests following server sys calls:
+	BroadcastServer
+	instruction to test:
+	start server: nachos -m 0 -o 1
+	start client: nachos -m 1 -x ../test/serverbroadcast_function_test
+	**********************************************************************************************************
+
+	**********************************************************************************************************
+	lock_function_test1 tests following server sys calls:
+	CreateLockServer ,AcquireServer, ReleaseServer
+	instruction to test:
+	start server: nachos -m 0 -o 1
+	start client: nachos -m 1 -x ../test/lock_function_test1
+	**********************************************************************************************************
+
+	**********************************************************************************************************
+	lock_function_test2 tests following server sys calls:
+	CreateLockServer ,AcquireServer, ReleaseServer,  DestroyLockServer
+	instruction to test:
+	start server: nachos -m 0 -o 1
+	start client: nachos -m 1 -x ../test/lock_function_test2
+	**********************************************************************************************************
+
+	**********************************************************************************************************
+	monitor_function_test1,monitor_function_test2,monitor_function_test3 tests following server sys calls:
+	CreateMVServer, SetMVServer, GetMVServer
+	instruction to test:
+	start server: nachos -m 0 -o 1
+	start client1: nachos -m 1 -x ../test/monitor_function_test1
+	start client2: nachos -m 2 -x ../test/monitor_function_test2
+	start client3: nachos -m 3 -x ../test/monitor_function_test3
+	**********************************************************************************************************
+
+
+VI. DISCUSSION
+
+Part1/2 we just follow the assumptions of the student documentations provided. We followed the student documentation and the lecture notes that we dropped during the class. Although it is a bit unclear of how to start to declare IPT and populate TLB. We managed to make it through.
+
+Part3 of this project is really confusing as there is too little guidelines on how to implement the RPC. The abstraction of post office helps to explain what is RPC’s. However, it doesn’t really help to get to know how to start part3 by itself. It is really rough and tedious to know what to do for the first step of the whole RPC’s implementation.
+
+
+VII. MISCELLANEOUS
+
+	N/A

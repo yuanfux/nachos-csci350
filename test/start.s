@@ -130,6 +130,240 @@ Yield:
 	j	$31
 	.end Yield
 
+	.globl Acquire
+	.ent	Acquire
+Acquire:
+	addiu $2,$0,SC_Acquire
+	syscall
+	j	$31
+	.end Acquire
+
+	.globl Release
+	.ent	Release
+Release:
+	addiu $2,$0,SC_Release
+	syscall
+	j	$31
+	.end Release
+
+	.globl Wait
+	.ent	Wait
+Wait:
+	addiu $2,$0,SC_Wait
+	syscall
+	j	$31
+	.end Wait
+
+	.globl Signal
+	.ent	Signal
+Signal:
+	addiu $2,$0,SC_Signal
+	syscall
+	j	$31
+	.end Signal
+
+	.globl Broadcast
+	.ent	Broadcast
+Broadcast:
+	addiu $2,$0,SC_Broadcast
+	syscall
+	j	$31
+	.end Broadcast
+
+	.globl CreateLock
+	.ent	CreateLock
+CreateLock:
+	addiu $2,$0,SC_CreateLock
+	syscall
+	j	$31
+	.end CreateLock
+
+	.globl DestroyLock
+	.ent	DestroyLock
+DestroyLock:
+	addiu $2,$0,SC_DestroyLock
+	syscall
+	j	$31
+	.end DestroyLock
+
+	.globl CreateCondition
+	.ent	CreateCondition
+CreateCondition:
+	addiu $2,$0,SC_CreateCondition
+	syscall
+	j	$31
+	.end CreateCondition
+
+	.globl DestroyCondition
+	.ent	DestroyCondition
+DestroyCondition:
+	addiu $2,$0,SC_DestroyCondition
+	syscall
+	j	$31
+	.end DestroyCondition
+
+	.globl Printint
+	.ent	Printint
+Printint:
+	addiu $2,$0,SC_Printint
+	syscall
+	j	$31
+	.end Printint
+
+    .globl Random
+	.ent	Random
+Random:
+	addiu $2,$0,SC_Random
+	syscall
+	j	$31
+	.end Random
+
+    .globl CreateMV
+	.ent	CreateMV
+CreateMV:
+	addiu $2,$0,SC_CreateMV
+	syscall
+	j	$31
+	.end CreateMV
+
+    .globl GetMV
+	.ent	GetMV
+GetMV:
+	addiu $2,$0,SC_GetMV
+	syscall
+	j	$31
+	.end GetMV
+
+    .globl SetMV
+	.ent	SetMV
+SetMV:
+	addiu $2,$0,SC_SetMV
+	syscall
+	j	$31
+	.end SetMV
+/*note line*/
+
+	.globl AcquireServer
+	.ent	AcquireServer
+AcquireServer:
+	addiu $2,$0,SC_AcquireServer
+	syscall
+	j	$31
+	.end AcquireServer
+
+	.globl ReleaseServer
+	.ent	ReleaseServer
+ReleaseServer:
+	addiu $2,$0,SC_ReleaseServer
+	syscall
+	j	$31
+	.end ReleaseServer
+
+	.globl WaitServer
+	.ent	WaitServer
+WaitServer:
+	addiu $2,$0,SC_WaitServer
+	syscall
+	j	$31
+	.end WaitServer
+
+	.globl SignalServer
+	.ent	SignalServer
+SignalServer:
+	addiu $2,$0,SC_SignalServer
+	syscall
+	j	$31
+	.end SignalServer
+
+	.globl BroadcastServer
+	.ent	BroadcastServer
+BroadcastServer:
+	addiu $2,$0,SC_BroadcastServer
+	syscall
+	j	$31
+	.end BroadcastServer
+
+	.globl CreateLockServer
+	.ent	CreateLockServer
+CreateLockServer:
+	addiu $2,$0,SC_CreateLockServer
+	syscall
+	j	$31
+	.end CreateLockServer
+
+	.globl DestroyLockServer
+	.ent	DestroyLockServer
+DestroyLockServer:
+	addiu $2,$0,SC_DestroyLockServer
+	syscall
+	j	$31
+	.end DestroyLockServer
+
+	.globl CreateConditionServer
+	.ent	CreateConditionServer
+CreateConditionServer:
+	addiu $2,$0,SC_CreateConditionServer
+	syscall
+	j	$31
+	.end CreateConditionServer
+
+	.globl DestroyConditionServer
+	.ent	DestroyConditionServer
+DestroyConditionServer:
+	addiu $2,$0,SC_DestroyConditionServer
+	syscall
+	j	$31
+	.end DestroyConditionServer
+
+    .globl CreateMVServer
+	.ent	CreateMVServer
+CreateMVServer:
+	addiu $2,$0,SC_CreateMVServer
+	syscall
+	j	$31
+	.end CreateMVServer
+
+    .globl GetMVServer
+	.ent	GetMVServer
+GetMVServer:
+	addiu $2,$0,SC_GetMVServer
+	syscall
+	j	$31
+	.end GetMVServer
+
+    .globl SetMVServer
+	.ent	SetMVServer
+SetMVServer:
+	addiu $2,$0,SC_SetMVServer
+	syscall
+	j	$31
+	.end SetMVServer
+
+    .globl CreateMVArrayServer
+	.ent	CreateMVArrayServer
+CreateMVArrayServer:
+	addiu $2,$0,SC_CreateMVArrayServer
+	syscall
+	j	$31
+	.end CreateMVArrayServer
+
+    .globl GetMVArrayServer
+	.ent	GetMVArrayServer
+GetMVArrayServer:
+	addiu $2,$0,SC_GetMVArrayServer
+	syscall
+	j	$31
+	.end GetMVArrayServer
+
+    .globl SetMVArrayServer
+	.ent	SetMVArrayServer
+SetMVArrayServer:
+	addiu $2,$0,SC_SetMVArrayServer
+	syscall
+	j	$31
+	.end SetMVArrayServer
+
+
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

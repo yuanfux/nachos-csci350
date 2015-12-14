@@ -1,0 +1,204 @@
+Title:  Writeup for Project 2, Fall 2015
+Date:  10/18/15
+Group:		Name					Email	
+		Ching Ho Anthony Cheung		chinghoc@usc.edu	
+		Yuan Fu				yuanfu@usc.edu
+		Chunan Zeng 			czeng@usc.edu
+  
+I. Requirements:
+Part 1: Implement the following system calls for NACHOS user programs:
+			#define SC_Acquire  11
+			#define SC_Release  12
+			#define SC_Wait     13
+			#define SC_Signal   14
+			#define SC_Broadcast 15
+			#define SC_CreateLock 16
+			#define SC_DestroyLock 17
+			#define SC_CreateCondition 18
+			#define SC_DestroyCondition 19
+
+Part 2: Implement multiprogramming which are Fork and Execute syscall.
+
+Part 3: Implement the passport office simulation as we have created in project1.
+
+II. Assumptions:
+Part 1:
+		We use the backbone of project1 (lock and condition variable) to continue the work in the systemcall file by just including the codes of it.
+		
+Part 2:
+		We assume that there are inifinite space for the memory to hold all the process/thread such that we will just increase the page number by 1 everytime when it reaches the maximum amount of pages in the current data structure (Array of pages in a table)
+
+Part 3: 
+		Basically the same as what we have assumed in project1 since this is just implementation of the simulation, there is nothing changed
+
+III. Design:
+
+Part 1:
+
+System calls: Implemented in userprog/exception.cc. userprog/syscall.h, and test/start.s.
+			We use an array to hold all the locks in places which the array can be increased whenever there is createlock being called. and we will mark the lock as available. Otherwise, if it is going to be deleted, we will mark it as deleted so that no one will use it afterwards. (We don't actually destory the lock as it will mess up the index of the lock array)
+			#define SC_Acquire  11
+				We basically check if the index provided in the function that has exceeded the maximum number of locks in the current array of locks or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				Secondly, we will check if the lock is available or not. OTherwise, it will be acquired by the current thread
+			#define SC_Release  12
+				We basically check if the index provided in the function that has exceeded the maximum number of locks in the current array of locks or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				Secondly, we will check if the current lock holder is the current thread. If not, there is no release as the current lockholder is not releasing the lock which is an invalid command.
+			#define SC_Wait     13
+				We basically check if the index provided in the function that has exceeded the maximum number of conditions in the current array of conditions or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				And we just follow the simple wait command as we implemented in project1
+			#define SC_Signal   14
+				We basically check if the index provided in the function that has exceeded the maximum number of conditions in the current array of conditions or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				And we just follow the simple signal command as we implemented in project1
+			#define SC_Broadcast 15
+				We basically check if the index provided in the function that has exceeded the maximum number of conditions in the current array of conditions or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				And we just follow the simple broadcast command as we implemented in project1
+			#define SC_CreateLock 16
+				So we basically just added one lock in the lock array and give it as the index of the array of locks to keep track for that lock. (Return an int)
+			#define SC_DestroyLock 17
+				We will just make the lock as deleted that will just never be used again but never destoryed as it will mess up the array index.
+			#define SC_CreateCondition 18
+				So we basically just added one condition in the condition array and give it as the index of the array of conditions to keep track for that condition. (Return an int)
+			#define SC_DestroyCondition 19
+			We will just make the condition as deleted that will just never be used again but never destoryed as it will mess up the array index.
+Part 2: 
+
+Create a processThreadTable that maps address spaces to the number of threads in that process.  In addition there will be a lock that controls access to the processThreadTable.
+
+Create a PageManager class to organize memory page assignment to processes.  This class will use a bitmap to determine whether or not a page is free and a lock to ensure modification by only one process at a time.  In addition it will support the following functions:
+- ObtainFreePage:  Find a free page and return the physical page number and increments the number of used pages.  Otherwise return -1.
+- FreePage: Frees the physical page number that is passed in and decrements the number of used pages.
+- num_available_pages: Returns the number of free physical pages.
+
+Modify AddrSpace to properly allocate pages for a given process.
+- Modify the constructor of AddrSpace to read the executable into memory and allocate the appropriate number of stack pages properly.  Change the assignment of the physical page number in pageTable to make a call to the PageManager to get a free page.
+- AllocateStackPages: Add more stack pages to the current process (used for forking a new thread within a process) and adjust pageTable and numPages appropriately.
+- DeallocateStack: Deallocates the stack pages for a given thread within a process.
+- DeallocateAllPages: Deallocates all pages used for a given process.
+
+Exec Syscall: Basically we just followed the student documentation that will just open the file. Get a new address space for the new thread by allocating space for it. And then we will tell the thread of its current address space and to fork the thread. The process is suppose to be atomic which we will have a lock around it in case if there are several executions system call is happening
+
+Fork Syscall: Basically we just followed the student documentation that we will check if the virtual address is larger than the physical address sizxe, if so there is no fork so just return. And check if the virtual address is smaller than 0 that will be an invalid input. Otherwise, the standard fork procedure will proceed by creating a new thread and assign space for the new thread and fork it into kernel thread. The process is suppose to be atomic which we will have a lock around it in case if there are several executions system call is happening
+
+Part 3:
+ 
+Reimplement passport office using system calls and C.
+We basically just replace all the locks and conditions by the syscall functions to create/lock/acquire/release which will be the same logic but just running in system call environment. We create multiple threads of every different types of people in the passport office and they are sorted as different processes so that we will be able to simulate multitasking environment and in nachos.
+We use write to print out the statements which works perfectly
+
+IV. Implementation:
++ Files Modified
+Userprog
+	addrspace.cc
+	addrspace.h
+	bitmap.cc
+	bitmap.h
+	exception.cc
+	progtest.cc
+	syscall.h
+Threads
+	threadtest.cc
+	synch.h
+	synch.cc
+	
++ Files added
+Test
+	TestSuit.c
+	broadcasttest.c
+	destroy_condition_locktest.c
+	destroyconditionlocktest.c
+	exec_exittest.c
+	exectest.c
+	forktest.c
+	multioffice.c
+	passportoffice.c
+	printinttest.c
+	randomtest.c
+	release_acquiretest.c
+	releaseacquiretest.c
+	signal_waittest.c
+	signalwaittest.c
+	yieldtest.c
+
+- Each tests’ names are self-explanatory. Some test files tests two system calls.
+- TestSuite combines all tests,except passport office, together. Since processes run concurrently, output may be messy.
+- passportoffice.c runs a single Passport Office Simulation. The number of different characters are to the upper limit:
+	Customers: 50
+	Application Clerk: 5
+	Picture Clerk: 5
+	Passport Clerk: 5
+	Cashier: 5
+	Senator: 10
+	Manager: 1
+- multioffice.c runs 3 Passport Offices concurrently. It may take about a minute to run. Please be patient.
+
+
++ Functions added and in which file.
+userprog/syscall.h and userprog/exception.cc
+			#define SC_Acquire  11
+				We basically check if the index provided in the function that has exceeded the maximum number of locks in the current array of locks or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				Secondly, we will check if the lock is available or not. OTherwise, it will be acquired by the current thread
+			#define SC_Release  12
+				We basically check if the index provided in the function that has exceeded the maximum number of locks in the current array of locks or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				Secondly, we will check if the current lock holder is the current thread. If not, there is no release as the current lockholder is not releasing the lock which is an invalid command.
+			#define SC_Wait     13
+				We basically check if the index provided in the function that has exceeded the maximum number of conditions in the current array of conditions or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				And we just follow the simple wait command as we implemented in project1
+			#define SC_Signal   14
+				We basically check if the index provided in the function that has exceeded the maximum number of conditions in the current array of conditions or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				And we just follow the simple signal command as we implemented in project1
+			#define SC_Broadcast 15
+				We basically check if the index provided in the function that has exceeded the maximum number of conditions in the current array of conditions or not. Or invalid input ( < 0 ) that it will return as these are invalid inputs.
+				And we just follow the simple broadcast command as we implemented in project1
+			#define SC_CreateLock 16
+				So we basically just added one lock in the lock array and give it as the index of the array of locks to keep track for that lock. (Return an int)
+			#define SC_DestroyLock 17
+				We will just make the lock as deleted that will just never be used again but never destoryed as it will mess up the array index.
+			#define SC_CreateCondition 18
+				So we basically just added one condition in the condition array and give it as the index of the array of conditions to keep track for that condition. (Return an int)
+			#define SC_DestroyCondition 19
+			We will just make the condition as deleted that will just never be used again but never destoryed as it will mess up the array index.
+
+addrspace.h
+void AddrSpace::AllocateSpaceForNewThread() 
+	That this is just new assigning the new thread of space to make it proper running with the correct space that the thread suppose to run.
+
+// Deallocates the stack assigned to the current thread.
+void DeallocateSpaceForThread();
+
+
++ Functions modified and in which file.
+userprog/syscall.h and userprog/exception.cc
+	Yield
+	Yield is just currentthread yield and return.
+	
+	Exit
+	where as exit is determine by if the current thread is the last thread of the process, or is it the last process and thread in the whole program or is it just a thread about to be extied. they all operate differently.
+	
+	Execute
+	Listed as in earlier documentationc
+	
+	Fork
+	Listed as in earlier documentation
+
+addrspace.h
+void AddrSpace::AllocateSpaceForNewThread() 
+	That this is just new assigning the new thread of space to make it proper running with the correct space that the thread suppose to run.
+
+***For details on Passport Office Simulation Functions and Classes see Project 1 writeup.  All functionality defined in that writeup was reimplemented in C for this assignment in test/simulation.c***
+
+V. Testing:  (For each test case, you must show)
++ How to test
+- cd test
+- gmake
+- cd ../usrprog
+- gmake
+- nachos -x ../test/<filename>
+
+VI. Discussion:
++ Experiment expectation: Multiple user programs run to completion.
++ Experiment result: Multiple user programs run to completion.
++ Explanation: It works.  Check program output as validation.
+
+VIII. Miscellaneous:
+- Whatever else you want the grader know about your development.  You can create your own subsections headings here.
+

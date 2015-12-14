@@ -16,6 +16,10 @@
 #include "stats.h"
 #include "timer.h"
 
+#define MAX_PROCESS_NUM 64
+#define NumSwapPages 8192
+#define NumThreads 2048
+
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
 						// called before anything else
@@ -28,10 +32,20 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
-
 #ifdef USER_PROGRAM
 #include "machine.h"
+#include "ipt.h"
 extern Machine* machine;	// user program memory and registers
+extern Table processTable;
+extern BitMap memoryMap;
+extern IPT* ipt;
+enum Policy{RAND, FIFO};
+extern Policy evictPolicy;
+extern List *evictQueue;
+extern OpenFile *swapFile;
+extern BitMap swapFileBitMap;
+
+extern BitMap threadBitMap;
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 
@@ -46,7 +60,9 @@ extern SynchDisk   *synchDisk;
 
 #ifdef NETWORK
 #include "post.h"
+#define NumServers 2
 extern PostOffice* postOffice;
+
 #endif
 
 #endif // SYSTEM_H
