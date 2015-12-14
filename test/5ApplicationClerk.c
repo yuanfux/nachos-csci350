@@ -4,7 +4,7 @@
 int main(){
     int i;
     
-    for(i = 0 ; i< 1;i++){
+    for(i = 0 ; i< 5;i++){
         Exec("../test/ApplicationClerk", sizeof("../test/ApplicationClerk"));
     }
     

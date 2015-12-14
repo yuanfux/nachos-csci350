@@ -233,7 +233,7 @@ void sendInt(int replyTo, int threadIndex, int value){
     outMailHdr.length = strlen(send) + 1;
     //printf("send from server to machine %d, thread %d, value %d\n", replyTo, threadIndex,value);
     if(postOffice->Send(outPktHdr, outMailHdr, send) == false){
-        printf("Server: Send failed\n");
+        //printf("Server: Send failed\n");
         return;
     }
     
@@ -256,7 +256,7 @@ void sendServerReply(int replyTo, int threadIndex, bool isYes){
     }
     outMailHdr.length = strlen(send) + 1;
     if(postOffice->Send(outPktHdr, outMailHdr, send) == false){
-        printf("Server: Send failed\n");
+        //printf("Server: Send failed\n");
         return;
     }
 }
@@ -364,12 +364,12 @@ void Acquire(int lockIndex, int replyTo, int ThreadIndex, int replyToClient, int
                 if(binderV[i].replyTo == replyTo){
                     //is the space holder, can possibly hold the lock
                     if(serverLock[index].lockHolder.replyTo == replyTo && serverLock[index].lockHolder.ThreadIndex == ThreadIndex){
-                        printf("Acquire: already the lock holder\n");
+                        //printf("Acquire: already the lock holder\n");
                         sendInt(replyTo, ThreadIndex, -1);
                         return;
                     }
                     else if(serverLock[index].lockHolder.replyTo == -1 && serverLock[index].lockHolder.ThreadIndex == -1){
-                        printf("Acquire: no lock holder, hold the lock\n");
+                       // printf("Acquire: no lock holder, hold the lock\n");
                         serverLock[index].lockHolder.replyTo = replyTo;
                         serverLock[index].lockHolder.ThreadIndex = ThreadIndex;
                         sendInt(replyTo, ThreadIndex, lockIndex);
@@ -377,7 +377,7 @@ void Acquire(int lockIndex, int replyTo, int ThreadIndex, int replyToClient, int
                     }
                     else{
                         //someone is holding the lock. Wait here
-                        printf("Acquire: someone is holding the lock, wait\n");
+                        //printf("Acquire: someone is holding the lock, wait\n");
                         Binder* binder = new Binder(replyTo, ThreadIndex);
                         serverLock[index].queue->Append((Binder*)binder);
                         return;
@@ -399,7 +399,7 @@ void Acquire(int lockIndex, int replyTo, int ThreadIndex, int replyToClient, int
             
             bool isYes = waitServerReply();
             
-            printf("Acquire: The result collected from other servers: %d\n", isYes);
+           // printf("Acquire: The result collected from other servers: %d\n", isYes);
             if(isYes){
                 
                 return;
@@ -943,7 +943,7 @@ void processSignal(int lockIndex, int nextReplyTo, int nextThreadIndex, int repl
     
     std::vector<Binder> binderV = serverLock[index].spaceHolder;
     for(unsigned int i = 0; i < binderV.size(); i++){
-        printf("In Signal: binderV[i].replyTo: %d, replytoClient: %d\n", binderV[i].replyTo, replyToClient);
+        //printf("In Signal: binderV[i].replyTo: %d, replytoClient: %d\n", binderV[i].replyTo, replyToClient);
 
         if(binderV[i].replyTo == replyToClient){
             //is the space holder
@@ -1079,15 +1079,15 @@ void CreateLock(char* name, int replyTo, int ThreadIndex, int replyToClient, int
     
     if( replyTo >= NumServers){ //receive msg from clients
     for(int i = 0 ; i < numLock ; i++){
-        printf("CreateLock: from client name: %s, in server name: %s\n", name, serverLock[i].name);
-        printf("CreateLock: Current Lock size: %d\n", numLock);
+       // printf("CreateLock: from client name: %s, in server name: %s\n", name, serverLock[i].name);
+       // printf("CreateLock: Current Lock size: %d\n", numLock);
         if(strcmp(serverLock[i].name, name) == 0){//name already exists -> share
             
             printf("CreateLock: name already exists\n");
             
             serverLock[i].spaceHolder.push_back(binder);
             
-            printf("in createlcok: binder.replyto: %d , binder.threadindex: %d \n", binder.replyTo, binder.ThreadIndex);
+            //printf("in createlcok: binder.replyto: %d , binder.threadindex: %d \n", binder.replyTo, binder.ThreadIndex);
             sendInt(replyTo, ThreadIndex, NUM_LOCK*getMachineID()+i);//send back the lock index
             
             return;
@@ -1102,7 +1102,7 @@ void CreateLock(char* name, int replyTo, int ThreadIndex, int replyToClient, int
         forwardMsg(send);
     
       bool isYes = waitServerReply();
-        printf("CreateLock: The result collected from other servers: %d\n", isYes);
+       // printf("CreateLock: The result collected from other servers: %d\n", isYes);
 
         if(isYes){
             
@@ -1125,7 +1125,7 @@ void CreateLock(char* name, int replyTo, int ThreadIndex, int replyToClient, int
 
     
             sendInt(replyTo,ThreadIndex, NUM_LOCK*getMachineID()+numLock);
-            printf("5\n");
+            //printf("5\n");
 
             numLock++;
         
@@ -1281,15 +1281,15 @@ void DestroyLock(int lockIndex, int replyTo, int ThreadIndex, int replyToClient,
 void CreateCondition(char* name, int replyTo, int ThreadIndex, int replyToClient, int ThreadIndexClient){
     
     Binder binder(replyTo, ThreadIndex);
-    printf("11\n");
+    //printf("11\n");
     if(replyTo >= NumServers){//client msg
-        printf("12\n");
+       // printf("12\n");
     for(int i = 0 ; i < numCondition ; i++){
-        printf("in loop: %d\n ", i);
-        printf("CreateCondition: from client name: %s, in server name: %s\n", name, serverCondition[i].name);
-        printf("CreateCondition: Current Lock size: %d\n", numCondition);
+       // printf("in loop: %d\n ", i);
+      //  printf("CreateCondition: from client name: %s, in server name: %s\n", name, serverCondition[i].name);
+      //  printf("CreateCondition: Current Lock size: %d\n", numCondition);
         if(strcmp(serverCondition[i].name, name) == 0){//name already exists -> share
-            printf("CreateCondition: name already exists\n");
+           // printf("CreateCondition: name already exists\n");
             serverLock[i].spaceHolder.push_back(binder);
             
             sendInt(replyTo, ThreadIndex, NUM_CONDITION*getMachineID() + i);//send back the condition index
@@ -1313,20 +1313,20 @@ void CreateCondition(char* name, int replyTo, int ThreadIndex, int replyToClient
         }
         else{
             //create new
-            printf("1\n");
+           // printf("1\n");
             serverCondition[numCondition].name = new char[strlen(name)];
-            printf("2\n");
+          //  printf("2\n");
 
             strcpy(serverCondition[numCondition].name, name);
-            printf("3\n");
+           // printf("3\n");
 
             
             serverCondition[numCondition].spaceHolder.push_back(binder);
-            printf("4\n");
+           // printf("4\n");
 
             
             sendInt(replyTo, ThreadIndex, NUM_CONDITION*getMachineID() + numCondition);
-            printf("5\n");
+           // printf("5\n");
 
             
             numCondition++;

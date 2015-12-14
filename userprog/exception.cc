@@ -393,7 +393,9 @@ void Fork_Syscall(int vaddr) {
 }
 
 void Yield_Syscall() {
+    
     currentThread->Yield();
+    
 }
 
 int CreateLock_Syscall() {
@@ -1017,7 +1019,7 @@ void UpdateEvictedPageTable(int swapFileLocation, int virtualPage, int physicalP
 }
 
 
-int EvictIPT() {
+int Evict() {
     int physicalPage, virtualPage;
 
     // Choose a page to evcit depending on policy
@@ -1202,7 +1204,7 @@ int PageFaultHandler(int vaddr) {
     (void) interrupt->SetLevel(oldLevel);
     return 0;
 
-}
+}//context switch invalidate the TLB
 
 
 

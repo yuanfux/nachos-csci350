@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager PassportClerk PictureClerk 1Manager 5ApplicationClerk 5Cashier 5PassportClerk 5PictureClerk 10Senator 50Customer
+all: client1 client2 lock1 lock2 monitor1 monitor2 ApplicationClerk Cashier Customer Manager Senator PassportClerk PictureClerk 1Manager 5ApplicationClerk 5Cashier 5PassportClerk 5PictureClerk 10Senator 50Customer
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -146,5 +146,16 @@ PictureClerk: PictureClerk.o start.o
 	$(LD) $(LDFLAGS) start.o 5PictureClerk.o -o 5PictureClerk.coff
 	../bin/coff2noff 5PictureClerk.coff 5PictureClerk
 
+Senator.o: Senator.c
+	$(CC) $(CFLAGS) -c Senator.c
+Senator: Senator.o start.o
+	$(LD) $(LDFLAGS) start.o Senator.o -o Senator.coff
+	../bin/coff2noff Senator.coff Senator
+
+10Senator.o: 10Senator.c
+	$(CC) $(CFLAGS) -c 10Senator.c
+10Senator: 10Senator.o start.o
+	$(LD) $(LDFLAGS) start.o 10Senator.o -o 10Senator.coff
+	../bin/coff2noff 10Senator.coff 10Senator
 clean:
 	rm -f *.o *.coff
