@@ -4,8 +4,14 @@ Distributed Nachos OS CSCI-350 Project.
 
 
 Author: 
-Ching Ho Anthony Cheung		chinghoc@usc.edu	
+
+
+Ching Ho Anthony Cheung		chinghoc@usc.edu
+
+	
 Yuan Fu				yuanfu@usc.edu
+
+
 Chunan Zeng 			czeng@usc.edu
 
 
@@ -35,4 +41,4 @@ Basic System Calls for Remote Procedural Call ✓
 Simulate Passport Office by Remote Procedural Calls ✓
 
 
-This is the latest complete version of CSCI-350 project.
+Note: This is the latest complete version of CSCI-350 project.
